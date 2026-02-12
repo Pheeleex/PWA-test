@@ -25,13 +25,6 @@ export default function SettingsScreen() {
             icon: 'list-outline',
             route: '/(drawer)/incidents',
         },
-        {
-            id: 'logout',
-            title: 'Logout',
-            icon: 'log-out-outline',
-            route: '/login',
-            isLogout: true,
-        },
     ];
 
     const handlePress = (item: any) => {

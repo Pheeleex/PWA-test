@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image, BackHandler } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -19,6 +19,19 @@ export default function ReportScreen() {
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [isFocus, setIsFocus] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                router.push('/(drawer)/settings');
+                return true;
+            };
+
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () => subscription.remove();
+        }, [router])
+    );
 
     const handleSubmit = () => {
         if (!category) {
@@ -73,7 +86,11 @@ export default function ReportScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Report Incident" withSafeArea={false} />
+            <ScreenHeader
+                title="Report Incident"
+                withSafeArea={false}
+                onBack={() => router.push('/(drawer)/settings')}
+            />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Issue Category */}

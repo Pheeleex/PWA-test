@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, BackHandler } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 
 export default function ChangePasswordScreen() {
@@ -8,6 +8,19 @@ export default function ChangePasswordScreen() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                router.push('/(drawer)/settings');
+                return true;
+            };
+
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () => subscription.remove();
+        }, [router])
+    );
 
     const handleUpdate = () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
@@ -28,7 +41,11 @@ export default function ChangePasswordScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Change Password" withSafeArea={false} />
+            <ScreenHeader
+                title="Change Password"
+                withSafeArea={false}
+                onBack={() => router.push('/(drawer)/settings')}
+            />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Current Password */}
