@@ -170,7 +170,7 @@ export default function OnboardingScreen() {
                 {/* Next / Get Started Button */}
                 <TouchableOpacity onPress={scrollToNext} style={styles.nextButton}>
                     <ThemedText style={styles.nextButtonText}>
-                        Get Started
+                        {currentIndex < slides.length - 1 ? 'Next' : 'Get Started'}
                     </ThemedText>
                 </TouchableOpacity>
             </View>
