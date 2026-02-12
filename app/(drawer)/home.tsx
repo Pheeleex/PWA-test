@@ -1,22 +1,165 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 
 export default function HomeScreen() {
+    const router = useRouter();
+    // Status can be 'active', 'transit', or 'nogo'
+    const [status, setStatus] = useState<'active' | 'transit' | 'nogo'>('active');
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'active': return '#50AF47'; // Green
+            case 'transit': return '#FFBF00'; // Amber
+            case 'nogo': return '#FF3B30'; // Red
+            default: return '#50AF47';
+        }
+    };
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'active': return 'Activation Zone';
+            case 'transit': return 'Transit Zone';
+            case 'nogo': return 'No Go Zone';
+            default: return 'Activation Zone';
+        }
+    };
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Landing Page</Text>
-            <Text>Welcome to Promolocation!</Text>
-        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+            {/* Status Bar */}
+            <View style={[styles.statusBar, { backgroundColor: getStatusColor(status) }]}>
+                <Text style={styles.statusText}>
+                    {getStatusText(status)}
+                </Text>
+            </View>
+
+            <View style={styles.content}>
+
+                {/* Cards */}
+                <View style={styles.cardsContainer}>
+                    <View style={styles.card}>
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="globe-outline" size={32} color="#0E2B63" />
+                        </View>
+                        <Text style={styles.cardTitle}>Region</Text>
+                        <Text style={styles.cardValue}>North-West</Text>
+                    </View>
+
+                    <View style={styles.card}>
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="location-outline" size={32} color="#0E2B63" />
+                        </View>
+                        <Text style={styles.cardTitle}>Location</Text>
+                        <Text style={styles.cardValue}>Lagos, NG</Text>
+                    </View>
+
+                    <View style={styles.card}>
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="person-outline" size={32} color="#0E2B63" />
+                        </View>
+                        <Text style={styles.cardTitle}>Role</Text>
+                        <Text style={styles.cardValue}>Field Agent</Text>
+                    </View>
+                </View>
+
+                {/* Proceed Button */}
+                <TouchableOpacity
+                    style={styles.proceedButton}
+                    onPress={() => router.push('/(drawer)/map')}
+                >
+                    <Text style={styles.proceedButtonText}>Proceed to Map</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center',
+        flexGrow: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    statusBar: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         alignItems: 'center',
     },
-    title: {
-        fontSize: 24,
-        marginBottom: 20,
+    statusText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    content: {
+        flex: 1,
+        padding: 20,
+        alignItems: 'center',
+    },
+
+    cardsContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        marginBottom: 40,
+        gap: 16,
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        width: '45%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
+        elevation: 5,
+        marginBottom: 10,
+    },
+    iconContainer: {
+        backgroundColor: '#E6F0FF',
+        padding: 10,
+        borderRadius: 50,
+        marginBottom: 12,
+    },
+    cardTitle: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 4,
+    },
+    cardValue: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+    },
+    proceedButton: {
+        flexDirection: 'row',
+        backgroundColor: '#00B1EB',
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 30,
+        alignItems: 'center',
+        shadowColor: '#00B1EB',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+        marginTop: 'auto', // Pushes to bottom if space allows
+    },
+    proceedButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });

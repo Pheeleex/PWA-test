@@ -167,10 +167,10 @@ export default function OnboardingScreen() {
             <Paginator data={slides} scrollX={scrollX} />
 
             <View style={styles.footer}>
-                {/* Next / Get Started Button */}
-                <TouchableOpacity onPress={scrollToNext} style={styles.nextButton}>
+                {/*  Get Started Button */}
+                <TouchableOpacity onPress={handleSkip} style={styles.nextButton}>
                     <ThemedText style={styles.nextButtonText}>
-                        {currentIndex < slides.length - 1 ? 'Next' : 'Get Started'}
+                        Get Started
                     </ThemedText>
                 </TouchableOpacity>
             </View>
