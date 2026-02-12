@@ -1,10 +1,137 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import ScreenHeader from '@/components/ScreenHeader';
+import { useRouter } from 'expo-router';
+import { Dropdown } from 'react-native-element-dropdown';
+import * as ImagePicker from 'expo-image-picker';
+
+const incidentCategories = [
+    { label: 'Accident', value: 'accident' },
+    { label: 'Maintenance', value: 'maintenance' },
+    { label: 'Security', value: 'security' },
+    { label: 'Other', value: 'other' },
+];
 
 export default function ReportScreen() {
+    const router = useRouter();
+    const [category, setCategory] = useState<string | null>(null);
+    const [description, setDescription] = useState('');
+    const [image, setImage] = useState<string | null>(null);
+    const [isFocus, setIsFocus] = useState(false);
+
+    const handleSubmit = () => {
+        if (!category) {
+            Alert.alert('Missing Information', 'Please select an issue category.');
+            return;
+        }
+        Alert.alert('Report Submitted', 'Your incident report has been submitted successfully.');
+        router.push('/(drawer)/home');
+    };
+
+    const pickImage = async () => {
+        Alert.alert('Upload Photo', 'Choose an option', [
+            {
+                text: 'Camera',
+                onPress: async () => {
+                    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+                    if (permissionResult.granted === false) {
+                        Alert.alert('Permission to access camera is required!');
+                        return;
+                    }
+                    const result = await ImagePicker.launchCameraAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 1,
+                    });
+                    if (!result.canceled) {
+                        setImage(result.assets[0].uri);
+                    }
+                },
+            },
+            {
+                text: 'Gallery',
+                onPress: async () => {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 1,
+                    });
+                    if (!result.canceled) {
+                        setImage(result.assets[0].uri);
+                    }
+                },
+            },
+            {
+                text: 'Cancel',
+                style: 'cancel',
+            },
+        ]);
+    };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Report Incident</Text>
-            <Text>Form to report an incident.</Text>
+            <ScreenHeader title="Report Incident" withSafeArea={false} />
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+
+                {/* Issue Category */}
+                <Text style={styles.label}>Issue Category</Text>
+                <Dropdown
+                    style={[styles.dropdown, isFocus && { borderColor: '#00B1EB' }]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    data={incidentCategories}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={!isFocus ? 'Select Category' : '...'}
+                    searchPlaceholder="Search..."
+                    value={category}
+                    onFocus={() => setIsFocus(true)}
+                    onBlur={() => setIsFocus(false)}
+                    onChange={item => {
+                        setCategory(item.value);
+                        setIsFocus(false);
+                    }}
+                />
+
+                {/* Description */}
+                <Text style={styles.label}>Description</Text>
+                <TextInput
+                    style={[styles.inputContainer, styles.textArea]}
+                    placeholder="Describe the incident..."
+                    placeholderTextColor="#999"
+                    multiline
+                    numberOfLines={4}
+                    value={description}
+                    onChangeText={setDescription}
+                    textAlignVertical="top"
+                />
+
+                {/* Upload Photo */}
+                <Text style={styles.label}>Upload Photo</Text>
+                <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+                    {image ? (
+                        <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 12 }} resizeMode="cover" />
+                    ) : (
+                        <>
+                            <Ionicons name="camera-outline" size={32} color="#0E2B63" />
+                            <Text style={styles.uploadText}>Tap to upload photo</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+
+                {/* Submit Button */}
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                    <Text style={styles.submitButtonText}>Submit Report</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
         </View>
     );
 }
@@ -12,11 +139,96 @@ export default function ReportScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
+    },
+    scrollContent: {
+        padding: 20,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+        marginTop: 16,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    dropdown: {
+        height: 50,
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
+    },
+    placeholderStyle: {
+        fontSize: 16,
+        color: '#999',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#333',
+    },
+    inputSearchStyle: {
+        height: 40,
+        fontSize: 16,
+    },
+    inputText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    placeholderText: {
+        color: '#999',
+    },
+    textArea: {
+        height: 120,
+        alignItems: 'flex-start',
+    },
+    uploadButton: {
+        height: 150,
+        backgroundColor: '#F0F8FF',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#0E2B63',
+        borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 30,
     },
-    title: {
-        fontSize: 24,
-        marginBottom: 20,
+    uploadText: {
+        marginTop: 8,
+        fontSize: 16,
+        color: '#0E2B63',
+        fontWeight: '500',
+    },
+    submitButton: {
+        backgroundColor: '#00B1EB',
+        paddingVertical: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        shadowColor: '#00B1EB',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });

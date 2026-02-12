@@ -33,6 +33,7 @@ export default function DrawerLayout() {
                         </TouchableOpacity>
                     ),
                     headerTitle: '',
+                    drawerStyle: { width: '50%' }, // Set drawer width to half screen
                 })}
             >
                 <Drawer.Screen
@@ -72,6 +73,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Profile',
                         title: 'Profile',
+                        drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
                     }}
                 />
                 <Drawer.Screen
@@ -79,6 +81,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Settings',
                         title: 'Settings',
+                        drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
                     }}
                 />
             </Drawer>

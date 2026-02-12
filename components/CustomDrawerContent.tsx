@@ -21,12 +21,7 @@ export default function CustomDrawerContent(props: any) {
 const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-start', // Drawer is on right, so "start" is left side of drawer? 
-        // Wait, if drawer is on right, content slides in from right. 
-        // "Close" is requested "at the top right (since drawer is on right... or top left?)"
-        // User guideline: "Add x close icon to drawer"
-        // If drawer is right-side, standard close X is usually Top-Right (inside) or Top-Left (outside/edge).
-        // Let's put it Top-Left of the drawer content so it's easily accessible near the screen edge.
+        justifyContent: 'flex-end', // Close button on the right
         paddingHorizontal: 16,
         paddingBottom: 10,
     },
