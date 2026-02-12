@@ -84,6 +84,14 @@ export default function DrawerLayout() {
                         drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
                     }}
                 />
+                <Drawer.Screen
+                    name="change-password"
+                    options={{
+                        drawerLabel: 'Change Password',
+                        title: 'Change Password',
+                        drawerItemStyle: { display: 'none' }, // Hidden from menu
+                    }}
+                />
             </Drawer>
         </GestureHandlerRootView>
     );

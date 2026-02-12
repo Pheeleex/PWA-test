@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     content: {
-        flex: 1,
         padding: 20,
+        paddingBottom: 40, // Ensure content is above Android bottom navigation
         alignItems: 'center',
     },
 

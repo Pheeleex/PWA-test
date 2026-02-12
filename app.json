@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Promolocation",
-    "slug": "Promolocation",
+    "slug": "promolocation",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Promolocation"
+      "bundleIdentifier": "com.bat.promolocation",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +23,8 @@
         "monochromeImage": "./assets/images/adaptive-icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bat.promolocation"
     },
     "web": {
       "output": "static",
@@ -48,8 +52,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0e0d1460-f57b-4d24-ac19-ffd8a0c3d220"
+        "projectId": "fa9407f9-da07-4c09-bd54-533979326a69"
       }
-    }
+    },
+    "owner": "nubiavilledev"
   }
 }

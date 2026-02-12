@@ -11,7 +11,7 @@ export default function SettingsScreen() {
             id: 'password',
             title: 'Change Password',
             icon: 'lock-closed-outline',
-            route: '/forgot-password', // Assuming this or a new screen
+            route: '/(drawer)/change-password',
         },
         {
             id: 'report',
