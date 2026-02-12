@@ -1,8 +1,9 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import CustomDrawerContent from '@/components/CustomDrawerContent';
 
 export default function DrawerLayout() {
     const navigation = useNavigation();
@@ -10,6 +11,7 @@ export default function DrawerLayout() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <Drawer
+                drawerContent={(props) => <CustomDrawerContent {...props} />}
                 screenOptions={({ navigation }) => ({
                     drawerPosition: 'right',
                     headerStyle: { backgroundColor: '#0E2B63' },
@@ -38,6 +40,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Home',
                         title: 'Promolocation',
+                        drawerItemStyle: { display: 'none' }
                     }}
                 />
                 <Drawer.Screen
@@ -45,6 +48,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Map View',
                         title: 'Map',
+                        drawerItemStyle: { display: 'none' }
                     }}
                 />
                 <Drawer.Screen
@@ -52,6 +56,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Report Incident',
                         title: 'Report Incident',
+                        drawerItemStyle: { display: 'none' }
                     }}
                 />
                 <Drawer.Screen
@@ -59,6 +64,7 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'View Incidents',
                         title: 'Incidents',
+                        drawerItemStyle: { display: 'none' }
                     }}
                 />
                 <Drawer.Screen
