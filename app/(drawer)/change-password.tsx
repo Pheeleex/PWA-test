@@ -63,7 +63,7 @@ export default function ChangePasswordScreen() {
                 title="Change Password"
                 withSafeArea={false}
                 showBackButton={showBack}
-
+                onBack={showBack ? () => router.navigate('/(drawer)/settings') : undefined}
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 

@@ -99,7 +99,7 @@ export default function LoginScreen() {
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => router.push('/(drawer)/report')} style={styles.optionButton}>
+                        <TouchableOpacity onPress={() => router.push('/(drawer)/report?ref=login')} style={styles.optionButton}>
                             <Text style={styles.reportButtonText}>Report Incident</Text>
                         </TouchableOpacity>
                     </View>

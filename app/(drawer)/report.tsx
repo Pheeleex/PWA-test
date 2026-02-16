@@ -3,7 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
+import { useEffect } from 'react';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -18,8 +20,10 @@ import { useLocalSearchParams } from 'expo-router';
 
 export default function ReportScreen() {
     const router = useRouter();
+    const navigation = useNavigation<DrawerNavigationProp<any>>();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
+    const isFromLogin = params.ref === 'login';
     const [category, setCategory] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
@@ -39,9 +43,28 @@ export default function ReportScreen() {
     const handleCloseAlert = () => {
         setAlertVisible(false);
         if (alertConfig.type === 'success') {
-            router.push('/(drawer)/home');
+            if (isFromLogin) {
+                router.replace('/login');
+            } else {
+                router.push('/(drawer)/home');
+            }
         }
     };
+
+    useEffect(() => {
+        if (isFromLogin) {
+            navigation.setOptions({
+                swipeEnabled: false,
+                headerShown: false,
+                drawerItemStyle: { display: 'none' }
+            });
+        } else {
+            navigation.setOptions({
+                swipeEnabled: true,
+                headerShown: true
+            });
+        }
+    }, [isFromLogin, navigation]);
 
 
 
@@ -99,8 +122,17 @@ export default function ReportScreen() {
         <View style={styles.container}>
             <ScreenHeader
                 title="Report Incident"
-                withSafeArea={false}
+                withSafeArea={isFromLogin}
                 showBackButton={showBack}
+                onBack={showBack ? () => {
+                    if (isFromLogin) {
+                        router.replace('/login');
+                    } else if (params.ref === 'settings') {
+                        router.navigate('/(drawer)/settings');
+                    } else {
+                        router.back();
+                    }
+                } : undefined}
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 

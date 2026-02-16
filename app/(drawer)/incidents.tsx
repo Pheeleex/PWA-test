@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, I
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 // Mock Data
 const MOCK_INCIDENTS = [
@@ -42,6 +42,8 @@ const MOCK_INCIDENTS = [
 
 export default function IncidentsScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const showBack = !!params.ref;
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIncident, setSelectedIncident] = useState<any>(null);
     const [modalVisible, setModalVisible] = useState(false);
@@ -93,7 +95,8 @@ export default function IncidentsScreen() {
             <ScreenHeader
                 title="Incident History"
                 withSafeArea={false}
-                showBackButton={true}
+                showBackButton={showBack}
+                onBack={showBack ? () => router.navigate('/(drawer)/settings') : undefined}
             />
 
             {/* Search Bar */}
