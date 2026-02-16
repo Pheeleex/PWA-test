@@ -6,13 +6,27 @@ interface CustomAlertProps {
     visible: boolean;
     title: string;
     message: string;
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning' | 'info';
     onClose: () => void;
+    showCancel?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm?: () => void;
 }
 
 const { width } = Dimensions.get('window');
 
-export default function CustomAlert({ visible, title, message, type, onClose }: CustomAlertProps) {
+export default function CustomAlert({
+    visible,
+    title,
+    message,
+    type,
+    onClose,
+    showCancel = false,
+    confirmText = 'Yes',
+    cancelText = 'Cancel',
+    onConfirm
+}: CustomAlertProps) {
     const scaleValue = useRef(new Animated.Value(0)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
 
@@ -44,9 +58,26 @@ export default function CustomAlert({ visible, title, message, type, onClose }: 
     if (!visible) return null;
 
     const isSuccess = type === 'success';
-    const iconName = isSuccess ? 'checkmark-circle' : 'alert-circle';
-    const iconColor = isSuccess ? '#4CAF50' : '#FF3B30';
-    const buttonColor = isSuccess ? '#4CAF50' : '#FF3B30';
+    const isError = type === 'error';
+    const isWarning = type === 'warning';
+
+    let iconName: any = 'checkmark-circle';
+    let iconColor = '#4CAF50';
+    let buttonColor = '#4CAF50';
+
+    if (isError) {
+        iconName = 'alert-circle';
+        iconColor = '#FF3B30';
+        buttonColor = '#FF3B30';
+    } else if (isWarning) {
+        iconName = 'warning';
+        iconColor = '#FF9500';
+        buttonColor = '#FF9500';
+    } else if (type === 'info') {
+        iconName = 'information-circle';
+        iconColor = '#00B1EB';
+        buttonColor = '#00B1EB';
+    }
 
     return (
         <Modal transparent visible={visible} animationType="none">
@@ -67,12 +98,32 @@ export default function CustomAlert({ visible, title, message, type, onClose }: 
                     <Text style={styles.title}>{title}</Text>
                     <Text style={styles.message}>{message}</Text>
 
-                    <TouchableOpacity
-                        style={[styles.button, { backgroundColor: buttonColor }]}
-                        onPress={onClose}
-                    >
-                        <Text style={styles.buttonText}>OK</Text>
-                    </TouchableOpacity>
+                    {showCancel ? (
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity
+                                style={[styles.button, styles.cancelButton]}
+                                onPress={onClose}
+                            >
+                                <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: buttonColor, flex: 1, marginLeft: 8 }]}
+                                onPress={() => {
+                                    if (onConfirm) onConfirm();
+                                    else onClose();
+                                }}
+                            >
+                                <Text style={styles.buttonText}>{confirmText}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: buttonColor }]}
+                            onPress={onClose}
+                        >
+                            <Text style={styles.buttonText}>OK</Text>
+                        </TouchableOpacity>
+                    )}
                 </Animated.View>
             </View>
         </Modal>
@@ -123,6 +174,23 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         alignItems: 'center',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    cancelButton: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        flex: 1,
+        marginRight: 8,
+    },
+    cancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
     },
     buttonText: {
         color: '#fff',

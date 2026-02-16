@@ -37,7 +37,7 @@ export default function ForgotPasswordScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Forgot Password" withSafeArea={true} />
+            <ScreenHeader title="Forgot Password" withSafeArea={true} showBackButton={true} />
             <View style={styles.content}>
                 <Text style={styles.description}>
                     Enter your email address and we'll send you a verification code.

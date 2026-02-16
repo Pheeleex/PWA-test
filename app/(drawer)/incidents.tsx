@@ -93,6 +93,7 @@ export default function IncidentsScreen() {
             <ScreenHeader
                 title="Incident History"
                 withSafeArea={false}
+                showBackButton={true}
             />
 
             {/* Search Bar */}

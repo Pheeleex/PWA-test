@@ -3,24 +3,22 @@ import { View, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function CustomDrawerContent(props: any) {
     const insets = useSafeAreaInsets();
     const router = useRouter();
 
+    const [alertVisible, setAlertVisible] = useState(false);
+
     const handleLogout = () => {
-        Alert.alert(
-            'Confirm Logout',
-            'Are you sure you want to log out?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Yes',
-                    style: 'destructive',
-                    onPress: () => router.replace('/login')
-                },
-            ]
-        );
+        setAlertVisible(true);
+    };
+
+    const confirmLogout = () => {
+        setAlertVisible(false);
+        router.replace('/login');
     };
 
     return (
@@ -37,6 +35,18 @@ export default function CustomDrawerContent(props: any) {
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
             </View>
+
+            <CustomAlert
+                visible={alertVisible}
+                title="Confirm Logout"
+                message="Are you sure you want to log out?"
+                type="warning"
+                onClose={() => setAlertVisible(false)}
+                showCancel={true}
+                confirmText="Yes"
+                cancelText="Cancel"
+                onConfirm={confirmLogout}
+            />
         </DrawerContentScrollView>
     );
 }

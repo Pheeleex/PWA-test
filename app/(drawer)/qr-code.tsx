@@ -3,14 +3,16 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useRouter } from 'expo-router';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function QRCodeScreen() {
     const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+    const [alertVisible, setAlertVisible] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
         if (timeLeft === 0) {
-            router.replace('/(drawer)/map');
+            setAlertVisible(true);
             return;
         }
 
@@ -27,6 +29,11 @@ export default function QRCodeScreen() {
         return () => clearInterval(intervalId);
     }, [timeLeft]);
 
+    const handleTimeout = () => {
+        setAlertVisible(false);
+        router.replace('/(drawer)/map');
+    };
+
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
@@ -35,7 +42,12 @@ export default function QRCodeScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Scan To Activate" withSafeArea={false} />
+            <ScreenHeader
+                title="Scan To Activate"
+                withSafeArea={false}
+                showBackButton={true}
+                onBack={() => router.replace('/(drawer)/map')}
+            />
             <View style={styles.content}>
 
                 <View style={styles.qrContainer}>
@@ -49,9 +61,19 @@ export default function QRCodeScreen() {
                 </View>
 
                 {timeLeft === 0 && (
-                    <Text style={styles.expiredText}>Code Expired. Please regenerate.</Text>
+                    <Text style={styles.expiredText}>Code Expired.</Text>
                 )}
             </View>
+
+            <CustomAlert
+                visible={alertVisible}
+                title="Time Expired"
+                message="Your activation code has expired."
+                type="warning"
+                onClose={handleTimeout}
+                showCancel={false}
+                confirmText="OK"
+            />
         </View>
     );
 }

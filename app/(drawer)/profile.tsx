@@ -57,7 +57,7 @@ export default function ProfileScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Profile" withSafeArea={false} />
+            <ScreenHeader title="Profile" withSafeArea={false} showBackButton={true} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 <View style={styles.headerSection}>

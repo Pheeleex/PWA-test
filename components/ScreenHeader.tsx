@@ -7,9 +7,10 @@ interface ScreenHeaderProps {
     title: string;
     onBack?: () => void;
     withSafeArea?: boolean;
+    showBackButton?: boolean;
 }
 
-export default function ScreenHeader({ title, onBack, withSafeArea = true }: ScreenHeaderProps) {
+export default function ScreenHeader({ title, onBack, withSafeArea = true, showBackButton = false }: ScreenHeaderProps) {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
@@ -24,9 +25,13 @@ export default function ScreenHeader({ title, onBack, withSafeArea = true }: Scr
     return (
         <View style={[styles.container, withSafeArea && { paddingTop: insets.top }]}>
             <View style={styles.content}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#0E2B63" />
-                </TouchableOpacity>
+                {showBackButton ? (
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#0E2B63" />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={styles.placeholder} />
+                )}
                 <Text style={styles.title}>{title}</Text>
                 <View style={styles.placeholder} />
             </View>

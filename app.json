@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bat.promolocation",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library so you can select images for promotions."
       }
     },
     "android": {

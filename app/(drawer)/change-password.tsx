@@ -1,14 +1,22 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
 
+import { useLocalSearchParams } from 'expo-router';
+
 export default function ChangePasswordScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const showBack = !!params.ref;
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
         title: '',
@@ -54,41 +62,79 @@ export default function ChangePasswordScreen() {
             <ScreenHeader
                 title="Change Password"
                 withSafeArea={false}
+                showBackButton={showBack}
+
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Current Password */}
                 <Text style={styles.label}>Current Password</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter current password"
-                    placeholderTextColor="#999"
-                    secureTextEntry
-                    value={currentPassword}
-                    onChangeText={setCurrentPassword}
-                />
+                <View style={styles.passwordContainer}>
+                    <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Enter current password"
+                        placeholderTextColor="#999"
+                        secureTextEntry={!showCurrentPassword}
+                        value={currentPassword}
+                        onChangeText={setCurrentPassword}
+                    />
+                    <TouchableOpacity
+                        style={styles.eyeIcon}
+                        onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                        <Ionicons
+                            name={showCurrentPassword ? "eye-off-outline" : "eye-outline"}
+                            size={24}
+                            color="#666"
+                        />
+                    </TouchableOpacity>
+                </View>
 
                 {/* New Password */}
                 <Text style={styles.label}>New Password</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter new password"
-                    placeholderTextColor="#999"
-                    secureTextEntry
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                />
+                <View style={styles.passwordContainer}>
+                    <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Enter new password"
+                        placeholderTextColor="#999"
+                        secureTextEntry={!showNewPassword}
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                    />
+                    <TouchableOpacity
+                        style={styles.eyeIcon}
+                        onPress={() => setShowNewPassword(!showNewPassword)}
+                    >
+                        <Ionicons
+                            name={showNewPassword ? "eye-off-outline" : "eye-outline"}
+                            size={24}
+                            color="#666"
+                        />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Confirm Password */}
                 <Text style={styles.label}>Confirm Password</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Confirm new password"
-                    placeholderTextColor="#999"
-                    secureTextEntry
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                />
+                <View style={styles.passwordContainer}>
+                    <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Confirm new password"
+                        placeholderTextColor="#999"
+                        secureTextEntry={!showConfirmPassword}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                    />
+                    <TouchableOpacity
+                        style={styles.eyeIcon}
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                        <Ionicons
+                            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                            size={24}
+                            color="#666"
+                        />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Update Button */}
                 <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
@@ -128,13 +174,29 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     input: {
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
         borderWidth: 1,
         borderColor: '#E0E0E0',
         fontSize: 16,
         color: '#333',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#fff',
+    },
+    passwordInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333',
+        height: '100%',
+    },
+    eyeIcon: {
+        padding: 4,
     },
     updateButton: {
         backgroundColor: '#00B1EB',

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
     StyleSheet,
     Text,
@@ -17,6 +18,7 @@ export default function LoginScreen() {
     const router = useRouter();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
         title: '',
@@ -71,13 +73,25 @@ export default function LoginScreen() {
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Password</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                        />
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Enter your password"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                            />
+                            <TouchableOpacity
+                                style={styles.eyeIcon}
+                                onPress={() => setShowPassword(!showPassword)}
+                            >
+                                <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={24}
+                                    color="#666"
+                                />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     <View style={styles.optionsRow}>
@@ -157,6 +171,24 @@ const styles = StyleSheet.create({
         color: '#333',
         borderWidth: 1,
         borderColor: '#E0E0E0',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 50,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        paddingHorizontal: 16,
+    },
+    passwordInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333',
+        height: '100%',
+    },
+    eyeIcon: {
+        padding: 4,
     },
     optionsRow: {
         flexDirection: 'row',

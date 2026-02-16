@@ -60,7 +60,11 @@ export default function ActivationScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Activate Account" withSafeArea={true} />
+            <ScreenHeader
+                title="Activate Account"
+                withSafeArea={true}
+                showBackButton={true}
+            />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.content}

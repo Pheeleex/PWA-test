@@ -14,8 +14,12 @@ const incidentCategories = [
     { label: 'Other', value: 'other' },
 ];
 
+import { useLocalSearchParams } from 'expo-router';
+
 export default function ReportScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const showBack = !!params.ref;
     const [category, setCategory] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
@@ -96,6 +100,7 @@ export default function ReportScreen() {
             <ScreenHeader
                 title="Report Incident"
                 withSafeArea={false}
+                showBackButton={showBack}
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 

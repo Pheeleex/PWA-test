@@ -8,7 +8,7 @@ export default function MapScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Map View" withSafeArea={false} />
+            <ScreenHeader title="Map View" withSafeArea={false} showBackButton={true} />
             <View style={styles.content}>
                 {/* Map Placeholder */}
                 <View style={styles.mapPlaceholder}>

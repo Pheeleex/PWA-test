@@ -11,19 +11,19 @@ export default function SettingsScreen() {
             id: 'password',
             title: 'Change Password',
             icon: 'lock-closed-outline',
-            route: '/(drawer)/change-password',
+            route: '/(drawer)/change-password?ref=settings',
         },
         {
             id: 'report',
             title: 'Report Incident',
             icon: 'warning-outline',
-            route: '/(drawer)/report',
+            route: '/(drawer)/report?ref=settings',
         },
         {
             id: 'history',
             title: 'Incident History',
             icon: 'list-outline',
-            route: '/(drawer)/incidents',
+            route: '/(drawer)/incidents?ref=settings',
         },
     ];
 
@@ -37,7 +37,7 @@ export default function SettingsScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="Settings" withSafeArea={false} />
+            <ScreenHeader title="Settings" withSafeArea={false} showBackButton={true} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.listContainer}>
                     {menuItems.map((item) => (
