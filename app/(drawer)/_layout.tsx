@@ -1,13 +1,16 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Image, TouchableOpacity } from 'react-native';
+import { Image, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
 import { StatusBar } from 'expo-status-bar';
+import { Colors } from '@/constants/theme';
 
 export default function DrawerLayout() {
     const navigation = useNavigation();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -16,10 +19,13 @@ export default function DrawerLayout() {
                 drawerContent={(props) => <CustomDrawerContent {...props} />}
                 screenOptions={({ navigation }) => ({
                     drawerPosition: 'right',
-                    headerStyle: { backgroundColor: '#0E2B63' },
+                    headerStyle: {
+                        backgroundColor: '#0E2B63',
+                        height: 110, // Increased height for padding
+                    },
                     headerTintColor: '#fff',
                     headerLeft: () => (
-                        <TouchableOpacity onPress={() => navigation.navigate('home')}>
+                        <TouchableOpacity onPress={() => navigation.navigate('home')} style={{ marginBottom: 10 }}>
                             <Image
                                 source={require('@/assets/images/Logo.png')}
                                 style={{ width: 30, height: 30, marginLeft: 16, resizeMode: 'contain' }}
@@ -29,24 +35,26 @@ export default function DrawerLayout() {
                     headerRight: () => (
                         <TouchableOpacity
                             onPress={() => navigation.toggleDrawer()}
-                            style={{ marginRight: 16 }}
+                            style={{ marginRight: 16, marginBottom: 10 }}
                         >
                             <Ionicons name="menu" size={28} color="#fff" />
                         </TouchableOpacity>
                     ),
                     headerTitle: '',
-                    drawerStyle: { width: '75%' }, // Increased drawer width
+                    drawerStyle: { width: '75%', backgroundColor: theme.background },
+                    drawerActiveTintColor: theme.tint,
+                    drawerInactiveTintColor: theme.text,
                     drawerItemStyle: {
-                        backgroundColor: '#D9D9D9A1',
-                        borderRadius: 25, // Higher border radius for pill shape
+                        backgroundColor: colorScheme === 'dark' ? '#333' : '#D9D9D9A1',
+                        borderRadius: 25,
                         marginBottom: 8,
-                        marginHorizontal: 12, // Add margin to detach from edges
-                        paddingVertical: 0, // Reduce padding
-                        paddingHorizontal: 10, // Reduced horizontal padding
+                        marginHorizontal: 12,
+                        paddingVertical: 0,
+                        paddingHorizontal: 10,
                         justifyContent: 'center'
                     },
                     drawerLabelStyle: {
-                        marginLeft: 0, // Reset margin to add space between icon and text
+                        marginLeft: 0,
                         fontSize: 14,
                         fontWeight: '500',
                     }
