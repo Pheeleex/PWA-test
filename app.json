@@ -56,6 +56,12 @@
         "projectId": "fa9407f9-da07-4c09-bd54-533979326a69"
       }
     },
-    "owner": "nubiavilledev"
+    "owner": "nubiavilledev",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/fa9407f9-da07-4c09-bd54-533979326a69"
+    }
   }
 }
