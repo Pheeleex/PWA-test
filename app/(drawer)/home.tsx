@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -30,9 +30,18 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.container}>
             {/* Status Bar */}
             <View style={[styles.statusBar, { backgroundColor: getStatusColor(status) }]}>
-                <Text style={styles.statusText}>
-                    {getStatusText(status)}
-                </Text>
+                <Image
+                    source={require('@/assets/images/home_target.png')}
+                    style={styles.targetImage}
+                />
+                <View>
+                    <Text style={styles.statusText}>
+                        You are in an {getStatusText(status)}
+                    </Text>
+                    <Text style={styles.subStatusText}>
+                        Current Status: Compliant
+                    </Text>
+                </View>
             </View>
 
             <View style={styles.content}>
@@ -85,13 +94,30 @@ const styles = StyleSheet.create({
     statusBar: {
         paddingVertical: 12,
         paddingHorizontal: 16,
+        marginVertical: 30,
+        marginHorizontal: 18,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 16
+    },
+    targetImage: {
+        width: 40,
+        height: 40,
+        marginRight: 10,
+        resizeMode: 'contain',
     },
     statusText: {
         color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'left',
+    },
+    subStatusText: {
+        color: '#fff',
         fontSize: 14,
-        fontWeight: '600',
-        textAlign: 'center',
+        fontWeight: '500',
+        textAlign: 'left',
     },
     content: {
         padding: 20,
@@ -148,7 +174,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#0E2B63',
         borderRadius: 17,
         alignItems: 'center',
-        shadowColor: '#00B1EB',
+        shadowColor: '#0E2B63',
         shadowOffset: {
             width: 0,
             height: 4,

@@ -34,6 +34,20 @@ export default function DrawerLayout() {
                     ),
                     headerTitle: '',
                     drawerStyle: { width: '50%' }, // Set drawer width to half screen
+                    drawerItemStyle: {
+                        backgroundColor: '#D9D9D9A1',
+                        borderRadius: 25, // Higher border radius for pill shape
+                        marginBottom: 8,
+                        marginHorizontal: 12, // Add margin to detach from edges
+                        paddingVertical: 0, // Reduce padding
+                        paddingHorizontal: 12, // Adjust horizontal padding
+                        justifyContent: 'center'
+                    },
+                    drawerLabelStyle: {
+                        marginLeft: -10, // Pull label closer to icon if needed
+                        fontSize: 14,
+                        fontWeight: '500',
+                    }
                 })}
             >
                 <Drawer.Screen
@@ -90,6 +104,14 @@ export default function DrawerLayout() {
                         drawerLabel: 'Change Password',
                         title: 'Change Password',
                         drawerItemStyle: { display: 'none' }, // Hidden from menu
+                    }}
+                />
+                <Drawer.Screen
+                    name="qr-code"
+                    options={{
+                        drawerLabel: 'Scan QR',
+                        title: 'Scan QR',
+                        drawerItemStyle: { display: 'none' }
                     }}
                 />
             </Drawer>
