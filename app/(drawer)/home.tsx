@@ -1,10 +1,13 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Colors } from '@/constants/theme';
 
 export default function HomeScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
     // Status can be 'active', 'transit', or 'nogo'
     const [status, setStatus] = useState<'active' | 'transit' | 'nogo'>('active');
 
@@ -27,7 +30,7 @@ export default function HomeScreen() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
             {/* Status Bar */}
             <View style={[styles.statusBar, { backgroundColor: getStatusColor(status) }]}>
                 <Image
@@ -48,28 +51,28 @@ export default function HomeScreen() {
 
                 {/* Cards */}
                 <View style={styles.cardsContainer}>
-                    <View style={styles.card}>
+                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="globe-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>City/Region</Text>
-                        <Text style={styles.cardValue}>North-West</Text>
+                        <Text style={[styles.cardValue, { color: theme.text }]}>North-West</Text>
                     </View>
 
-                    <View style={styles.card}>
+                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="location-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>Location</Text>
-                        <Text style={styles.cardValue}>Lagos, NG</Text>
+                        <Text style={[styles.cardValue, { color: theme.text }]}>Lagos, NG</Text>
                     </View>
 
-                    <View style={styles.card}>
+                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="person-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>Role</Text>
-                        <Text style={styles.cardValue}>Field Agent</Text>
+                        <Text style={[styles.cardValue, { color: theme.text }]}>Field Agent</Text>
                     </View>
                 </View>
 
@@ -89,7 +92,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: '#f8f9fa',
     },
     statusBar: {
         paddingVertical: 12,
@@ -134,7 +136,6 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     card: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
         width: '45%',
@@ -163,7 +164,6 @@ const styles = StyleSheet.create({
     cardValue: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#333',
         textAlign: 'center',
     },
     proceedButton: {

@@ -1,11 +1,15 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, BackHandler, useColorScheme } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
+import { Colors } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [email, setEmail] = useState('');
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
@@ -13,6 +17,17 @@ export default function ForgotPasswordScreen() {
         message: '',
         type: 'success'
     });
+
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
 
     const showAlert = (title: string, message: string, type: 'success' | 'error') => {
         setAlertConfig({ title, message, type });
@@ -36,19 +51,26 @@ export default function ForgotPasswordScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader title="Forgot Password" withSafeArea={true} showBackButton={true} />
             <View style={styles.content}>
-                <Text style={styles.description}>
+                <Text style={[styles.description, { color: theme.icon }]}>
                     Enter your email address and we'll send you a verification code.
                 </Text>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Email Address</Text>
+                    <Text style={[styles.label, { color: theme.text }]}>Email Address</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[
+                            styles.input,
+                            {
+                                color: theme.text,
+                                borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
+                                backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
+                            }
+                        ]}
                         placeholder="name@example.com"
-                        placeholderTextColor="#999"
+                        placeholderTextColor={theme.icon}
                         value={email}
                         onChangeText={setEmail}
                         autoCapitalize="none"
@@ -74,7 +96,6 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
         flex: 1,
@@ -82,7 +103,6 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        color: '#666',
         marginBottom: 32,
         lineHeight: 24,
     },
@@ -92,7 +112,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
     },
     input: {
@@ -100,9 +119,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 16,
         fontSize: 16,
-        color: '#333',
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     button: {
         backgroundColor: '#0E2B63',

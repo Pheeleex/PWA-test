@@ -1,16 +1,19 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, BackHandler, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
-
+import { Colors } from '@/constants/theme';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function ChangePasswordScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,6 +26,21 @@ export default function ChangePasswordScreen() {
         message: '',
         type: 'success'
     });
+
+    useEffect(() => {
+        const onBackPress = () => {
+            if (showBack) {
+                router.navigate('/(drawer)/settings');
+            } else {
+                router.back();
+            }
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router, showBack]);
 
     const showAlert = (title: string, message: string, type: 'success' | 'error') => {
         setAlertConfig({ title, message, type });
@@ -38,8 +56,6 @@ export default function ChangePasswordScreen() {
             router.push('/forgot-password');
         }
     };
-
-
 
     const handleUpdate = () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
@@ -58,7 +74,7 @@ export default function ChangePasswordScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
                 title="Change Password"
                 withSafeArea={false}
@@ -68,12 +84,12 @@ export default function ChangePasswordScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Current Password */}
-                <Text style={styles.label}>Current Password</Text>
-                <View style={styles.passwordContainer}>
+                <Text style={[styles.label, { color: theme.text }]}>Current Password</Text>
+                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
-                        style={styles.passwordInput}
+                        style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Enter current password"
-                        placeholderTextColor="#999"
+                        placeholderTextColor={theme.icon}
                         secureTextEntry={!showCurrentPassword}
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
@@ -85,18 +101,18 @@ export default function ChangePasswordScreen() {
                         <Ionicons
                             name={showCurrentPassword ? "eye-off-outline" : "eye-outline"}
                             size={24}
-                            color="#666"
+                            color={theme.icon}
                         />
                     </TouchableOpacity>
                 </View>
 
                 {/* New Password */}
-                <Text style={styles.label}>New Password</Text>
-                <View style={styles.passwordContainer}>
+                <Text style={[styles.label, { color: theme.text }]}>New Password</Text>
+                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
-                        style={styles.passwordInput}
+                        style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Enter new password"
-                        placeholderTextColor="#999"
+                        placeholderTextColor={theme.icon}
                         secureTextEntry={!showNewPassword}
                         value={newPassword}
                         onChangeText={setNewPassword}
@@ -108,18 +124,18 @@ export default function ChangePasswordScreen() {
                         <Ionicons
                             name={showNewPassword ? "eye-off-outline" : "eye-outline"}
                             size={24}
-                            color="#666"
+                            color={theme.icon}
                         />
                     </TouchableOpacity>
                 </View>
 
                 {/* Confirm Password */}
-                <Text style={styles.label}>Confirm Password</Text>
-                <View style={styles.passwordContainer}>
+                <Text style={[styles.label, { color: theme.text }]}>Confirm Password</Text>
+                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
-                        style={styles.passwordInput}
+                        style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Confirm new password"
-                        placeholderTextColor="#999"
+                        placeholderTextColor={theme.icon}
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
@@ -131,7 +147,7 @@ export default function ChangePasswordScreen() {
                         <Ionicons
                             name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                             size={24}
-                            color="#666"
+                            color={theme.icon}
                         />
                     </TouchableOpacity>
                 </View>
@@ -161,7 +177,6 @@ export default function ChangePasswordScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         padding: 20,
@@ -169,7 +184,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
         marginTop: 16,
     },
@@ -177,22 +191,18 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E0E0E0',
         fontSize: 16,
-        color: '#333',
     },
     passwordContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#fff',
     },
     passwordInput: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
         height: '100%',
     },
     eyeIcon: {

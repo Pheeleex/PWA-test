@@ -1,14 +1,17 @@
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { View, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import CustomAlert from '@/components/CustomAlert';
+import { Colors } from '@/constants/theme';
 
 export default function CustomDrawerContent(props: any) {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
 
     const [alertVisible, setAlertVisible] = useState(false);
 
@@ -22,14 +25,18 @@ export default function CustomDrawerContent(props: any) {
     };
 
     return (
-        <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: insets.top }}>
+        <DrawerContentScrollView
+            {...props}
+            contentContainerStyle={{ paddingTop: insets.top, backgroundColor: theme.background, }}
+            style={{ backgroundColor: theme.background }}
+        >
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => props.navigation.closeDrawer()} style={styles.closeButton}>
-                    <Ionicons name="close" size={30} color="#000" />
+                    <Ionicons name="close" size={30} color={theme.text} />
                 </TouchableOpacity>
             </View>
             <DrawerItemList {...props} />
-            <View style={styles.footer}>
+            <View style={[styles.footer, { borderTopColor: colorScheme === 'dark' ? '#333' : '#f4f4f4' }]}>
                 <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
                     <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
                     <Text style={styles.logoutText}>Logout</Text>
@@ -65,7 +72,6 @@ const styles = StyleSheet.create({
         marginTop: 'auto',
         padding: 20,
         borderTopWidth: 1,
-        borderTopColor: '#f4f4f4',
     },
     logoutButton: {
         flexDirection: 'row',

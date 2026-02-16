@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/theme';
 
 interface CustomAlertProps {
     visible: boolean;
@@ -29,6 +30,8 @@ export default function CustomAlert({
 }: CustomAlertProps) {
     const scaleValue = useRef(new Animated.Value(0)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
 
     useEffect(() => {
         if (visible) {
@@ -88,6 +91,7 @@ export default function CustomAlert({
                         {
                             opacity: opacityValue,
                             transform: [{ scale: scaleValue }],
+                            backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff'
                         },
                     ]}
                 >
@@ -95,16 +99,23 @@ export default function CustomAlert({
                         <Ionicons name={iconName} size={50} color={iconColor} />
                     </View>
 
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.message}>{message}</Text>
+                    <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+                    <Text style={[styles.message, { color: theme.text }]}>{message}</Text>
 
                     {showCancel ? (
                         <View style={styles.buttonRow}>
                             <TouchableOpacity
-                                style={[styles.button, styles.cancelButton]}
+                                style={[
+                                    styles.button,
+                                    styles.cancelButton,
+                                    {
+                                        backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff',
+                                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#ccc'
+                                    }
+                                ]}
                                 onPress={onClose}
                             >
-                                <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                                <Text style={[styles.cancelButtonText, { color: theme.text }]}>{cancelText}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: buttonColor, flex: 1, marginLeft: 8 }]}
@@ -139,7 +150,6 @@ const styles = StyleSheet.create({
     },
     alertContainer: {
         width: width * 0.85,
-        backgroundColor: '#fff',
         borderRadius: 20,
         padding: 24,
         alignItems: 'center',
@@ -158,13 +168,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
         marginBottom: 8,
         textAlign: 'center',
     },
     message: {
         fontSize: 16,
-        color: '#666',
         textAlign: 'center',
         marginBottom: 24,
         lineHeight: 22,
@@ -181,14 +189,11 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     cancelButton: {
-        backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#ccc',
         flex: 1,
         marginRight: 8,
     },
     cancelButtonText: {
-        color: '#666',
         fontSize: 16,
         fontWeight: '600',
     },

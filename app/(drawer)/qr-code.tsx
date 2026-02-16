@@ -1,14 +1,18 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, BackHandler, useColorScheme } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useRouter } from 'expo-router';
 import CustomAlert from '@/components/CustomAlert';
+import { Colors } from '@/constants/theme';
 
 export default function QRCodeScreen() {
+    const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
     const [alertVisible, setAlertVisible] = useState(false);
-    const router = useRouter();
 
     useEffect(() => {
         if (timeLeft === 0) {
@@ -29,6 +33,18 @@ export default function QRCodeScreen() {
         return () => clearInterval(intervalId);
     }, [timeLeft]);
 
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
+
+
     const handleTimeout = () => {
         setAlertVisible(false);
         router.replace('/(drawer)/map');
@@ -41,7 +57,7 @@ export default function QRCodeScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
                 title="Scan To Activate"
                 withSafeArea={false}
@@ -50,13 +66,13 @@ export default function QRCodeScreen() {
             />
             <View style={styles.content}>
 
-                <View style={styles.qrContainer}>
-                    {/* Placeholder for QR Code */}
+                <View style={[styles.qrContainer, { backgroundColor: '#fff', borderColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
+                    {/* Placeholder for QR Code - typically QR codes are black on white for readability */}
                     <Ionicons name="qr-code" size={300} color="#000" />
                 </View>
 
                 <View style={styles.timerContainer}>
-                    <Text style={styles.timerLabel}>Code expires in:</Text>
+                    <Text style={[styles.timerLabel, { color: theme.icon }]}>Code expires in:</Text>
                     <Text style={styles.timerValue}>{formatTime(timeLeft)}</Text>
                 </View>
 
@@ -81,7 +97,6 @@ export default function QRCodeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
         flex: 1,
@@ -89,15 +104,8 @@ const styles = StyleSheet.create({
         padding: 24,
         // justifyContent: 'center',
     },
-    instruction: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 40,
-    },
     qrContainer: {
         padding: 20,
-        backgroundColor: '#fff',
         borderRadius: 20,
         shadowColor: "#000",
         shadowOffset: {
@@ -109,14 +117,12 @@ const styles = StyleSheet.create({
         elevation: 10,
         marginBottom: 40,
         borderWidth: 1,
-        borderColor: '#f0f0f0',
     },
     timerContainer: {
         alignItems: 'center',
     },
     timerLabel: {
         fontSize: 14,
-        color: '#666',
         marginBottom: 8,
     },
     timerValue: {

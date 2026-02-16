@@ -1,24 +1,39 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, BackHandler, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
+import { useEffect } from 'react';
+import { Colors } from '@/constants/theme';
 
 export default function MapScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader title="Map View" withSafeArea={false} showBackButton={true} />
             <View style={styles.content}>
                 {/* Map Placeholder */}
-                <View style={styles.mapPlaceholder}>
+                <View style={[styles.mapPlaceholder, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E5E3DF' }]}>
                     <View style={styles.mapBackground}>
-                        <View style={styles.gridLineVertical} />
-                        <View style={styles.gridLineHorizontal} />
+                        <View style={[styles.gridLineVertical, { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+                        <View style={[styles.gridLineHorizontal, { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
                         <Ionicons name="location" size={48} color="#FF3B30" />
                         <View style={styles.pulseRing} />
                     </View>
-                    <Text style={styles.placeholderText}>Map Loaded</Text>
+                    <Text style={[styles.placeholderText, { color: '#666' }]}>Map Loaded</Text>
                 </View>
 
                 {/* Activation QR Code Button */}
@@ -37,7 +52,6 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
         flex: 1,
@@ -45,7 +59,6 @@ const styles = StyleSheet.create({
     },
     mapPlaceholder: {
         flex: 1,
-        backgroundColor: '#E5E3DF', // Common map background color
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -61,14 +74,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: 2,
         height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.05)',
         left: '50%',
     },
     gridLineHorizontal: {
         position: 'absolute',
         width: '100%',
         height: 2,
-        backgroundColor: 'rgba(0,0,0,0.05)',
         top: '50%',
     },
     pulseRing: {
@@ -85,7 +96,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.8)',
         padding: 8,
         borderRadius: 4,
-        color: '#666',
         fontSize: 12,
     },
     qrButton: {

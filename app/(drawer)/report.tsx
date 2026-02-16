@@ -1,13 +1,13 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image, BackHandler, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
-import { useRouter, useNavigation } from 'expo-router';
-import { useEffect } from 'react';
+import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
+import { Colors } from '@/constants/theme';
 
 const incidentCategories = [
     { label: 'Accident', value: 'accident' },
@@ -16,14 +16,15 @@ const incidentCategories = [
     { label: 'Other', value: 'other' },
 ];
 
-import { useLocalSearchParams } from 'expo-router';
-
 export default function ReportScreen() {
     const router = useRouter();
     const navigation = useNavigation<DrawerNavigationProp<any>>();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
     const isFromLogin = params.ref === 'login';
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [category, setCategory] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
@@ -66,7 +67,22 @@ export default function ReportScreen() {
         }
     }, [isFromLogin, navigation]);
 
+    useEffect(() => {
+        const onBackPress = () => {
+            if (isFromLogin) {
+                router.replace('/login');
+            } else if (params.ref === 'settings') {
+                router.navigate('/(drawer)/settings');
+            } else {
+                router.back();
+            }
+            return true;
+        };
 
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router, isFromLogin, params.ref]);
 
     const handleSubmit = () => {
         if (!category) {
@@ -119,7 +135,7 @@ export default function ReportScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
                 title="Report Incident"
                 withSafeArea={isFromLogin}
@@ -137,11 +153,14 @@ export default function ReportScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Issue Category */}
-                <Text style={styles.label}>Issue Category</Text>
+                <Text style={[styles.label, { color: theme.text }]}>Issue Category</Text>
                 <Dropdown
-                    style={[styles.dropdown, isFocus && { borderColor: '#00B1EB' }]}
+                    style={[styles.dropdown, isFocus && { borderColor: '#00B1EB' }, {
+                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
+                        backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
+                    }]}
                     placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
+                    selectedTextStyle={[styles.selectedTextStyle, { color: theme.text }]}
                     inputSearchStyle={styles.inputSearchStyle}
                     iconStyle={styles.iconStyle}
                     data={incidentCategories}
@@ -158,14 +177,23 @@ export default function ReportScreen() {
                         setCategory(item.value);
                         setIsFocus(false);
                     }}
+                    renderItem={(item) => (
+                        <View style={[styles.item, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                            <Text style={[styles.textItem, { color: theme.text }]}>{item.label}</Text>
+                        </View>
+                    )}
                 />
 
                 {/* Description */}
-                <Text style={styles.label}>Description</Text>
+                <Text style={[styles.label, { color: theme.text }]}>Description</Text>
                 <TextInput
-                    style={[styles.inputContainer, styles.textArea]}
+                    style={[styles.inputContainer, styles.textArea, {
+                        color: theme.text,
+                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
+                        backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
+                    }]}
                     placeholder="Describe the incident..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor={theme.icon}
                     multiline
                     numberOfLines={4}
                     value={description}
@@ -174,14 +202,14 @@ export default function ReportScreen() {
                 />
 
                 {/* Upload Photo */}
-                <Text style={styles.label}>Upload Photo</Text>
-                <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+                <Text style={[styles.label, { color: theme.text }]}>Upload Photo</Text>
+                <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F0F8FF', borderColor: theme.icon2 }]} onPress={pickImage}>
                     {image ? (
                         <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 12 }} resizeMode="cover" />
                     ) : (
                         <>
-                            <Ionicons name="camera-outline" size={32} color="#0E2B63" />
-                            <Text style={styles.uploadText}>Tap to upload photo</Text>
+                            <Ionicons name="camera-outline" size={32} color={theme.icon2} />
+                            <Text style={[styles.uploadText, { color: theme.icon2 }]}>Tap to upload photo</Text>
                         </>
                     )}
                 </TouchableOpacity>
@@ -206,7 +234,6 @@ export default function ReportScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         padding: 20,
@@ -214,26 +241,21 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
         marginTop: 16,
     },
     inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        fontSize: 16,
     },
     dropdown: {
         height: 50,
         borderRadius: 8,
         paddingHorizontal: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     iconStyle: {
         width: 20,
@@ -245,18 +267,20 @@ const styles = StyleSheet.create({
     },
     selectedTextStyle: {
         fontSize: 16,
-        color: '#333',
     },
     inputSearchStyle: {
         height: 40,
         fontSize: 16,
     },
-    inputText: {
-        fontSize: 16,
-        color: '#333',
+    item: {
+        padding: 17,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    placeholderText: {
-        color: '#999',
+    textItem: {
+        flex: 1,
+        fontSize: 16,
     },
     textArea: {
         height: 120,
@@ -264,10 +288,8 @@ const styles = StyleSheet.create({
     },
     uploadButton: {
         height: 150,
-        backgroundColor: '#F0F8FF',
         borderRadius: 17,
         borderWidth: 2,
-        borderColor: '#0E2B63',
         borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
@@ -276,7 +298,6 @@ const styles = StyleSheet.create({
     uploadText: {
         marginTop: 8,
         fontSize: 16,
-        color: '#0E2B63',
         fontWeight: '500',
     },
     submitButton: {

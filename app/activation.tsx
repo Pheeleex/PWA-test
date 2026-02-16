@@ -1,11 +1,17 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, BackHandler, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/theme';
 
 export default function ActivationScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [activationCode, setActivationCode] = useState(['', '', '', '', '', '']);
     const inputs = useRef<Array<TextInput | null>>([]);
     const [alertVisible, setAlertVisible] = useState(false);
@@ -14,6 +20,17 @@ export default function ActivationScreen() {
         message: '',
         type: 'success'
     });
+
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
 
     const showAlert = (title: string, message: string, type: 'success' | 'error') => {
         setAlertConfig({ title, message, type });
@@ -59,7 +76,7 @@ export default function ActivationScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
                 title="Activate Account"
                 withSafeArea={true}
@@ -67,10 +84,10 @@ export default function ActivationScreen() {
             />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={styles.content}
+                style={[styles.content, { paddingBottom: 40 + insets.bottom }]}
             >
                 <View style={styles.header}>
-                    <Text style={styles.subtitle}>Enter the 6-digit code sent to your email.</Text>
+                    <Text style={[styles.subtitle, { color: theme.text }]}>Enter the 6-digit code sent to your email.</Text>
                 </View>
 
                 <View style={styles.form}>
@@ -81,7 +98,12 @@ export default function ActivationScreen() {
                                 ref={(ref) => { inputs.current[index] = ref; }}
                                 style={[
                                     styles.codeInput,
-                                    digit ? styles.codeInputFilled : null
+                                    {
+                                        color: theme.text,
+                                        backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F9F9F9',
+                                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0'
+                                    },
+                                    digit ? { borderColor: '#00B1EB', backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff' } : null
                                 ]}
                                 value={digit}
                                 onChangeText={(text) => handleChange(text, index)}
@@ -89,6 +111,7 @@ export default function ActivationScreen() {
                                 keyboardType="number-pad"
                                 maxLength={1}
                                 selectTextOnFocus
+                                placeholderTextColor={theme.icon}
                             />
                         ))}
                     </View>
@@ -118,12 +141,10 @@ export default function ActivationScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
         flex: 1,
         paddingHorizontal: 24,
-        paddingBottom: 40, // Add padding bottom for better spacing
     },
     header: {
         marginBottom: 40,
@@ -131,7 +152,6 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
         textAlign: 'center',
     },
     form: {
@@ -140,22 +160,15 @@ const styles = StyleSheet.create({
     codeContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 40, // Increased specific margin
+        marginBottom: 40,
     },
     codeInput: {
         width: 45,
         height: 50,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
         fontSize: 20,
         textAlign: 'center',
-        color: '#333',
-        backgroundColor: '#F9F9F9',
-    },
-    codeInputFilled: {
-        borderColor: '#00B1EB',
-        backgroundColor: '#fff',
     },
     actionRow: {
         flexDirection: 'row',
@@ -164,7 +177,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     activateButton: {
-        width: 150, // Slightly reduced width to ensure fit
+        width: 150,
         height: 43,
         backgroundColor: '#0E2B63',
         borderRadius: 17,

@@ -1,11 +1,28 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme } from 'react-native';
+import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenHeader from '@/components/ScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/theme';
 
 export default function ProfileScreen() {
+    const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [image, setImage] = useState<string | null>('https://picsum.photos/200');
+
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
 
     const pickImage = async () => {
         Alert.alert(
@@ -56,7 +73,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader title="Profile" withSafeArea={false} showBackButton={true} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
@@ -65,23 +82,23 @@ export default function ProfileScreen() {
                         {image ? (
                             <Image source={{ uri: image }} style={styles.profileImage} />
                         ) : (
-                            <View style={[styles.profileImage, styles.placeholderImage]}>
-                                <Ionicons name="person" size={60} color="#ccc" />
+                            <View style={[styles.profileImage, styles.placeholderImage, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E0E0E0' }]}>
+                                <Ionicons name="person" size={60} color={theme.icon} />
                             </View>
                         )}
                         <View style={styles.editIcon}>
                             <Ionicons name="camera" size={20} color="#fff" />
                         </View>
                     </TouchableOpacity>
-                    <Text style={styles.userName}>John Doe</Text>
+                    <Text style={[styles.userName, { color: theme.text }]}>John Doe</Text>
                 </View>
 
-                <View style={styles.detailsContainer}>
-                    <DetailItem label="Email" value="johndoe@example.com" />
-                    <DetailItem label="User ID" value="USER-88392" />
-                    <DetailItem label="Assigned Region" value="North-East District" />
-                    <DetailItem label="Location" value="New York, NY" />
-                    <DetailItem label="Status" value="Active" statusColor="#4CAF50" />
+                <View style={[styles.detailsContainer, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F9F9F9' }]}>
+                    <DetailItem label="Email" value="johndoe@example.com" theme={theme} />
+                    <DetailItem label="User ID" value="USER-88392" theme={theme} />
+                    <DetailItem label="Assigned Region" value="North-East District" theme={theme} />
+                    <DetailItem label="Location" value="New York, NY" theme={theme} />
+                    <DetailItem label="Status" value="Active" statusColor="#4CAF50" theme={theme} />
                 </View>
 
             </ScrollView>
@@ -89,17 +106,16 @@ export default function ProfileScreen() {
     );
 }
 
-const DetailItem = ({ label, value, statusColor }: { label: string, value: string, statusColor?: string }) => (
-    <View style={styles.detailItem}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, statusColor ? { color: statusColor, fontWeight: 'bold' } : null]}>{value}</Text>
+const DetailItem = ({ label, value, statusColor, theme }: { label: string, value: string, statusColor?: string, theme: any }) => (
+    <View style={[styles.detailItem, { borderBottomColor: theme.background === '#151718' ? '#333' : '#EEE' }]}>
+        <Text style={[styles.label, { color: theme.icon }]}>{label}</Text>
+        <Text style={[styles.value, { color: statusColor || theme.text }, statusColor ? { fontWeight: 'bold' } : null]}>{value}</Text>
     </View>
 );
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -117,12 +133,11 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
     },
     placeholderImage: {
-        backgroundColor: '#E0E0E0',
+        // backgroundColor handled inline
     },
     editIcon: {
         position: 'absolute',
@@ -140,27 +155,22 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
     },
     detailsContainer: {
-        backgroundColor: '#F9F9F9',
         borderRadius: 12,
         padding: 20,
     },
     detailItem: {
         marginBottom: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
         paddingBottom: 10,
     },
     label: {
         fontSize: 14,
-        color: '#666',
         marginBottom: 4,
     },
     value: {
         fontSize: 16,
-        color: '#333',
         fontWeight: '500',
     },
 });

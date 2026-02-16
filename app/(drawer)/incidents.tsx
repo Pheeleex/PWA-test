@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, TouchableWithoutFeedback } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, TouchableWithoutFeedback, BackHandler, useColorScheme } from 'react-native';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Colors } from '@/constants/theme';
 
 // Mock Data
 const MOCK_INCIDENTS = [
@@ -44,11 +45,27 @@ export default function IncidentsScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIncident, setSelectedIncident] = useState<any>(null);
     const [modalVisible, setModalVisible] = useState(false);
 
+    useEffect(() => {
+        const onBackPress = () => {
+            if (showBack) {
+                router.navigate('/(drawer)/settings');
+            } else {
+                router.back();
+            }
+            return true;
+        };
 
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router, showBack]);
 
     const filteredIncidents = MOCK_INCIDENTS.filter(incident =>
         incident.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,14 +73,15 @@ export default function IncidentsScreen() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Resolved': return '#E8F5E9'; // Light Green
-            case 'In Progress': return '#FFF8E1'; // Light Amber
-            case 'Pending': return '#FFEBEE'; // Light Red
-            default: return '#F5F5F5';
+            case 'Resolved': return colorScheme === 'dark' ? '#1B5E20' : '#E8F5E9'; // Green shade
+            case 'In Progress': return colorScheme === 'dark' ? '#E65100' : '#FFF8E1'; // Amber shade
+            case 'Pending': return colorScheme === 'dark' ? '#B71C1C' : '#FFEBEE'; // Red shade
+            default: return colorScheme === 'dark' ? '#424242' : '#F5F5F5';
         }
     };
 
     const getStatusTextColor = (status: string) => {
+        if (colorScheme === 'dark') return '#FFF';
         switch (status) {
             case 'Resolved': return '#2E7D32'; // Green
             case 'In Progress': return '#F57F17'; // Amber
@@ -83,15 +101,15 @@ export default function IncidentsScreen() {
             onPress={() => handlePressItem(item)}
         >
             <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={[styles.cardTitle, { color: colorScheme === 'dark' ? '#FFF' : '#333' }]}>{item.title}</Text>
                 <Text style={[styles.cardStatus, { color: getStatusTextColor(item.status) }]}>{item.status}</Text>
             </View>
-            <Text style={styles.cardDate}>{item.date}</Text>
+            <Text style={[styles.cardDate, { color: colorScheme === 'dark' ? '#BBB' : '#666' }]}>{item.date}</Text>
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
                 title="Incident History"
                 withSafeArea={false}
@@ -100,12 +118,12 @@ export default function IncidentsScreen() {
             />
 
             {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <View style={[styles.searchContainer, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F5F5F5' }]}>
+                <Ionicons name="search" size={20} color={theme.icon} style={styles.searchIcon} />
                 <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { color: theme.text }]}
                     placeholder="Search incidents..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor={theme.icon}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
@@ -117,7 +135,7 @@ export default function IncidentsScreen() {
                 keyExtractor={item => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
-                ListEmptyComponent={<Text style={styles.emptyText}>No incidents found.</Text>}
+                ListEmptyComponent={<Text style={[styles.emptyText, { color: theme.icon }]}>No incidents found.</Text>}
             />
 
             {/* Detail Modal */}
@@ -133,16 +151,16 @@ export default function IncidentsScreen() {
                     onPress={() => setModalVisible(false)}
                 >
                     <TouchableWithoutFeedback>
-                        <View style={styles.modalView}>
+                        <View style={[styles.modalView, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : 'white' }]}>
                             <View style={styles.modalHeader}>
                                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                    <Ionicons name="close" size={24} color="#333" />
+                                    <Ionicons name="close" size={24} color={theme.text} />
                                 </TouchableOpacity>
                             </View>
 
                             {selectedIncident && (
                                 <View style={styles.modalContent}>
-                                    <Text style={styles.modalIncidentTitle}>{selectedIncident.title}</Text>
+                                    <Text style={[styles.modalIncidentTitle, { color: theme.text }]}>{selectedIncident.title}</Text>
                                     <View style={styles.statusRow}>
                                         <Text style={[styles.statusBadge, {
                                             backgroundColor: getStatusColor(selectedIncident.status),
@@ -150,16 +168,16 @@ export default function IncidentsScreen() {
                                         }]}>
                                             {selectedIncident.status}
                                         </Text>
-                                        <Text style={styles.modalDate}>{selectedIncident.date}</Text>
+                                        <Text style={[styles.modalDate, { color: theme.icon }]}>{selectedIncident.date}</Text>
                                     </View>
 
-                                    <Text style={styles.modalDescription}>{selectedIncident.description}</Text>
+                                    <Text style={[styles.modalDescription, { color: theme.text }]}>{selectedIncident.description}</Text>
 
                                     {selectedIncident.image ? (
                                         <Image source={{ uri: selectedIncident.image }} style={styles.modalImage} resizeMode="cover" />
                                     ) : (
-                                        <View style={styles.noImageContainer}>
-                                            <Text style={styles.noImageText}>No image available</Text>
+                                        <View style={[styles.noImageContainer, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F0F0F0' }]}>
+                                            <Text style={[styles.noImageText, { color: theme.icon }]}>No image available</Text>
                                         </View>
                                     )}
                                 </View>
@@ -175,12 +193,10 @@ export default function IncidentsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
         margin: 20,
         paddingHorizontal: 12,
         borderRadius: 8,
@@ -192,7 +208,6 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
         height: '100%',
     },
     listContent: {
@@ -222,7 +237,6 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#333',
     },
     cardStatus: {
         fontSize: 14,
@@ -230,12 +244,10 @@ const styles = StyleSheet.create({
     },
     cardDate: {
         fontSize: 14,
-        color: '#666',
     },
     emptyText: {
         textAlign: 'center',
         marginTop: 40,
-        color: '#999',
         fontSize: 16,
     },
     // Modal Styles
@@ -247,7 +259,6 @@ const styles = StyleSheet.create({
     },
     modalView: {
         width: '90%',
-        backgroundColor: 'white',
         borderRadius: 20,
         padding: 20,
         shadowColor: '#000',
@@ -273,7 +284,6 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: '#0E2B63',
     },
     statusRow: {
         flexDirection: 'row',
@@ -292,11 +302,9 @@ const styles = StyleSheet.create({
     },
     modalDate: {
         fontSize: 14,
-        color: '#666',
     },
     modalDescription: {
         fontSize: 16,
-        color: '#444',
         marginBottom: 20,
         lineHeight: 24,
     },
@@ -308,12 +316,10 @@ const styles = StyleSheet.create({
     noImageContainer: {
         width: '100%',
         height: 150,
-        backgroundColor: '#F0F0F0',
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
     noImageText: {
-        color: '#999',
     },
 });

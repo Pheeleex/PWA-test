@@ -8,14 +8,19 @@ import {
     TouchableOpacity,
     View,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import CustomAlert from '@/components/CustomAlert';
+import { Colors } from '@/constants/theme';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -48,23 +53,31 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar style="dark" />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.content}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Login to access your dashboard.</Text>
+                    <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
+                    <Text style={[styles.subtitle, { color: theme.icon }]}>Login to access your dashboard.</Text>
                 </View>
 
                 <View style={styles.form}>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Email/User ID</Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Email/User ID</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[
+                                styles.input,
+                                {
+                                    color: theme.text,
+                                    borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
+                                    backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff'
+                                }
+                            ]}
                             placeholder="Enter your username"
+                            placeholderTextColor={theme.icon}
                             value={username}
                             onChangeText={setUsername}
                             autoCapitalize="none"
@@ -72,11 +85,18 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Password</Text>
-                        <View style={styles.passwordContainer}>
+                        <Text style={[styles.label, { color: theme.text }]}>Password</Text>
+                        <View style={[
+                            styles.passwordContainer,
+                            {
+                                borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
+                                backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff'
+                            }
+                        ]}>
                             <TextInput
-                                style={styles.passwordInput}
+                                style={[styles.passwordInput, { color: theme.text }]}
                                 placeholder="Enter your password"
+                                placeholderTextColor={theme.icon}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
@@ -88,7 +108,7 @@ export default function LoginScreen() {
                                 <Ionicons
                                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                                     size={24}
-                                    color="#666"
+                                    color={theme.icon}
                                 />
                             </TouchableOpacity>
                         </View>
@@ -130,7 +150,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
         flex: 1,
@@ -144,12 +163,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#0E2B63',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
     },
     form: {
         marginBottom: 20,
@@ -160,7 +177,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
     },
     input: {
@@ -168,9 +184,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 16,
         fontSize: 16,
-        color: '#333',
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     passwordContainer: {
         flexDirection: 'row',
@@ -178,13 +192,11 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
         paddingHorizontal: 16,
     },
     passwordInput: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
         height: '100%',
     },
     eyeIcon: {

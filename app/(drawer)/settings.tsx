@@ -1,10 +1,14 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import { Colors } from '@/constants/theme';
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
 
     const menuItems = [
         {
@@ -27,6 +31,17 @@ export default function SettingsScreen() {
         },
     ];
 
+    useEffect(() => {
+        const onBackPress = () => {
+            router.back();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => subscription.remove();
+    }, [router]);
+
     const handlePress = (item: any) => {
         if (item.isLogout) {
             router.replace(item.route);
@@ -36,21 +51,21 @@ export default function SettingsScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader title="Settings" withSafeArea={false} showBackButton={true} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.listContainer}>
                     {menuItems.map((item) => (
                         <TouchableOpacity
                             key={item.id}
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F5F5F5' }]}
                             onPress={() => handlePress(item)}
                         >
                             <View style={styles.iconContainer}>
-                                <Ionicons name={item.icon as any} size={24} color="#0E2B63" />
+                                <Ionicons name={item.icon as any} size={24} color={theme.icon2} />
                             </View>
-                            <Text style={styles.menuItemText}>{item.title}</Text>
-                            <Ionicons name="chevron-forward" size={20} color="#666" />
+                            <Text style={[styles.menuItemText, { color: theme.text }]}>{item.title}</Text>
+                            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -62,7 +77,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -74,7 +88,6 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
         padding: 16,
         borderRadius: 8,
         marginBottom: 12,
@@ -85,7 +98,6 @@ const styles = StyleSheet.create({
     menuItemText: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
         fontWeight: '500',
     },
 });
