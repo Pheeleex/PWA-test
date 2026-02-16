@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, Alert, BackHandler } from 'react-native';
-import { useState, useCallback } from 'react';
+import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, Alert } from 'react-native';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 // Mock Data
 const MOCK_INCIDENTS = [
@@ -46,18 +46,7 @@ export default function IncidentsScreen() {
     const [selectedIncident, setSelectedIncident] = useState<any>(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    useFocusEffect(
-        useCallback(() => {
-            const onBackPress = () => {
-                router.push('/(drawer)/settings');
-                return true;
-            };
 
-            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () => subscription.remove();
-        }, [router])
-    );
 
     const filteredIncidents = MOCK_INCIDENTS.filter(incident =>
         incident.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -104,7 +93,6 @@ export default function IncidentsScreen() {
             <ScreenHeader
                 title="Incident History"
                 withSafeArea={false}
-                onBack={() => router.push('/(drawer)/settings')}
             />
 
             {/* Search Bar */}

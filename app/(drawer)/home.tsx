@@ -43,7 +43,7 @@ export default function HomeScreen() {
                         <View style={styles.iconContainer}>
                             <Ionicons name="globe-outline" size={32} color="#0E2B63" />
                         </View>
-                        <Text style={styles.cardTitle}>Region</Text>
+                        <Text style={styles.cardTitle}>City/Region</Text>
                         <Text style={styles.cardValue}>North-West</Text>
                     </View>
 
@@ -70,7 +70,7 @@ export default function HomeScreen() {
                     onPress={() => router.push('/(drawer)/map')}
                 >
                     <Text style={styles.proceedButtonText}>Proceed to Map</Text>
-                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                    {/* <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} /> */}
                 </TouchableOpacity>
             </View>
         </ScrollView>
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontSize: 14,
-        color: '#666',
+        color: '#00B1EB',
         marginBottom: 4,
     },
     cardValue: {
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
         width: 210,
         height: 43,
         justifyContent: 'center',
-        backgroundColor: '#00B1EB',
+        backgroundColor: '#0E2B63',
         borderRadius: 17,
         alignItems: 'center',
         shadowColor: '#00B1EB',

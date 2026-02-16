@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image, BackHandler } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -20,18 +20,7 @@ export default function ReportScreen() {
     const [image, setImage] = useState<string | null>(null);
     const [isFocus, setIsFocus] = useState(false);
 
-    useFocusEffect(
-        useCallback(() => {
-            const onBackPress = () => {
-                router.push('/(drawer)/settings');
-                return true;
-            };
 
-            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () => subscription.remove();
-        }, [router])
-    );
 
     const handleSubmit = () => {
         if (!category) {
@@ -89,7 +78,6 @@ export default function ReportScreen() {
             <ScreenHeader
                 title="Report Incident"
                 withSafeArea={false}
-                onBack={() => router.push('/(drawer)/settings')}
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
@@ -145,7 +133,7 @@ export default function ReportScreen() {
 
                 {/* Submit Button */}
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                    <Text style={styles.submitButtonText}>Submit Report</Text>
+                    <Text style={styles.submitButtonText}>Submit</Text>
                 </TouchableOpacity>
 
             </ScrollView>
@@ -230,14 +218,14 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     submitButton: {
-        backgroundColor: '#00B1EB',
+        backgroundColor: '#0E2B63',
         width: 210,
         height: 43,
         justifyContent: 'center',
         alignSelf: 'center', // Center the button since it has a fixed width
         borderRadius: 17,
         alignItems: 'center',
-        shadowColor: '#00B1EB',
+        shadowColor: '#0E2B63',
         shadowOffset: {
             width: 0,
             height: 4,
