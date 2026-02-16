@@ -54,7 +54,7 @@ export default function ChangePasswordScreen() {
     };
 
     const handleForgotPassword = () => {
-        showAlert('Forgot Password', 'Navigate to forgot password flow?', 'success');
+        router.push('/forgot-password');
     };
 
     return (
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     updateButton: {
-        backgroundColor: '#00B1EB',
+        backgroundColor: '#0E2B63',
         width: 210,
         height: 43,
         justifyContent: 'center',
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
         borderRadius: 17,
         alignItems: 'center',
         marginTop: 32,
-        shadowColor: '#00B1EB',
+        shadowColor: '#0E2B63',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4.65,

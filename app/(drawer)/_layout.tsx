@@ -4,12 +4,14 @@ import { Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
+import { StatusBar } from 'expo-status-bar';
 
 export default function DrawerLayout() {
     const navigation = useNavigation();
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
+            <StatusBar style="light" />
             <Drawer
                 drawerContent={(props) => <CustomDrawerContent {...props} />}
                 screenOptions={({ navigation }) => ({

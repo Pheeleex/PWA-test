@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Modal, Image, TouchableWithoutFeedback } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -124,40 +124,46 @@ export default function IncidentsScreen() {
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="#333" />
-                            </TouchableOpacity>
-                        </View>
-
-                        {selectedIncident && (
-                            <View style={styles.modalContent}>
-                                <Text style={styles.modalIncidentTitle}>{selectedIncident.title}</Text>
-                                <View style={styles.statusRow}>
-                                    <Text style={[styles.statusBadge, {
-                                        backgroundColor: getStatusColor(selectedIncident.status),
-                                        color: getStatusTextColor(selectedIncident.status)
-                                    }]}>
-                                        {selectedIncident.status}
-                                    </Text>
-                                    <Text style={styles.modalDate}>{selectedIncident.date}</Text>
-                                </View>
-
-                                <Text style={styles.modalDescription}>{selectedIncident.description}</Text>
-
-                                {selectedIncident.image ? (
-                                    <Image source={{ uri: selectedIncident.image }} style={styles.modalImage} resizeMode="cover" />
-                                ) : (
-                                    <View style={styles.noImageContainer}>
-                                        <Text style={styles.noImageText}>No image available</Text>
-                                    </View>
-                                )}
+                <TouchableOpacity
+                    style={styles.centeredView}
+                    activeOpacity={1}
+                    onPress={() => setModalVisible(false)}
+                >
+                    <TouchableWithoutFeedback>
+                        <View style={styles.modalView}>
+                            <View style={styles.modalHeader}>
+                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                    <Ionicons name="close" size={24} color="#333" />
+                                </TouchableOpacity>
                             </View>
-                        )}
-                    </View>
-                </View>
+
+                            {selectedIncident && (
+                                <View style={styles.modalContent}>
+                                    <Text style={styles.modalIncidentTitle}>{selectedIncident.title}</Text>
+                                    <View style={styles.statusRow}>
+                                        <Text style={[styles.statusBadge, {
+                                            backgroundColor: getStatusColor(selectedIncident.status),
+                                            color: getStatusTextColor(selectedIncident.status)
+                                        }]}>
+                                            {selectedIncident.status}
+                                        </Text>
+                                        <Text style={styles.modalDate}>{selectedIncident.date}</Text>
+                                    </View>
+
+                                    <Text style={styles.modalDescription}>{selectedIncident.description}</Text>
+
+                                    {selectedIncident.image ? (
+                                        <Image source={{ uri: selectedIncident.image }} style={styles.modalImage} resizeMode="cover" />
+                                    ) : (
+                                        <View style={styles.noImageContainer}>
+                                            <Text style={styles.noImageText}>No image available</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+                        </View>
+                    </TouchableWithoutFeedback>
+                </TouchableOpacity>
             </Modal>
         </View>
     );
@@ -252,9 +258,9 @@ const styles = StyleSheet.create({
     },
     modalHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end', // Align close button to the right
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 10,
     },
 
     modalContent: {
