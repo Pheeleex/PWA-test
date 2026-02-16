@@ -122,8 +122,11 @@ const styles = StyleSheet.create({
     },
     updateButton: {
         backgroundColor: '#00B1EB',
-        paddingVertical: 16,
-        borderRadius: 8,
+        width: 210,
+        height: 43,
+        justifyContent: 'center',
+        alignSelf: 'center',
+        borderRadius: 17,
         alignItems: 'center',
         marginTop: 32,
         shadowColor: '#00B1EB',

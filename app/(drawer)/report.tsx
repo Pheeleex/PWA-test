@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     uploadButton: {
         height: 150,
         backgroundColor: '#F0F8FF',
-        borderRadius: 12,
+        borderRadius: 17,
         borderWidth: 2,
         borderColor: '#0E2B63',
         borderStyle: 'dashed',
@@ -231,8 +231,11 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         backgroundColor: '#00B1EB',
-        paddingVertical: 16,
-        borderRadius: 8,
+        width: 210,
+        height: 43,
+        justifyContent: 'center',
+        alignSelf: 'center', // Center the button since it has a fixed width
+        borderRadius: 17,
         alignItems: 'center',
         shadowColor: '#00B1EB',
         shadowOffset: {

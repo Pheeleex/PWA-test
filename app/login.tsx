@@ -30,13 +30,13 @@ export default function LoginScreen() {
                 style={styles.content}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>Welcome Back!</Text>
-                    <Text style={styles.subtitle}>Please sign in to continue.</Text>
+                    <Text style={styles.title}>Welcome Back</Text>
+                    <Text style={styles.subtitle}>Login to access your dashboard.</Text>
                 </View>
 
                 <View style={styles.form}>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Username</Text>
+                        <Text style={styles.label}>Email/User ID</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Enter your username"
@@ -57,9 +57,15 @@ export default function LoginScreen() {
                         />
                     </View>
 
-                    <TouchableOpacity onPress={() => router.push('/forgot-password')} style={styles.forgotPasswordButton}>
-                        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
+                    <View style={styles.optionsRow}>
+                        <TouchableOpacity onPress={() => router.push('/forgot-password')} style={styles.optionButton}>
+                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => router.push('/(drawer)/report')} style={styles.optionButton}>
+                            <Text style={styles.reportButtonText}>Report Incident</Text>
+                        </TouchableOpacity>
+                    </View>
 
                     <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
                         <Text style={styles.loginButtonText}>Login</Text>
@@ -69,10 +75,6 @@ export default function LoginScreen() {
                 <View style={styles.footer}>
                     <TouchableOpacity onPress={() => router.push('/activation')} style={styles.activationButton}>
                         <Text style={styles.activationButtonText}>Activate Account</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => router.push('/(drawer)/incidents')} style={styles.reportButton}>
-                        <Text style={styles.reportButtonText}>Report Incident</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -125,18 +127,30 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E0E0E0',
     },
-    forgotPasswordButton: {
-        alignSelf: 'flex-end',
+    optionsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         marginBottom: 24,
+        alignItems: 'center',
+    },
+    optionButton: {
+        paddingVertical: 4,
     },
     forgotPasswordText: {
         color: '#00B1EB',
         fontSize: 14,
     },
+    reportButtonText: {
+        color: '#FF3B30', // Red color for urgency/incident
+        fontSize: 14,
+        fontWeight: '500',
+    },
     loginButton: {
-        height: 50,
+        width: 210,
+        height: 43,
+        alignSelf: 'center',
         backgroundColor: '#0E2B63',
-        borderRadius: 25,
+        borderRadius: 17,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: "#0E2B63",
@@ -155,22 +169,13 @@ const styles = StyleSheet.create({
     },
     footer: {
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 10,
     },
     activationButton: {
-        marginBottom: 10,
         padding: 10,
     },
     activationButtonText: {
         color: '#0E2B63',
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    reportButton: {
-        padding: 10,
-    },
-    reportButtonText: {
-        color: '#FF3B30', // Red color for urgency/incident
         fontSize: 16,
         fontWeight: '500',
     },

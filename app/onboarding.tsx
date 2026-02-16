@@ -60,9 +60,18 @@ function OnboardingItem({ item }: { item: typeof slides[0] }) {
                 <ThemedText type="title" style={styles.title}>
                     {item.title}
                 </ThemedText>
-                <ThemedText style={styles.subtitle}>
-                    {item.subtitle}
-                </ThemedText>
+
+                {/* Modified Subtitle for checking id '2' */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+
+                    <ThemedText style={[styles.subtitle, { marginBottom: 0 }]}>
+                        {item.subtitle}
+                    </ThemedText>
+                    {item.id === '2' && (
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#50AF47', marginLeft: 6 }} />
+                    )}
+                </View>
+
                 <ThemedText style={styles.description}>{item.description}</ThemedText>
             </View>
         </View>
@@ -77,9 +86,10 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
             {data.map((_, i) => {
                 const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
 
+                // Active dot should not be wider (kept constant 10)
                 const dotWidth = scrollX.interpolate({
                     inputRange,
-                    outputRange: [10, 20, 10],
+                    outputRange: [10, 10, 10],
                     extrapolate: 'clamp',
                 });
 
@@ -89,9 +99,19 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
                     extrapolate: 'clamp',
                 });
 
+                // Active color #00B1EB, inactive white
+                const backgroundColor = scrollX.interpolate({
+                    inputRange,
+                    outputRange: ['#FFFFFF', '#00B1EB', '#FFFFFF'],
+                    extrapolate: 'clamp'
+                });
+
                 return (
                     <Animated.View
-                        style={[styles.dot, { width: dotWidth, opacity }]}
+                        style={[
+                            styles.dot,
+                            { width: dotWidth, opacity, backgroundColor }
+                        ]}
                         key={i.toString()}
                     />
                 );
@@ -259,9 +279,11 @@ const styles = StyleSheet.create({
     },
     nextButton: {
         backgroundColor: '#fff',
-        paddingVertical: 5,
-        paddingHorizontal: 30,
-        borderRadius: 25,
+        width: 210,
+        height: 43,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 17,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,

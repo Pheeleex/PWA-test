@@ -142,10 +142,11 @@ const styles = StyleSheet.create({
     },
     proceedButton: {
         flexDirection: 'row',
+        width: 210,
+        height: 43,
+        justifyContent: 'center',
         backgroundColor: '#00B1EB',
-        paddingVertical: 16,
-        paddingHorizontal: 32,
-        borderRadius: 30,
+        borderRadius: 17,
         alignItems: 'center',
         shadowColor: '#00B1EB',
         shadowOffset: {
