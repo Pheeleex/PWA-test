@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert,
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import CustomAlert from '@/components/CustomAlert';
 import { useRouter } from 'expo-router';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,16 +20,33 @@ export default function ReportScreen() {
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [isFocus, setIsFocus] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error') => {
+        setAlertConfig({ title, message, type });
+        setAlertVisible(true);
+    };
+
+    const handleCloseAlert = () => {
+        setAlertVisible(false);
+        if (alertConfig.type === 'success') {
+            router.push('/(drawer)/home');
+        }
+    };
 
 
 
     const handleSubmit = () => {
         if (!category) {
-            Alert.alert('Missing Information', 'Please select an issue category.');
+            showAlert('Missing Information', 'Please select an issue category.', 'error');
             return;
         }
-        Alert.alert('Report Submitted', 'Your incident report has been submitted successfully.');
-        router.push('/(drawer)/home');
+        showAlert('Report Submitted', 'Your incident report has been submitted successfully.', 'success');
     };
 
     const pickImage = async () => {
@@ -137,7 +155,14 @@ export default function ReportScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
-        </View>
+            <CustomAlert
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={handleCloseAlert}
+            />
+        </View >
     );
 }
 

@@ -11,15 +11,38 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function LoginScreen() {
     const router = useRouter();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error') => {
+        setAlertConfig({ title, message, type });
+        setAlertVisible(true);
+    };
+
+    const handleCloseAlert = () => {
+        setAlertVisible(false);
+        if (alertConfig.type === 'success') {
+            router.replace('/(drawer)/home');
+        }
+    };
 
     const handleLogin = () => {
-        // Implement login logic here
-        router.replace('/(drawer)/home');
+        if (!username || !password) {
+            showAlert('Error', 'Please enter both username and password.', 'error');
+            return;
+        }
+        // Mock login success
+        showAlert('Success', 'Login successful!', 'success');
     };
 
     return (
@@ -78,7 +101,15 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={handleCloseAlert}
+            />
+        </SafeAreaView >
     );
 }
 

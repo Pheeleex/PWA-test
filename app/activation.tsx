@@ -2,26 +2,43 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function ActivationScreen() {
     const router = useRouter();
     const [activationCode, setActivationCode] = useState(['', '', '', '', '', '']);
     const inputs = useRef<Array<TextInput | null>>([]);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error') => {
+        setAlertConfig({ title, message, type });
+        setAlertVisible(true);
+    };
+
+    const handleCloseAlert = () => {
+        setAlertVisible(false);
+        if (alertConfig.title === 'Success') {
+            router.replace('/login');
+        }
+    };
 
     const handleActivation = () => {
         const code = activationCode.join('');
         if (code.length < 6) {
-            Alert.alert('Error', 'Please enter the full 6-digit activation code.');
+            showAlert('Error', 'Please enter the full 6-digit activation code.', 'error');
             return;
         }
         // Mock activation logic
-        Alert.alert('Success', 'Account activated successfully!', [
-            { text: 'OK', onPress: () => router.replace('/login') }
-        ]);
+        showAlert('Success', 'Account activated successfully!', 'success');
     };
 
     const handleResendCode = () => {
-        Alert.alert('Code Sent', 'A new activation code has been sent to your email.');
+        showAlert('Code Sent', 'A new activation code has been sent to your email.', 'success');
     };
 
     const handleChange = (text: string, index: number) => {
@@ -83,7 +100,14 @@ export default function ActivationScreen() {
                     </View>
                 </View>
             </KeyboardAvoidingView>
-        </View>
+            <CustomAlert
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={handleCloseAlert}
+            />
+        </View >
     );
 }
 

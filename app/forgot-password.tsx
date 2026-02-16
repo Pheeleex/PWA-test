@@ -2,27 +2,37 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import ScreenHeader from '@/components/ScreenHeader';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function ForgotPasswordScreen() {
     const router = useRouter();
     const [email, setEmail] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error') => {
+        setAlertConfig({ title, message, type });
+        setAlertVisible(true);
+    };
+
+    const handleCloseAlert = () => {
+        setAlertVisible(false);
+        if (alertConfig.type === 'success') {
+            router.push('/activation');
+        }
+    };
 
     const handleSendCode = () => {
         if (!email) {
-            Alert.alert('Error', 'Please enter your email address.');
+            showAlert('Error', 'Please enter your email address.', 'error');
             return;
         }
         // Mock sending code
-        Alert.alert(
-            'Verification Code Sent',
-            `A verification code has been sent to ${email}.`,
-            [
-                {
-                    text: 'OK',
-                    onPress: () => router.push('/activation')
-                }
-            ]
-        );
+        showAlert('Verification Code Sent', `A verification code has been sent to ${email}.`, 'success');
     };
 
     return (
@@ -50,7 +60,14 @@ export default function ForgotPasswordScreen() {
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+            <CustomAlert
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={handleCloseAlert}
+            />
+        </View >
     );
 }
 

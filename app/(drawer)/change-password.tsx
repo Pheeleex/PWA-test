@@ -2,30 +2,51 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert 
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function ChangePasswordScreen() {
     const router = useRouter();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error') => {
+        setAlertConfig({ title, message, type });
+        setAlertVisible(true);
+    };
+
+    const handleCloseAlert = () => {
+        setAlertVisible(false);
+        if (alertConfig.type === 'success' && alertConfig.title !== 'Forgot Password') {
+            router.back();
+        } else if (alertConfig.title === 'Forgot Password') {
+            // Navigate to forgot password flow if needed
+            router.push('/forgot-password');
+        }
+    };
 
 
 
     const handleUpdate = () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert('Missing Fields', 'Please fill in all fields.');
+            showAlert('Missing Fields', 'Please fill in all fields.', 'error');
             return;
         }
         if (newPassword !== confirmPassword) {
-            Alert.alert('Error', 'New passwords do not match.');
+            showAlert('Error', 'New passwords do not match.', 'error');
             return;
         }
-        Alert.alert('Success', 'Password updated successfully.');
-        router.back();
+        showAlert('Success', 'Password updated successfully.', 'success');
     };
 
     const handleForgotPassword = () => {
-        Alert.alert('Forgot Password', 'Navigate to forgot password flow.');
+        showAlert('Forgot Password', 'Navigate to forgot password flow?', 'success');
     };
 
     return (
@@ -80,7 +101,14 @@ export default function ChangePasswordScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
-        </View>
+            <CustomAlert
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={handleCloseAlert}
+            />
+        </View >
     );
 }
 

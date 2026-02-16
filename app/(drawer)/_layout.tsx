@@ -33,18 +33,18 @@ export default function DrawerLayout() {
                         </TouchableOpacity>
                     ),
                     headerTitle: '',
-                    drawerStyle: { width: '50%' }, // Set drawer width to half screen
+                    drawerStyle: { width: '75%' }, // Increased drawer width
                     drawerItemStyle: {
                         backgroundColor: '#D9D9D9A1',
                         borderRadius: 25, // Higher border radius for pill shape
                         marginBottom: 8,
                         marginHorizontal: 12, // Add margin to detach from edges
                         paddingVertical: 0, // Reduce padding
-                        paddingHorizontal: 12, // Adjust horizontal padding
+                        paddingHorizontal: 10, // Reduced horizontal padding
                         justifyContent: 'center'
                     },
                     drawerLabelStyle: {
-                        marginLeft: -10, // Pull label closer to icon if needed
+                        marginLeft: 0, // Reset margin to add space between icon and text
                         fontSize: 14,
                         fontWeight: '500',
                     }
