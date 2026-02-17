@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     skipText: {
-        color: '#FFFFFF',
+        color: '#00B1EB',
         fontSize: 16,
     },
     skipSpace: {

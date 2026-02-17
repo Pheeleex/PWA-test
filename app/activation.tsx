@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     resendButtonText: {
-        color: '#00B1EB',
+        color: '#0E2B63',
         fontSize: 16,
         fontWeight: '500',
     },

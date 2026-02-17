@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     linkText: {
-        color: '#00B1EB',
+        color: '#000629',
         fontSize: 16,
         fontWeight: '500',
     },
