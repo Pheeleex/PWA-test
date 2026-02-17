@@ -51,7 +51,7 @@ export default function HomeScreen() {
 
                 {/* Cards */}
                 <View style={styles.cardsContainer}>
-                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                    <View style={[styles.card, { backgroundColor: '#EEEBF3' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="globe-outline" size={32} color="#0E2B63" />
                         </View>
@@ -59,7 +59,7 @@ export default function HomeScreen() {
                         <Text style={[styles.cardValue, { color: theme.text }]}>North-West</Text>
                     </View>
 
-                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                    <View style={[styles.card, { backgroundColor: '#E8F3E7' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="location-outline" size={32} color="#0E2B63" />
                         </View>
@@ -67,7 +67,7 @@ export default function HomeScreen() {
                         <Text style={[styles.cardValue, { color: theme.text }]}>Lagos, NG</Text>
                     </View>
 
-                    <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                    <View style={[styles.card, { backgroundColor: '#FDF4E2' }]}>
                         <View style={styles.iconContainer}>
                             <Ionicons name="person-outline" size={32} color="#0E2B63" />
                         </View>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
         padding: 16,
         width: '45%',
         alignItems: 'center',
-        shadowColor: '#000',
+        shadowColor: '#D1D1D1',
         shadowOffset: {
             width: 0,
             height: 2,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     iconContainer: {
-        backgroundColor: '#E6F0FF',
+        // backgroundColor: '#E6F0FF',
         padding: 10,
         borderRadius: 50,
         marginBottom: 12,

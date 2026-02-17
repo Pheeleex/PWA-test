@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
@@ -14,19 +14,19 @@ export default function SettingsScreen() {
         {
             id: 'password',
             title: 'Change Password',
-            icon: 'lock-closed-outline',
+            image: require('@/assets/images/changepassword.png'),
             route: '/(drawer)/change-password?ref=settings',
         },
         {
             id: 'report',
             title: 'Report Incident',
-            icon: 'warning-outline',
+            image: require('@/assets/images/reportincident.png'),
             route: '/(drawer)/report?ref=settings',
         },
         {
             id: 'history',
             title: 'Incident History',
-            icon: 'list-outline',
+            image: require('@/assets/images/incidenthistory.png'),
             route: '/(drawer)/incidents?ref=settings',
         },
     ];
@@ -43,11 +43,7 @@ export default function SettingsScreen() {
     }, [router]);
 
     const handlePress = (item: any) => {
-        if (item.isLogout) {
-            router.replace(item.route);
-        } else {
-            router.push(item.route);
-        }
+        router.push(item.route);
     };
 
     return (
@@ -61,8 +57,8 @@ export default function SettingsScreen() {
                             style={[styles.menuItem, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F5F5F5' }]}
                             onPress={() => handlePress(item)}
                         >
-                            <View style={styles.iconContainer}>
-                                <Ionicons name={item.icon as any} size={24} color={theme.icon2} />
+                            <View style={[styles.iconContainer, { backgroundColor: '#fff' }]}>
+                                <Image source={item.image} style={styles.iconImage} resizeMode="cover" />
                             </View>
                             <Text style={[styles.menuItemText, { color: theme.text }]}>{item.title}</Text>
                             <Ionicons name="chevron-forward" size={20} color={theme.icon} />
@@ -88,12 +84,22 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 8,
+        padding: 12,
+        borderRadius: 12,
         marginBottom: 12,
     },
     iconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginRight: 16,
+        overflow: 'hidden',
+    },
+    iconImage: {
+        width: '50%',
+        height: '50%',
     },
     menuItemText: {
         flex: 1,

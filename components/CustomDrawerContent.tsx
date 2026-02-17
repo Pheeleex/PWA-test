@@ -47,7 +47,7 @@ export default function CustomDrawerContent(props: any) {
                 visible={alertVisible}
                 title="Confirm Logout"
                 message="Are you sure you want to log out?"
-                type="warning"
+                type="error"
                 onClose={() => setAlertVisible(false)}
                 showCancel={true}
                 confirmText="Yes"

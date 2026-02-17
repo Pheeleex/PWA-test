@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -12,9 +12,14 @@ export default function ProfileScreen() {
     const theme = Colors[colorScheme];
 
     const [image, setImage] = useState<string | null>('https://picsum.photos/200');
+    const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
         const onBackPress = () => {
+            if (modalVisible) {
+                setModalVisible(false);
+                return true;
+            }
             router.back();
             return true;
         };
@@ -22,11 +27,11 @@ export default function ProfileScreen() {
         const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
         return () => subscription.remove();
-    }, [router]);
+    }, [router, modalVisible]);
 
     const pickImage = async () => {
         Alert.alert(
-            'Profile Picture',
+            'Change Profile Picture',
             'Choose an option',
             [
                 {
@@ -72,24 +77,52 @@ export default function ProfileScreen() {
         );
     };
 
+    const deleteImage = () => {
+        Alert.alert(
+            'Delete Profile Picture',
+            'Are you sure you want to remove your profile picture?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => setImage(null),
+                },
+            ]
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader title="Profile" withSafeArea={false} showBackButton={true} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 <View style={styles.headerSection}>
-                    <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
-                        {image ? (
-                            <Image source={{ uri: image }} style={styles.profileImage} />
-                        ) : (
-                            <View style={[styles.profileImage, styles.placeholderImage, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E0E0E0' }]}>
-                                <Ionicons name="person" size={60} color={theme.icon} />
-                            </View>
-                        )}
-                        <View style={styles.editIcon}>
-                            <Ionicons name="camera" size={20} color="#fff" />
+                    <View style={styles.imageContainer}>
+                        <TouchableOpacity onPress={() => image && setModalVisible(true)} disabled={!image}>
+                            {image ? (
+                                <Image source={{ uri: image }} style={styles.profileImage} />
+                            ) : (
+                                <View style={[styles.profileImage, styles.placeholderImage, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E0E0E0' }]}>
+                                    <Ionicons name="person" size={60} color={theme.icon} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        <View style={styles.actionButtonsContainer}>
+                            <TouchableOpacity onPress={pickImage} style={[styles.actionButton, styles.editButton]}>
+                                <Ionicons name="camera" size={18} color="#fff" />
+                            </TouchableOpacity>
+                            {image && (
+                                <TouchableOpacity onPress={deleteImage} style={[styles.actionButton, styles.deleteButton]}>
+                                    <Ionicons name="trash" size={18} color="#fff" />
+                                </TouchableOpacity>
+                            )}
                         </View>
-                    </TouchableOpacity>
+                    </View>
                     <Text style={[styles.userName, { color: theme.text }]}>John Doe</Text>
                 </View>
 
@@ -102,6 +135,29 @@ export default function ProfileScreen() {
                 </View>
 
             </ScrollView>
+
+            <Modal
+                visible={modalVisible}
+                transparent={true}
+                onRequestClose={() => setModalVisible(false)}
+                animationType="fade"
+            >
+                <View style={styles.modalContainer}>
+                    <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setModalVisible(false)}
+                    >
+                        <Ionicons name="close" size={30} color="#fff" />
+                    </TouchableOpacity>
+                    {image && (
+                        <Image
+                            source={{ uri: image }}
+                            style={styles.fullImage}
+                            resizeMode="contain"
+                        />
+                    )}
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -128,6 +184,7 @@ const styles = StyleSheet.create({
     imageContainer: {
         position: 'relative',
         marginBottom: 16,
+        alignItems: 'center',
     },
     profileImage: {
         width: 120,
@@ -139,18 +196,28 @@ const styles = StyleSheet.create({
     placeholderImage: {
         // backgroundColor handled inline
     },
-    editIcon: {
+    actionButtonsContainer: {
         position: 'absolute',
         bottom: 0,
-        right: 0,
-        backgroundColor: '#00B1EB',
+        right: -10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    actionButton: {
         width: 36,
         height: 36,
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 3,
+        borderWidth: 2,
         borderColor: '#fff',
+    },
+    editButton: {
+        backgroundColor: '#00B1EB',
+    },
+    deleteButton: {
+        backgroundColor: '#FF3B30',
     },
     userName: {
         fontSize: 24,
@@ -172,5 +239,22 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 16,
         fontWeight: '500',
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullImage: {
+        width: '100%',
+        height: '80%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 1,
+        padding: 10,
     },
 });
