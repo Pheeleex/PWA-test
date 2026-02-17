@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 8,
         textAlign: 'center',
+        color: '#0E2B63',
     },
     message: {
         fontSize: 16,

@@ -34,12 +34,12 @@ export default function ScreenHeader({ title, onBack, withSafeArea = true, showB
             <View style={styles.content}>
                 {showBackButton ? (
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color={theme.text} />
+                        <Ionicons name="chevron-back" size={24} color="#000000" />
                     </TouchableOpacity>
                 ) : (
                     <View style={styles.placeholder} />
                 )}
-                <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+                <Text style={[styles.title, { color: '#0E2B63' }]}>{title}</Text>
                 <View style={styles.placeholder} />
             </View>
         </View>

@@ -60,13 +60,13 @@ export default function LoginScreen() {
                 style={styles.content}
             >
                 <View style={styles.header}>
-                    <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
-                    <Text style={[styles.subtitle, { color: theme.icon }]}>Login to access your dashboard.</Text>
+                    <Text style={[styles.title, { color: theme.icon2 }]}>Welcome Back</Text>
+                    <Text style={[styles.subtitle, { color: theme.icon2 }]}>Login to access your dashboard.</Text>
                 </View>
 
                 <View style={styles.form}>
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.label, { color: theme.text }]}>Email/User ID</Text>
+                        <Text style={[styles.label, { color: theme.icon2 }]}>Email/User ID</Text>
                         <TextInput
                             style={[
                                 styles.input,
@@ -85,7 +85,7 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.label, { color: theme.text }]}>Password</Text>
+                        <Text style={[styles.label, { color: theme.icon2 }]}>Password</Text>
                         <View style={[
                             styles.passwordContainer,
                             {
@@ -131,7 +131,7 @@ export default function LoginScreen() {
 
                 <View style={styles.footer}>
                     <TouchableOpacity onPress={() => router.push('/activation')} style={styles.activationButton}>
-                        <Text style={styles.activationButtonText}>Activate Account</Text>
+                        <Text style={[styles.activationButtonText, { color: colorScheme === 'dark' ? '#00B1EB' : '#0E2B63' }]}>Activate Account</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

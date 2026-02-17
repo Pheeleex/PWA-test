@@ -87,6 +87,14 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 1.65,
+        elevation: 3,
     },
     iconContainer: {
         width: 40,

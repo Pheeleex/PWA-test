@@ -156,7 +156,6 @@ export default function ReportScreen() {
                 <Text style={[styles.label, { color: theme.text }]}>Issue Category</Text>
                 <Dropdown
                     style={[styles.dropdown, isFocus && { borderColor: '#00B1EB' }, {
-                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
                         backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
                     }]}
                     placeholderStyle={styles.placeholderStyle}
@@ -189,7 +188,6 @@ export default function ReportScreen() {
                 <TextInput
                     style={[styles.inputContainer, styles.textArea, {
                         color: theme.text,
-                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
                         backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
                     }]}
                     placeholder="Describe the incident..."
@@ -243,12 +241,14 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginBottom: 8,
         marginTop: 16,
+        color: '#0E2B63',
     },
     inputContainer: {
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderWidth: 1,
+        borderColor: '#00B1EB', // Updated border color
         fontSize: 16,
     },
     dropdown: {
@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 16,
         borderWidth: 1,
+        borderColor: '#00B1EB', // Updated border color
     },
     iconStyle: {
         width: 20,

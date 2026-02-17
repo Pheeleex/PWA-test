@@ -65,7 +65,6 @@ export default function ForgotPasswordScreen() {
                             styles.input,
                             {
                                 color: theme.text,
-                                borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0',
                                 backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
                             }
                         ]}
@@ -120,6 +119,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         fontSize: 16,
         borderWidth: 1,
+        borderColor: '#00B1EB', // Updated border color
     },
     button: {
         backgroundColor: '#0E2B63',

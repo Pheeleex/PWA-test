@@ -85,7 +85,7 @@ export default function ChangePasswordScreen() {
 
                 {/* Current Password */}
                 <Text style={[styles.label, { color: theme.text }]}>Current Password</Text>
-                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                <View style={[styles.passwordContainer, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
                         style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Enter current password"
@@ -108,7 +108,7 @@ export default function ChangePasswordScreen() {
 
                 {/* New Password */}
                 <Text style={[styles.label, { color: theme.text }]}>New Password</Text>
-                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                <View style={[styles.passwordContainer, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
                         style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Enter new password"
@@ -131,7 +131,7 @@ export default function ChangePasswordScreen() {
 
                 {/* Confirm Password */}
                 <Text style={[styles.label, { color: theme.text }]}>Confirm Password</Text>
-                <View style={[styles.passwordContainer, { borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0', backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
+                <View style={[styles.passwordContainer, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
                     <TextInput
                         style={[styles.passwordInput, { color: theme.text }]}
                         placeholder="Confirm new password"
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: '#00B1EB', // Updated border color
         fontSize: 16,
     },
     passwordContainer: {
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 8,
         borderWidth: 1,
+        borderColor: '#00B1EB', // Updated border color
         paddingHorizontal: 16,
         paddingVertical: 12,
     },

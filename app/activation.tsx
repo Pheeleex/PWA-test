@@ -101,9 +101,9 @@ export default function ActivationScreen() {
                                     {
                                         color: theme.text,
                                         backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F9F9F9',
-                                        borderColor: colorScheme === 'dark' ? '#3A3A3C' : '#E0E0E0'
+                                        borderColor: '#00B1EB'
                                     },
-                                    digit ? { borderColor: '#00B1EB', backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff' } : null
+                                    digit ? { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff' } : null
                                 ]}
                                 value={digit}
                                 onChangeText={(text) => handleChange(text, index)}

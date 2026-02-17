@@ -18,7 +18,8 @@ export default function DrawerLayout() {
             <Drawer
                 drawerContent={(props) => <CustomDrawerContent {...props} />}
                 screenOptions={({ navigation }) => ({
-                    drawerPosition: 'right',
+                    drawerType: 'front', // Make drawer act like a modal
+                    drawerPosition: 'right', // Open from right
                     headerStyle: {
                         backgroundColor: '#0E2B63',
                         height: 110, // Increased height for padding
@@ -97,7 +98,8 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Profile',
                         title: 'Profile',
-                        drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+                        drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={'#747474'} />,
+                        drawerLabelStyle: { color: '#0E2B63', marginLeft: 0, fontSize: 14, fontWeight: '500' }
                     }}
                 />
                 <Drawer.Screen
@@ -105,7 +107,8 @@ export default function DrawerLayout() {
                     options={{
                         drawerLabel: 'Settings',
                         title: 'Settings',
-                        drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+                        drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={'#747474'} />,
+                        drawerLabelStyle: { color: '#0E2B63', marginLeft: 0, fontSize: 14, fontWeight: '500' }
                     }}
                 />
                 <Drawer.Screen
