@@ -118,7 +118,7 @@ export default function ActivationScreen() {
 
                     <View style={styles.actionRow}>
                         <TouchableOpacity onPress={handleResendCode} style={styles.resendButton}>
-                            <Text style={styles.resendButtonText}>Resend Code</Text>
+                            <Text style={[styles.resendButtonText, { color: theme.icon2 }]}>Resend Code</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={handleActivation} style={styles.activateButton}>
@@ -201,7 +201,6 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     resendButtonText: {
-        color: '#0E2B63',
         fontSize: 16,
         fontWeight: '500',
     },

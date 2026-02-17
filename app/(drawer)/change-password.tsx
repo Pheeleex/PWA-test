@@ -159,7 +159,7 @@ export default function ChangePasswordScreen() {
 
                 {/* Forgot Password Link */}
                 <TouchableOpacity onPress={handleForgotPassword} style={styles.linkContainer}>
-                    <Text style={styles.linkText}>Forgot Password?</Text>
+                    <Text style={[styles.linkText, { color: colorScheme === 'dark' ? '#8999f4ff' : '#000629' }]}>Forgot Password?</Text>
                 </TouchableOpacity>
 
             </ScrollView>
@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     linkText: {
-        color: '#000629',
         fontSize: 16,
         fontWeight: '500',
     },

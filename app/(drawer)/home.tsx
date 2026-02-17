@@ -56,7 +56,7 @@ export default function HomeScreen() {
                             <Ionicons name="globe-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>City/Region</Text>
-                        <Text style={[styles.cardValue, { color: theme.text }]}>North-West</Text>
+                        <Text style={[styles.cardValue, { color: "#0E2B63" }]}>North-West</Text>
                     </View>
 
                     <View style={[styles.card, { backgroundColor: '#E8F3E7' }]}>
@@ -64,7 +64,7 @@ export default function HomeScreen() {
                             <Ionicons name="location-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>Location</Text>
-                        <Text style={[styles.cardValue, { color: theme.text }]}>Lagos, NG</Text>
+                        <Text style={[styles.cardValue, { color: '#0E2B63' }]}>Lagos, NG</Text>
                     </View>
 
                     <View style={[styles.card, { backgroundColor: '#FDF4E2' }]}>
@@ -72,7 +72,7 @@ export default function HomeScreen() {
                             <Ionicons name="person-outline" size={32} color="#0E2B63" />
                         </View>
                         <Text style={styles.cardTitle}>Role</Text>
-                        <Text style={[styles.cardValue, { color: theme.text }]}>Field Agent</Text>
+                        <Text style={[styles.cardValue, { color: '#0E2B63' }]}>Field Agent</Text>
                     </View>
                 </View>
 

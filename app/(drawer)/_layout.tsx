@@ -99,7 +99,7 @@ export default function DrawerLayout() {
                         drawerLabel: 'Profile',
                         title: 'Profile',
                         drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={'#747474'} />,
-                        drawerLabelStyle: { color: '#0E2B63', marginLeft: 0, fontSize: 14, fontWeight: '500' }
+                        drawerLabelStyle: { color: theme.icon2, marginLeft: 0, fontSize: 14, fontWeight: '500' }
                     }}
                 />
                 <Drawer.Screen
@@ -108,7 +108,7 @@ export default function DrawerLayout() {
                         drawerLabel: 'Settings',
                         title: 'Settings',
                         drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={'#747474'} />,
-                        drawerLabelStyle: { color: '#0E2B63', marginLeft: 0, fontSize: 14, fontWeight: '500' }
+                        drawerLabelStyle: { color: theme.icon2, marginLeft: 0, fontSize: 14, fontWeight: '500' }
                     }}
                 />
                 <Drawer.Screen

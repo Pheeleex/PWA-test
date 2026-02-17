@@ -201,13 +201,13 @@ export default function ReportScreen() {
 
                 {/* Upload Photo */}
                 <Text style={[styles.label, { color: theme.text }]}>Upload Photo</Text>
-                <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F0F8FF', borderColor: theme.icon2 }]} onPress={pickImage}>
+                <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F0F8FF', borderColor: '#00B1EB' }]} onPress={pickImage}>
                     {image ? (
                         <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 12 }} resizeMode="cover" />
                     ) : (
                         <>
-                            <Ionicons name="camera-outline" size={32} color={theme.icon2} />
-                            <Text style={[styles.uploadText, { color: theme.icon2 }]}>Tap to upload photo</Text>
+                            <Ionicons name="camera-outline" size={32} color="#00B1EB" />
+                            <Text style={[styles.uploadText, { color: '#00B1EB' }]}>Tap to upload photo</Text>
                         </>
                     )}
                 </TouchableOpacity>
