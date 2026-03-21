@@ -39,7 +39,7 @@ export default function LoginScreen() {
     const handleCloseAlert = () => {
         setAlertVisible(false);
         if (alertConfig.type === 'success') {
-            router.replace('/(drawer)/home');
+            router.replace('/(drawer)/map');
         }
     };
 

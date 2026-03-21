@@ -1,14 +1,16 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Image, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { useNavigation } from 'expo-router';
+import { Image, TouchableOpacity, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '@/constants/theme';
 
+export const unstable_settings = {
+    initialRouteName: 'map',
+};
+
 export default function DrawerLayout() {
-    const navigation = useNavigation();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -16,6 +18,7 @@ export default function DrawerLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <StatusBar style="light" />
             <Drawer
+                initialRouteName="map"
                 drawerContent={(props) => <CustomDrawerContent {...props} />}
                 screenOptions={({ navigation }) => ({
                     drawerType: 'front', // Make drawer act like a modal
@@ -26,7 +29,7 @@ export default function DrawerLayout() {
                     },
                     headerTintColor: '#fff',
                     headerLeft: () => (
-                        <TouchableOpacity onPress={() => navigation.navigate('home')} style={{ marginBottom: 10 }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('map')} style={{ marginBottom: 10 }}>
                             <Image
                                 source={require('@/assets/images/Logo.png')}
                                 style={{ width: 30, height: 30, marginLeft: 16, resizeMode: 'contain' }}
@@ -62,18 +65,10 @@ export default function DrawerLayout() {
                 })}
             >
                 <Drawer.Screen
-                    name="home"
-                    options={{
-                        drawerLabel: 'Home',
-                        title: 'Promolocation',
-                        drawerItemStyle: { display: 'none' }
-                    }}
-                />
-                <Drawer.Screen
                     name="map"
                     options={{
                         drawerLabel: 'Map View',
-                        title: 'Map',
+                        title: 'Promolocation',
                         drawerItemStyle: { display: 'none' }
                     }}
                 />
