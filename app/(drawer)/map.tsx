@@ -69,6 +69,24 @@ const ACTIVATION_ZONES: ActivationZone[] = [
     center: { latitude: 6.6375, longitude: 3.35555 },
     radius: 25,
   },
+  {
+    id: 'titilayo-4',
+    name: 'Titilayo Test Point 4',
+    center: { latitude: 6.632727187933099, longitude: 3.3615263470127994 },
+    radius: 25,
+  },
+  {
+    id: 'titilayo-5',
+    name: 'Titilayo Test Point 5',
+    center: { latitude: 6.632812444143604, longitude: 3.3614619739978613 },
+    radius: 25,
+  },
+  {
+    id: 'titilayo-6',
+    name: 'Titilayo Test Point 6',
+    center: { latitude: 6.629602, longitude:3.360962},
+    radius: 25,
+  }
 ];
 
 function haversineDistanceInMeters(point1: LatLng, point2: LatLng) {
