@@ -20,6 +20,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library so you can select images for promotions."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyAoR_Q8E99HuBg5xHygksHfjB1_uF9_yM8"
       }
     },
     "android": {

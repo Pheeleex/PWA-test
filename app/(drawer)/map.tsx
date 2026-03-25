@@ -87,6 +87,12 @@ const ACTIVATION_ZONES: ActivationZone[] = [
     name: 'Titilayo Test Point 6',
     center: { latitude: 6.629602, longitude:3.360962},
     radius: 25,
+  },
+  {
+    id: 'titilayo-7',
+    name: 'Kalakuta museum',
+    center: { latitude: 6.602596626968706, longitude: 3.3467981000000004 },
+    radius: 25,
   }
 ];
 
