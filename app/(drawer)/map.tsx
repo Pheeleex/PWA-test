@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import ScreenHeader from '@/components/ScreenHeader';
 import { Colors } from '@/constants/theme';
 
+
 type LatLng = {
   latitude: number;
   longitude: number;
