@@ -21,7 +21,7 @@ export default function LoginScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
-    const [username, setUsername] = useState('');
+    const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false);
@@ -44,8 +44,8 @@ export default function LoginScreen() {
     };
 
     const handleLogin = () => {
-        if (!username || !password) {
-            showAlert('Error', 'Please enter both username and password.', 'error');
+        if (!userId || !password) {
+            showAlert('Error', 'Please enter both User ID and password.', 'error');
             return;
         }
         // Mock login success
@@ -66,7 +66,7 @@ export default function LoginScreen() {
 
                 <View style={styles.form}>
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.label, { color: theme.icon2 }]}>Email/User ID</Text>
+                        <Text style={[styles.label, { color: theme.icon2 }]}>User ID</Text>
                         <TextInput
                             style={[
                                 styles.input,
@@ -76,10 +76,10 @@ export default function LoginScreen() {
                                     backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff'
                                 }
                             ]}
-                            placeholder="Enter your username"
+                            placeholder="Enter your User ID"
                             placeholderTextColor={theme.icon}
-                            value={username}
-                            onChangeText={setUsername}
+                            value={userId}
+                            onChangeText={setUserId}
                             autoCapitalize="none"
                         />
                     </View>

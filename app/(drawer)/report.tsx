@@ -5,16 +5,8 @@ import ScreenHeader from '@/components/ScreenHeader';
 import CustomAlert from '@/components/CustomAlert';
 import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '@/constants/theme';
-
-const incidentCategories = [
-    { label: 'Accident', value: 'accident' },
-    { label: 'Maintenance', value: 'maintenance' },
-    { label: 'Security', value: 'security' },
-    { label: 'Other', value: 'other' },
-];
 
 export default function ReportScreen() {
     const router = useRouter();
@@ -25,10 +17,8 @@ export default function ReportScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
-    const [category, setCategory] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<string | null>(null);
-    const [isFocus, setIsFocus] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
         title: '',
@@ -47,7 +37,7 @@ export default function ReportScreen() {
             if (isFromLogin) {
                 router.replace('/login');
             } else {
-                router.push('/(drawer)/home');
+                router.replace('/(drawer)/map');
             }
         }
     };
@@ -85,10 +75,6 @@ export default function ReportScreen() {
     }, [router, isFromLogin, params.ref]);
 
     const handleSubmit = () => {
-        if (!category) {
-            showAlert('Missing Information', 'Please select an issue category.', 'error');
-            return;
-        }
         showAlert('Report Submitted', 'Your incident report has been submitted successfully.', 'success');
     };
 
@@ -151,38 +137,6 @@ export default function ReportScreen() {
                 } : undefined}
             />
             <ScrollView contentContainerStyle={styles.scrollContent}>
-
-                {/* Issue Category */}
-                <Text style={[styles.label, { color: theme.text }]}>Issue Category</Text>
-                <Dropdown
-                    style={[styles.dropdown, isFocus && { borderColor: '#00B1EB' }, {
-                        backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
-                    }]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={[styles.selectedTextStyle, { color: theme.text }]}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    iconStyle={styles.iconStyle}
-                    data={incidentCategories}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={!isFocus ? 'Select Category' : '...'}
-                    searchPlaceholder="Search..."
-                    value={category}
-                    onFocus={() => setIsFocus(true)}
-                    onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                        setCategory(item.value);
-                        setIsFocus(false);
-                    }}
-                    renderItem={(item) => (
-                        <View style={[styles.item, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff' }]}>
-                            <Text style={[styles.textItem, { color: theme.text }]}>{item.label}</Text>
-                        </View>
-                    )}
-                />
-
                 {/* Description */}
                 <Text style={[styles.label, { color: theme.text }]}>Description</Text>
                 <TextInput
@@ -249,38 +203,6 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderWidth: 1,
         borderColor: '#00B1EB', // Updated border color
-        fontSize: 16,
-    },
-    dropdown: {
-        height: 50,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        borderWidth: 1,
-        borderColor: '#00B1EB', // Updated border color
-    },
-    iconStyle: {
-        width: 20,
-        height: 20,
-    },
-    placeholderStyle: {
-        fontSize: 16,
-        color: '#999',
-    },
-    selectedTextStyle: {
-        fontSize: 16,
-    },
-    inputSearchStyle: {
-        height: 40,
-        fontSize: 16,
-    },
-    item: {
-        padding: 17,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    textItem: {
-        flex: 1,
         fontSize: 16,
     },
     textArea: {

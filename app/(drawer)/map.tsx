@@ -53,47 +53,35 @@ const LABEL_VERTICAL_OFFSET = 54;
 
 const ACTIVATION_ZONES: ActivationZone[] = [
   {
-    id: 'titilayo-1',
-    name: 'Titilayo Test Point 1',
-    center: { latitude: 6.632139865614449, longitude: 3.3620775269210394 },
-    radius: 25,
+    id: 'activation-point-1',
+    name: 'Activation Point 1',
+    center: { latitude: 52.464149932863826, longitude: 9.596046764111339 },
+    radius: 50,
   },
   {
-    id: 'titilayo-2',
-    name: 'Titilayo Test Point 2',
-    center: { latitude: 6.636118032464394, longitude: 3.3592141602207057 },
-    radius: 25,
+    id: 'activation-point-2',
+    name: 'Activation Point 2',
+    center: { latitude: 52.50087535085899, longitude: 13.322425441755252 },
+    radius: 50,
   },
   {
-    id: 'titilayo-3',
-    name: 'Titilayo Test Point 3',
-    center: { latitude: 6.6375, longitude: 3.35555 },
-    radius: 25,
+    id: 'activation-point-3',
+    name: 'Activation Point 3',
+    center: { latitude: 52.54369896093982, longitude: 13.34714467895819 },
+    radius: 50,
   },
   {
-    id: 'titilayo-4',
-    name: 'Titilayo Test Point 4',
-    center: { latitude: 6.632727187933099, longitude: 3.3615263470127994 },
-    radius: 25,
+    id: 'activation-point-4',
+    name: 'Activation Point 4',
+    center: { latitude: 52.47976153691424, longitude: 13.43812520477455 },
+    radius: 50,
   },
   {
-    id: 'titilayo-5',
-    name: 'Titilayo Test Point 5',
-    center: { latitude: 6.632812444143604, longitude: 3.3614619739978613 },
-    radius: 25,
+    id: 'activation-point-5',
+    name: 'Activation Point 5',
+    center: { latitude: 52.53471990733561, longitude: 13.19608267382913 },
+    radius: 50,
   },
-  {
-    id: 'titilayo-6',
-    name: 'Titilayo Test Point 6',
-    center: { latitude: 6.629602, longitude:3.360962},
-    radius: 25,
-  },
-  {
-    id: 'titilayo-7',
-    name: 'Kalakuta museum',
-    center: { latitude: 6.602596626968706, longitude: 3.3467981000000004 },
-    radius: 25,
-  }
 ];
 
 function haversineDistanceInMeters(point1: LatLng, point2: LatLng) {
@@ -310,10 +298,10 @@ export default function MapScreen() {
     : 'Outside activation zone';
 
   const initialRegion: Region = {
-    latitude: 6.63762,
-    longitude: 3.35571,
-    latitudeDelta: 0.003,
-    longitudeDelta: 0.003,
+    latitude: 52.50392444690182,
+    longitude: 11.517085984442945,
+    latitudeDelta: 0.11,
+    longitudeDelta: 4.7,
   };
 
   const updateZoneLabelPositions = useCallback(async () => {

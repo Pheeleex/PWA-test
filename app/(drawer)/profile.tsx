@@ -10,6 +10,7 @@ export default function ProfileScreen() {
     const router = useRouter();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
+    const userId = 'USER-88392';
 
     const [image, setImage] = useState<string | null>('https://picsum.photos/200');
     const [modalVisible, setModalVisible] = useState(false);
@@ -123,15 +124,11 @@ export default function ProfileScreen() {
                             )}
                         </View>
                     </View>
-                    <Text style={[styles.userName, { color: theme.text }]}>John Doe</Text>
+                    <Text style={[styles.userIdText, { color: theme.text }]}>{userId}</Text>
                 </View>
 
                 <View style={[styles.detailsContainer, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F9F9F9' }]}>
-                    <DetailItem label="Email" value="johndoe@example.com" theme={theme} />
-                    <DetailItem label="User ID" value="USER-88392" theme={theme} />
-                    <DetailItem label="Assigned Region" value="North-East District" theme={theme} />
-                    <DetailItem label="Location" value="New York, NY" theme={theme} />
-                    <DetailItem label="Status" value="Active" statusColor="#4CAF50" theme={theme} />
+                    <DetailItem label="User ID" value={userId} theme={theme} />
                 </View>
 
             </ScrollView>
@@ -219,7 +216,7 @@ const styles = StyleSheet.create({
     deleteButton: {
         backgroundColor: '#FF3B30',
     },
-    userName: {
+    userIdText: {
         fontSize: 24,
         fontWeight: 'bold',
     },

@@ -55,7 +55,7 @@ export default function ActivationScreen() {
     };
 
     const handleResendCode = () => {
-        showAlert('Code Sent', 'A new activation code has been sent to your email.', 'success');
+        showAlert('Code Sent', 'A new activation code has been sent for your User ID.', 'success');
     };
 
     const handleChange = (text: string, index: number) => {
@@ -87,7 +87,7 @@ export default function ActivationScreen() {
                 style={[styles.content, { paddingBottom: 40 + insets.bottom }]}
             >
                 <View style={styles.header}>
-                    <Text style={[styles.subtitle, { color: theme.text }]}>Enter the 6-digit code sent to your email.</Text>
+                    <Text style={[styles.subtitle, { color: theme.text }]}>Enter the 6-digit code sent for your User ID.</Text>
                 </View>
 
                 <View style={styles.form}>

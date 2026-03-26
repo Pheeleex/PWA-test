@@ -10,7 +10,7 @@ export default function ForgotPasswordScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
-    const [email, setEmail] = useState('');
+    const [userId, setUserId] = useState('');
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
         title: '',
@@ -42,12 +42,12 @@ export default function ForgotPasswordScreen() {
     };
 
     const handleSendCode = () => {
-        if (!email) {
-            showAlert('Error', 'Please enter your email address.', 'error');
+        if (!userId) {
+            showAlert('Error', 'Please enter your User ID.', 'error');
             return;
         }
         // Mock sending code
-        showAlert('Verification Code Sent', `A verification code has been sent to ${email}.`, 'success');
+        showAlert('Verification Code Sent', `A verification code has been sent for User ID ${userId}.`, 'success');
     };
 
     return (
@@ -55,11 +55,11 @@ export default function ForgotPasswordScreen() {
             <ScreenHeader title="Forgot Password" withSafeArea={true} showBackButton={true} />
             <View style={styles.content}>
                 <Text style={[styles.description, { color: theme.icon }]}>
-                    Enter your email address and we'll send you a verification code.
+                    Enter your User ID to receive a verification code.
                 </Text>
 
                 <View style={styles.inputContainer}>
-                    <Text style={[styles.label, { color: theme.text }]}>Email Address</Text>
+                    <Text style={[styles.label, { color: theme.text }]}>User ID</Text>
                     <TextInput
                         style={[
                             styles.input,
@@ -68,12 +68,11 @@ export default function ForgotPasswordScreen() {
                                 backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#fff'
                             }
                         ]}
-                        placeholder="name@example.com"
+                        placeholder="Enter your User ID"
                         placeholderTextColor={theme.icon}
-                        value={email}
-                        onChangeText={setEmail}
+                        value={userId}
+                        onChangeText={setUserId}
                         autoCapitalize="none"
-                        keyboardType="email-address"
                     />
                 </View>
 
