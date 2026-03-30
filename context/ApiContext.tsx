@@ -25,6 +25,23 @@ export interface Incident {
   admin_note?: string;
 }
 
+export interface Location {
+  id?: string | number;
+  location_id?: string | number;
+  name?: string;
+  location_name?: string;
+  category?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  is_active?: boolean | number;
+  description?: string;
+  address?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface CreateIncidentPayload {
   incident_name: string;
   issue_category?: string;
@@ -40,20 +57,34 @@ interface GetIncidentsFilters {
   issue_category?: string;
 }
 
+interface GetActiveLocationsFilters {
+  id?: string | number;
+  category?: string;
+  city?: string;
+  search?: string;
+}
+
 interface ApiContextType {
   // Global loading states
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
 
-  // General app state tracking (e.g. incidents, reports)
+  // General app state tracking (incidents, reports, locations)
   incidents: Incident[];
   setIncidents: (incidents: Incident[]) => void;
+  locations: Location[];
+  setLocations: (locations: Location[]) => void;
 
   // Incident management
   createIncident: (
     reportContent: CreateIncidentPayload,
   ) => Promise<Incident | null>;
   getIncidents: (filters?: GetIncidentsFilters) => Promise<Incident[] | null>;
+
+  // Location management
+  getActiveLocations: (
+    filters?: GetActiveLocationsFilters,
+  ) => Promise<Location[] | null>;
 
   // Report submission (legacy)
   submitReport: (reportContent: {
@@ -105,6 +136,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       photo: "https://picsum.photos/300/200?random=3",
     },
   ]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [apiError, setError] = useState<string | null>(null);
 
   const { token, apiKey, logout, user } = useAuth();
@@ -319,6 +351,73 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  /**
+   * Get active locations
+   * GET/POST /api/activate_location
+   * Retrieves all ACTIVE locations (is_active = 1)
+   * REQUIRED: token
+   * OPTIONAL: id, category, city, search
+   */
+  const getActiveLocations = async (
+    filters?: GetActiveLocationsFilters,
+  ): Promise<Location[] | null> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("token", apiKey || "");
+
+      if (filters?.id) {
+        formData.append("id", String(filters.id));
+      }
+      if (filters?.category) {
+        formData.append("category", filters.category);
+      }
+      if (filters?.city) {
+        formData.append("city", filters.city);
+      }
+      if (filters?.search) {
+        formData.append("search", filters.search);
+      }
+
+      console.log(
+        "[API POST] Get Active Locations Request:",
+        filters || "No filters",
+      );
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`;
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log("[API Response] Get Active Locations:", {
+        status: response.status,
+        total: Array.isArray(data) ? data.length : data.locations?.length || 0,
+      });
+
+      if (response.status === 200) {
+        // Handle both array and object responses
+        const locationsList = Array.isArray(data)
+          ? data
+          : data.locations || data.data || [];
+        setLocations(locationsList);
+        return locationsList;
+      } else {
+        throw new Error(data.message || "Failed to fetch locations");
+      }
+    } catch (error: any) {
+      const message = error.message || "Failed to fetch locations";
+      setError(message);
+      console.error("[API Error] Get Active Locations:", error);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const submitReport = async ({
     title,
     description,
@@ -344,7 +443,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const result = await fetchData<any>(
-        API_CONFIG.ENDPOINTS.REPORTS || "/reports",
+        API_CONFIG.ENDPOINTS.GET_INCIDENTS || "/reports",
         {
           method: "POST",
           body: formData,
@@ -379,8 +478,11 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         setLoading,
         incidents,
         setIncidents,
+        locations,
+        setLocations,
         createIncident,
         getIncidents,
+        getActiveLocations,
         submitReport,
         apiError,
         setError,

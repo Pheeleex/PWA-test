@@ -6,10 +6,9 @@ export const API_CONFIG = {
     LOGIN: "login",
     UPDATE_PASSWORD: "update_password",
     UPDATE_PROFILE: "update_profile",
-    INCIDENTS: "incidents",
-    REPORTS: "reports",
     CREATE_INCIDENT: "create_incident",
     GET_INCIDENTS: "get_incidents",
+    GET_ACTIVE_LOCATIONS: "activate_location",
   },
 };
 
