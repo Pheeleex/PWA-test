@@ -7,9 +7,11 @@ import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '@/constants/theme';
+import { useApi } from '@/context';
 
 export default function ReportScreen() {
     const router = useRouter();
+    const { addIncident } = useApi();
     const navigation = useNavigation<DrawerNavigationProp<any>>();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
@@ -75,6 +77,21 @@ export default function ReportScreen() {
     }, [router, isFromLogin, params.ref]);
 
     const handleSubmit = () => {
+        if (!description) {
+            showAlert('Error', 'Please provide a description of the incident.', 'error');
+            return;
+        }
+
+        const newIncident = {
+            id: Date.now().toString(),
+            title: 'User Reported Incident', // Using a placeholder title
+            date: 'Just now',
+            status: 'Pending',
+            description,
+            image: image || undefined,
+        };
+
+        addIncident(newIncident);
         showAlert('Report Submitted', 'Your incident report has been submitted successfully.', 'success');
     };
 

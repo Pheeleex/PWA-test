@@ -15,9 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import CustomAlert from '@/components/CustomAlert';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const { login } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -39,17 +41,22 @@ export default function LoginScreen() {
     const handleCloseAlert = () => {
         setAlertVisible(false);
         if (alertConfig.type === 'success') {
-            router.replace('/(drawer)/map');
+            router.replace('/(drawer)/map' as any);
         }
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!userId || !password) {
             showAlert('Error', 'Please enter both User ID and password.', 'error');
             return;
         }
-        // Mock login success
-        showAlert('Success', 'Login successful!', 'success');
+
+        try {
+            await login({ userId, password });
+            showAlert('Success', 'Login successful!', 'success');
+        } catch (error: any) {
+            showAlert('Error', error.message || 'Failed to login. Please try again.', 'error');
+        }
     };
 
     return (

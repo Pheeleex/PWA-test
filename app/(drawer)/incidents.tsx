@@ -4,45 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors } from '@/constants/theme';
-
-// Mock Data
-const MOCK_INCIDENTS = [
-    {
-        id: '1',
-        title: 'Minor Accident',
-        date: '2 hours ago',
-        status: 'Pending',
-        description: 'Two cars collided at the intersection. No injuries reported, but traffic is blocked.',
-        image: 'https://picsum.photos/300/200?random=1',
-    },
-    {
-        id: '2',
-        title: 'Road Maintenance',
-        date: '5 hours ago',
-        status: 'In Progress',
-        description: 'Road repair work ongoing near the city center. Expect delays.',
-        image: 'https://picsum.photos/300/200?random=2',
-    },
-    {
-        id: '3',
-        title: 'Security Alert',
-        date: '1 day ago',
-        status: 'Resolved',
-        description: 'Suspicious activity reported. Police investigated and cleared the area.',
-        image: 'https://picsum.photos/300/200?random=3',
-    },
-    {
-        id: '4',
-        title: 'Traffic Light Failure',
-        date: '2 days ago',
-        status: 'Resolved',
-        description: 'Traffic lights at Main St not working. Technician repaired it.',
-        image: 'https://picsum.photos/300/200?random=4',
-    },
-];
+import { useApi } from '@/context';
 
 export default function IncidentsScreen() {
     const router = useRouter();
+    const { incidents } = useApi();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
     const colorScheme = useColorScheme() ?? 'light';
@@ -67,7 +33,7 @@ export default function IncidentsScreen() {
         return () => subscription.remove();
     }, [router, showBack]);
 
-    const filteredIncidents = MOCK_INCIDENTS.filter(incident =>
+    const filteredIncidents = incidents.filter(incident =>
         incident.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
