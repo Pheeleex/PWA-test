@@ -311,31 +311,19 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("token", apiKey || "");
-      formData.append("user_id", String(user?.user_id || ""));
+      const params = new URLSearchParams();
+      params.append("token", apiKey || "");
+      params.append("user_id", String(user?.user_id || ""));
 
-      if (filters?.incident_id) {
-        formData.append("incident_id", String(filters.incident_id));
-      }
-      if (filters?.status) {
-        formData.append("status", filters.status);
-      }
-      if (filters?.issue_category) {
-        formData.append("issue_category", filters.issue_category);
-      }
-
-      console.log("[API POST] Get Incidents Payload:", {
+      console.log("[API GET] Get Incidents Payload:", {
         token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
         user_id: user?.user_id || "NOT_PROVIDED",
-        filters: filters || "No filters",
         endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_INCIDENTS}`,
       });
 
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_INCIDENTS}`;
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_INCIDENTS}?${params.toString()}`;
       const response = await fetch(url, {
-        method: "POST",
-        body: formData,
+        method: "GET",
       });
 
       const data = await response.json();
@@ -376,9 +364,15 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log("[API] Get Active Locations - Token available:", !!apiKey);
-      console.log("[API] Get Active Locations - Token value:", apiKey ? `${apiKey.substring(0, 10)}...` : "NULL");
-      console.log("[API] Get Active Locations - Filters:", filters || "No filters");
-      
+      console.log(
+        "[API] Get Active Locations - Token value:",
+        apiKey ? `${apiKey.substring(0, 10)}...` : "NULL",
+      );
+      console.log(
+        "[API] Get Active Locations - Filters:",
+        filters || "No filters",
+      );
+
       const formData = new FormData();
       formData.append("token", apiKey || "");
 
@@ -395,14 +389,11 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         formData.append("search", filters.search);
       }
 
-      console.log(
-        "[API POST] Get Active Locations Payload:",
-        {
-          token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
-          filters: filters || "No filters",
-          endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`,
-        }
-      );
+      console.log("[API POST] Get Active Locations Payload:", {
+        token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
+        filters: filters || "No filters",
+        endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`,
+      });
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`;
       const response = await fetch(url, {
