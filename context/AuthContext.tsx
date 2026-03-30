@@ -265,10 +265,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   ) => {
     setIsLoading(true);
     try {
+      // Validate that we have both token and jwt
+      if (!apiKey) {
+        throw new Error("API key is missing. Please log in again.");
+      }
+      if (!token) {
+        throw new Error("Access token is missing. Please log in again.");
+      }
+      if (!user?.user_id) {
+        throw new Error("User ID is missing. Please log in again.");
+      }
+
       const formData = new FormData();
-      formData.append("token", apiKey || "");
-      formData.append("jwt", token || "");
-      formData.append("user_id", String(user?.user_id || ""));
+
+      // Add authentication tokens FIRST
+      formData.append("token", apiKey);
+      formData.append("jwt", token);
+      formData.append("user_id", String(user.user_id));
 
       // Handle fullname: if provided, split into first_name and last_name
       if (profileData.fullname) {
@@ -281,10 +294,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         formData.append("last_name", last_name);
       }
 
-      // Append other profile fields
+      // Append other profile fields (excluding fields we've already handled)
       Object.keys(profileData).forEach((key) => {
-        if (key !== "fullname") {
-          // Skip fullname as we already handled it
+        if (
+          key !== "fullname" &&
+          key !== "first_name" &&
+          key !== "last_name" &&
+          key !== "user_id"
+        ) {
           const value = (profileData as any)[key];
           if (value !== undefined && value !== null) {
             formData.append(key, String(value));
@@ -302,7 +319,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         } as any);
       }
 
-      console.log("[API POST] Update Profile Request (FormData):", profileData);
+      console.log("[API POST] Update Profile Request (FormData):", {
+        token: apiKey ? `${apiKey}` : "MISSING",
+        jwt: token ? `${token}` : "MISSING",
+        userId: user?.user_id,
+        profileData,
+      });
 
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROFILE}`,
@@ -317,11 +339,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         status: response.status,
         data,
       });
+
+      if (response.status === 401) {
+        console.error(
+          "[API Error] Unauthorized - Invalid or expired token. Please log in again.",
+        );
+        await logout();
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
       if (response.status === 200) {
         const updatedUser = data.user || data;
         setUser((prev: User | null) =>
           prev ? { ...prev, ...updatedUser } : null,
         );
+        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
       } else {
         throw new Error(data.message || "Failed to update profile");
       }
