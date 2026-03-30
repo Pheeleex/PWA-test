@@ -48,6 +48,7 @@ interface AuthContextType {
     profileData: Partial<User>,
     imageUri?: string | null,
   ) => Promise<void>;
+  resetPassword: (promoter_id: string) => Promise<void>;
   fetchApiKey: () => Promise<string | null>;
 }
 
@@ -365,6 +366,66 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const resetPassword = async (promoter_id: string) => {
+    setIsLoading(true);
+    try {
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error(
+          "Unable to retrieve API key. Please check your internet connection.",
+        );
+      }
+
+      const payload = {
+        token: currentApiKey,
+        promoter_id,
+      };
+
+      console.log("[API POST] Reset Password Request:", {
+        url: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RESET_PASSWORD}`,
+        promoter_id,
+      });
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RESET_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      const data = await response.json();
+      console.log("[API Response] Reset Password:", {
+        status: response.status,
+        data,
+      });
+
+      if (response.status === 200) {
+        // Success - password has been reset
+        return;
+      } else {
+        let errorMsg =
+          data.message || "Failed to reset password. Please try again.";
+        if (response.status === 404) {
+          errorMsg = "Promoter ID not found.";
+        }
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error("[API Error] Reset Password:", error.message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isAuthenticated = !!token;
 
   return (
@@ -383,6 +444,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updateUser,
         updatePassword,
         updateProfile,
+        resetPassword,
         fetchApiKey,
       }}
     >

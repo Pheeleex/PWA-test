@@ -257,11 +257,15 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         } as any);
       }
 
-      console.log("[API POST] Create Incident Request:", {
+      console.log("[API POST] Create Incident Payload:", {
+        token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
+        user_id: finalUserId,
+        promoter_id: finalPromoterId,
         incident_name,
         issue_category,
         description,
         hasPhoto: !!photo,
+        endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_INCIDENT}`,
       });
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_INCIDENT}`;
@@ -321,7 +325,12 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         formData.append("issue_category", filters.issue_category);
       }
 
-      console.log("[API POST] Get Incidents Request:", filters || "No filters");
+      console.log("[API POST] Get Incidents Payload:", {
+        token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
+        user_id: user?.user_id || "NOT_PROVIDED",
+        filters: filters || "No filters",
+        endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_INCIDENTS}`,
+      });
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_INCIDENTS}`;
       const response = await fetch(url, {
@@ -332,7 +341,8 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       const data = await response.json();
       console.log("[API Response] Get Incidents:", {
         status: response.status,
-        total: data.total,
+        data: data,
+        total: data.total || data.incidents?.length || 0,
       });
 
       if (response.status === 200 && data.incidents) {
@@ -365,6 +375,10 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     setError(null);
 
     try {
+      console.log("[API] Get Active Locations - Token available:", !!apiKey);
+      console.log("[API] Get Active Locations - Token value:", apiKey ? `${apiKey.substring(0, 10)}...` : "NULL");
+      console.log("[API] Get Active Locations - Filters:", filters || "No filters");
+      
       const formData = new FormData();
       formData.append("token", apiKey || "");
 
@@ -382,8 +396,12 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       console.log(
-        "[API POST] Get Active Locations Request:",
-        filters || "No filters",
+        "[API POST] Get Active Locations Payload:",
+        {
+          token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
+          filters: filters || "No filters",
+          endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`,
+        }
       );
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`;
@@ -395,6 +413,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       const data = await response.json();
       console.log("[API Response] Get Active Locations:", {
         status: response.status,
+        data: data,
         total: Array.isArray(data) ? data.length : data.locations?.length || 0,
       });
 

@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   BackHandler,
   useColorScheme,
+  RefreshControl,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,13 +21,14 @@ import { useApi } from "@/context";
 
 export default function IncidentsScreen() {
   const router = useRouter();
-  const { incidents } = useApi();
+  const { incidents, getIncidents } = useApi();
   const params = useLocalSearchParams();
   const showBack = !!params.ref;
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -47,6 +49,17 @@ export default function IncidentsScreen() {
 
     return () => subscription.remove();
   }, [router, showBack]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await getIncidents();
+    } catch (error) {
+      console.error("Error refreshing incidents:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const filteredIncidents = incidents.filter((incident) => {
     const title = incident?.incident_name || incident?.title || "";
@@ -164,6 +177,17 @@ export default function IncidentsScreen() {
         }
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.icon}
+            colors={["#00B1EB"]}
+            progressBackgroundColor={
+              colorScheme === "dark" ? "#2C2C2E" : "#fff"
+            }
+          />
+        }
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: theme.icon }]}>
             No incidents found.
