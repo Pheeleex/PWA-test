@@ -7,8 +7,11 @@ import CustomAlert from '@/components/CustomAlert';
 import { Colors } from '@/constants/theme';
 import { useLocalSearchParams } from 'expo-router';
 
+import { useAuth } from '@/context';
+
 export default function ChangePasswordScreen() {
     const router = useRouter();
+    const { updatePassword } = useAuth();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
     const colorScheme = useColorScheme() ?? 'light';
@@ -57,7 +60,7 @@ export default function ChangePasswordScreen() {
         }
     };
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             showAlert('Missing Fields', 'Please fill in all fields.', 'error');
             return;
@@ -66,7 +69,21 @@ export default function ChangePasswordScreen() {
             showAlert('Error', 'New passwords do not match.', 'error');
             return;
         }
-        showAlert('Success', 'Password updated successfully.', 'success');
+        if (newPassword === currentPassword) {
+            showAlert('Error', 'New password must be different from old password.', 'error');
+            return;
+        }
+
+        try {
+            await updatePassword({
+                old_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            });
+            showAlert('Success', 'Password updated successfully.', 'success');
+        } catch (error: any) {
+            showAlert('Error', error.message || 'Failed to update password.', 'error');
+        }
     };
 
     const handleForgotPassword = () => {

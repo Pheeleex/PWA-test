@@ -124,8 +124,11 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
 // MAIN SCREEN
 // --------------------------------------------------------
 
+import { useAuth } from '@/context';
+
 export default function OnboardingScreen() {
     const router = useRouter();
+    const { completeOnboarding } = useAuth();
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
     const slidesRef = useRef<FlatList>(null);
@@ -138,15 +141,17 @@ export default function OnboardingScreen() {
 
     const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
-    const scrollToNext = () => {
+    const scrollToNext = async () => {
         if (currentIndex < slides.length - 1) {
             slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
+            await completeOnboarding();
             router.replace('/login');
         }
     };
 
-    const handleSkip = () => {
+    const handleSkip = async () => {
+        await completeOnboarding();
         router.replace('/login');
     };
 

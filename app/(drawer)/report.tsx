@@ -11,7 +11,7 @@ import { useApi } from '@/context';
 
 export default function ReportScreen() {
     const router = useRouter();
-    const { addIncident } = useApi();
+    const { submitReport } = useApi();
     const navigation = useNavigation<DrawerNavigationProp<any>>();
     const params = useLocalSearchParams();
     const showBack = !!params.ref;
@@ -76,23 +76,22 @@ export default function ReportScreen() {
         return () => subscription.remove();
     }, [router, isFromLogin, params.ref]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!description) {
             showAlert('Error', 'Please provide a description of the incident.', 'error');
             return;
         }
 
-        const newIncident = {
-            id: Date.now().toString(),
-            title: 'User Reported Incident', // Using a placeholder title
-            date: 'Just now',
-            status: 'Pending',
-            description,
-            image: image || undefined,
-        };
-
-        addIncident(newIncident);
-        showAlert('Report Submitted', 'Your incident report has been submitted successfully.', 'success');
+        try {
+            await submitReport({
+                title: 'User Reported Incident', // Placeholder title
+                description,
+                image: image || undefined,
+            });
+            showAlert('Report Submitted', 'Your incident report has been submitted successfully.', 'success');
+        } catch (error: any) {
+            showAlert('Error', error.message || 'Failed to submit report. Please try again.', 'error');
+        }
     };
 
     const pickImage = async () => {

@@ -21,7 +21,7 @@ interface ApiContextType {
   // General app state tracking (e.g. incidents, reports)
   incidents: Incident[];
   setIncidents: (incidents: Incident[]) => void;
-  addIncident: (incident: Incident) => void;
+  submitReport: (reportContent: { title: string; description: string; image?: string | null }) => Promise<void>;
 
   // Error handling
   apiError: string | null;
@@ -75,12 +75,33 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setError(null);
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
+    const isFormData = options.body instanceof FormData;
+
+    // Build headers
+    const headers: any = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(apiKey ? { 'X-API-Key': apiKey } : {}),
       ...(options.headers || {}),
     };
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+      if (apiKey) headers['X-API-Key'] = apiKey; 
+    }
+
+    // Logging the request
+    console.log(`[API ${options.method || 'GET'}] Request:`, {
+      url,
+      headers,
+      body: isFormData ? '[FormData]' : (options.body ? JSON.parse(options.body as string) : null)
+    });
+
+    // In React Native, append secrets to FormData too
+    if (isFormData && options.body) {
+      const fb = options.body as FormData;
+      if (apiKey && !fb.has('token')) fb.append('token', apiKey);
+      if (token && !fb.has('jwt')) fb.append('jwt', token);
+      if (token && !fb.has('access_token')) fb.append('access_token', token);
+    }
 
     try {
       const response = await fetch(url, {
@@ -89,17 +110,18 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
 
       if (response.status === 401) {
-        // Handle unauthorized (e.g., logout)
         await logout();
         throw new Error('Your session has expired. Please log in again.');
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log(`[API Error ${response.status}]:`, errorData);
         throw new Error(errorData.message || `API Error: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log(`[API Success]:`, data);
       return data as T;
     } catch (e: any) {
       const message = e.message || 'Something went wrong';
@@ -111,8 +133,41 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addIncident = (incident: Incident) => {
-    setIncidents((prev) => [incident, ...prev]);
+  const submitReport = async ({ title, description, image }: { title: string; description: string; image?: string | null }) => {
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+
+      if (image) {
+        const uriParts = image.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        formData.append('image', {
+          uri: image,
+          name: `report_${Date.now()}.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
+      }
+
+      const result = await fetchData<any>(API_CONFIG.ENDPOINTS.REPORTS || '/reports', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (result) {
+        // Optionally add to local state if server doesn't re-fetch
+        setIncidents(prev => [{
+          id: result.id || Date.now().toString(),
+          title,
+          description,
+          status: 'Pending',
+          date: 'Just now',
+          image: image || undefined
+        }, ...prev]);
+      }
+    } catch (e: any) {
+      throw e;
+    }
   };
 
   const setLoading = (loading: boolean) => setIsLoading(loading);
@@ -124,7 +179,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setLoading,
         incidents,
         setIncidents,
-        addIncident,
+        submitReport,
         apiError,
         setError,
         fetchData,

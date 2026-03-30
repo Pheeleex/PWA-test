@@ -19,7 +19,10 @@
       "bundleIdentifier": "com.bat.promolocation",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library so you can select images for promotions."
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library so you can select images for promotions.",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance."
       },
       "config": {
         "googleMapsApiKey": "AIzaSyAoR_Q8E99HuBg5xHygksHfjB1_uF9_yM8"

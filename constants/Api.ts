@@ -3,10 +3,10 @@ export const API_CONFIG = {
   TIMEOUT: 10000,
   ENDPOINTS: {
     GET_API_KEY: 'getAPIKey',
-    LOGIN: 'login', // Update based on typical naming but using placeholders if unsure
-    REGISTER: 'register',
+    LOGIN: 'login',
+    UPDATE_PASSWORD: 'update_password',
+    UPDATE_PROFILE: 'update_profile',
     INCIDENTS: 'incidents',
-    PROFILE: 'user/profile',
     REPORTS: 'reports',
   },
 };

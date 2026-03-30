@@ -1,11 +1,27 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import API_CONFIG from '../constants/Api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import API_CONFIG from "../constants/Api";
 
 interface User {
-  id: string;
-  name: string;
+  user_id: number;
+  promoter_id: string;
   email: string;
-  role?: string;
+  fullname: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  user_role: string;
+  avatar: string;
+  active: boolean;
+  email_verified: boolean;
+  is_approved: boolean;
+  area?: string;
 }
 
 interface AuthContextType {
@@ -13,66 +29,188 @@ interface AuthContextType {
   token: string | null;
   apiKey: string | null;
   isAuthenticated: boolean;
-  login: (credentials: { userId: string; password: string }) => Promise<void>;
+  isOnboardingComplete: boolean;
+  isInitialized: boolean;
+  isLoading: boolean;
+  login: (credentials: {
+    promoter_id: string;
+    password: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
-  fetchApiKey: () => Promise<void>;
+  updatePassword: (passwords: {
+    old_password: string;
+    new_password: string;
+    confirm_password: string;
+  }) => Promise<void>;
+  updateProfile: (
+    profileData: Partial<User>,
+    imageUri?: string | null,
+  ) => Promise<void>;
+  fetchApiKey: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] =
+    useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Initial load to fetch API Key
-  React.useEffect(() => {
-    fetchApiKey();
+  // Initial load from storage
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const [storedToken, storedApiKey, onboardingStatus, storedUser] =
+          await Promise.all([
+            AsyncStorage.getItem("jwt_token"),
+            AsyncStorage.getItem("api_key"),
+            AsyncStorage.getItem("onboarding_complete"),
+            AsyncStorage.getItem("user_data"),
+          ]);
+
+        if (storedToken) setToken(storedToken);
+        if (storedApiKey) setApiKey(storedApiKey);
+        if (onboardingStatus === "true") setIsOnboardingComplete(true);
+        if (storedUser) setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Initialization Error:", error);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initialize();
   }, []);
 
-  const fetchApiKey = async () => {
+  const fetchApiKey = async (): Promise<string | null> => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_API_KEY}`);
+      console.log(`[API GET] Requesting API Key...`);
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_API_KEY}`,
+      );
       const data = await response.json();
-      if (data && data.key) {
-        setApiKey(data.key);
+      console.log(`[API Success] API Key retrieved:`, data);
+      if (Array.isArray(data) && data.length > 0 && data[0].api_key) {
+        const fetchedKey = data[0].api_key;
+        setApiKey(fetchedKey);
+        await AsyncStorage.setItem("api_key", fetchedKey);
+        return fetchedKey;
       }
+      return null;
     } catch (error) {
-      console.error('Failed to fetch API key:', error);
+      console.error("[API Error] Failed to fetch API key:", error);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const login = async (credentials: { userId: string; password: string }) => {
+  const completeOnboarding = async () => {
+    setIsOnboardingComplete(true);
+    await AsyncStorage.setItem("onboarding_complete", "true");
+  };
+
+  const login = async (credentials: {
+    promoter_id: string;
+    password: string;
+  }) => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'X-API-Key': apiKey } : {}),
-        },
-        body: JSON.stringify(credentials),
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error(
+          "Unable to retrieve API key. Please check your internet connection.",
+        );
+      }
+
+      const loginPayload = {
+        token: currentApiKey,
+        ...credentials,
+      };
+
+      console.log("[API POST] Login Request:", {
+        url: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN}`,
+        body: loginPayload,
       });
 
-      const data = await response.json();
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(loginPayload),
+        },
+      );
 
-      if (response.ok && data.token) {
-        // Assume user data comes back or use fallback
-        setUser(data.user || { id: credentials.userId, name: 'User', email: '' });
-        setToken(data.token);
+      const data = await response.json();
+      console.log("[API Response] Login:", { status: response.status, data });
+
+      if (response.status === 200 && data.access_token) {
+        const access_token = data.access_token;
+        setToken(access_token);
+
+        const userData: User = {
+          user_id: data.user_id,
+          promoter_id: data.promoter_id,
+          email: data.email,
+          fullname: data.fullname,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone,
+          user_role: data.user_role,
+          avatar: data.avatar,
+          active: data.active,
+          email_verified: data.email_verified,
+          is_approved: data.is_approved,
+        };
+        setUser(userData);
+
+        await Promise.all([
+          AsyncStorage.setItem("jwt_token", access_token),
+          AsyncStorage.setItem("user_data", JSON.stringify(userData)),
+        ]);
       } else {
-        throw new Error(data.message || 'Login failed');
+        let errorMsg = data.message || "Login failed";
+        if (response.status === 404)
+          errorMsg = "No account found with this promoter ID.";
+        if (response.status === 400)
+          errorMsg = "Invalid credentials. Check your password.";
+        if (response.status === 403) errorMsg = "Email not verified.";
+        if (response.status === 406)
+          errorMsg = "Account pending admin approval.";
+        if (response.status === 423) errorMsg = "Account has been deactivated.";
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
-      console.error('Login Error:', error);
+      console.error("[API Error] Login:", error.message);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    // Clear storage here as well
     setUser(null);
     setToken(null);
+    await Promise.all([
+      AsyncStorage.removeItem("jwt_token"),
+      AsyncStorage.removeItem("user_data"),
+    ]);
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -81,10 +219,141 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updatePassword = async (passwords: {
+    old_password: string;
+    new_password: string;
+    confirm_password: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      console.log("[API POST] Update Password Request:", passwords);
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            token: apiKey,
+            jwt: token,
+            ...passwords,
+          }),
+        },
+      );
+
+      const data = await response.json();
+      console.log("[API Response] Update Password:", {
+        status: response.status,
+        data,
+      });
+      if (response.status !== 200) {
+        throw new Error(data.message || "Failed to update password");
+      }
+    } catch (error: any) {
+      console.error("[API Error] Update Password:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateProfile = async (
+    profileData: Partial<User>,
+    imageUri?: string | null,
+  ) => {
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("token", apiKey || "");
+      formData.append("jwt", token || "");
+      formData.append("user_id", String(user?.user_id || ""));
+
+      // Handle fullname: if provided, split into first_name and last_name
+      if (profileData.fullname) {
+        const nameParts = profileData.fullname.trim().split(/\s+/);
+        const first_name = nameParts[0];
+        const last_name = nameParts.slice(1).join(" ") || nameParts[0];
+
+        formData.append("fullname", profileData.fullname);
+        formData.append("first_name", first_name);
+        formData.append("last_name", last_name);
+      }
+
+      // Append other profile fields
+      Object.keys(profileData).forEach((key) => {
+        if (key !== "fullname") {
+          // Skip fullname as we already handled it
+          const value = (profileData as any)[key];
+          if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+          }
+        }
+      });
+
+      if (imageUri) {
+        const uriParts = imageUri.split(".");
+        const fileType = uriParts[uriParts.length - 1];
+        formData.append("avatar", {
+          uri: imageUri,
+          name: `avatar.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
+      }
+
+      console.log("[API POST] Update Profile Request (FormData):", profileData);
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROFILE}`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      const data = await response.json();
+      console.log("[API Response] Update Profile:", {
+        status: response.status,
+        data,
+      });
+      if (response.status === 200) {
+        const updatedUser = data.user || data;
+        setUser((prev: User | null) =>
+          prev ? { ...prev, ...updatedUser } : null,
+        );
+      } else {
+        throw new Error(data.message || "Failed to update profile");
+      }
+    } catch (error: any) {
+      console.error("[API Error] Update Profile:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ user, token, apiKey, isAuthenticated, login, logout, updateUser, fetchApiKey }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        apiKey,
+        isAuthenticated,
+        isOnboardingComplete,
+        isInitialized,
+        isLoading,
+        login,
+        logout,
+        completeOnboarding,
+        updateUser,
+        updatePassword,
+        updateProfile,
+        fetchApiKey,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -93,7 +362,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

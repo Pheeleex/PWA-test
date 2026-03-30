@@ -9,7 +9,8 @@ import {
     View,
     KeyboardAvoidingView,
     Platform,
-    useColorScheme
+    useColorScheme,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -26,6 +27,7 @@ export default function LoginScreen() {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{ title: string; message: string; type: 'success' | 'error' }>({
         title: '',
@@ -47,15 +49,17 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!userId || !password) {
-            showAlert('Error', 'Please enter both User ID and password.', 'error');
+            showAlert('Error', 'Please enter both Promoter ID and password.', 'error');
             return;
         }
 
+        setIsLoading(true);
         try {
-            await login({ userId, password });
+            await login({ promoter_id: userId, password });
             showAlert('Success', 'Login successful!', 'success');
         } catch (error: any) {
             showAlert('Error', error.message || 'Failed to login. Please try again.', 'error');
+            setIsLoading(false);
         }
     };
 
@@ -73,7 +77,7 @@ export default function LoginScreen() {
 
                 <View style={styles.form}>
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.label, { color: theme.icon2 }]}>User ID</Text>
+                        <Text style={[styles.label, { color: theme.icon2 }]}>Promoter ID</Text>
                         <TextInput
                             style={[
                                 styles.input,
@@ -83,7 +87,7 @@ export default function LoginScreen() {
                                     backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#fff'
                                 }
                             ]}
-                            placeholder="Enter your User ID"
+                            placeholder="Enter your Promoter ID"
                             placeholderTextColor={theme.icon}
                             value={userId}
                             onChangeText={setUserId}
@@ -131,15 +135,19 @@ export default function LoginScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+                    <TouchableOpacity
+                        onPress={handleLogin}
+                        style={[styles.loginButton, isLoading && { opacity: 0.8 }]}
+                        disabled={isLoading}
+                    >
                         <Text style={styles.loginButtonText}>Login</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => router.push('/activation')} style={styles.activationButton}>
+                    {/* <TouchableOpacity onPress={() => router.push('/activation')} style={styles.activationButton}>
                         <Text style={[styles.activationButtonText, { color: colorScheme === 'dark' ? '#00B1EB' : '#0E2B63' }]}>Activate Account</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </KeyboardAvoidingView>
 

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal, TextInput } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -6,14 +6,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 
+import { useAuth } from '@/context';
+
 export default function ProfileScreen() {
     const router = useRouter();
+    const { user, updateProfile } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
-    const userId = 'USER-88392';
 
-    const [image, setImage] = useState<string | null>('https://picsum.photos/200');
+    const [fullname, setFullname] = useState(user?.fullname || '');
+    const [phone, setPhone] = useState(user?.phone || '');
+    const [image, setImage] = useState<string | null>(user?.avatar || null);
+    const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setFullname(user.fullname);
+            setPhone(user.phone);
+            if (user.avatar) setImage(user.avatar);
+        }
+    }, [user]);
 
     useEffect(() => {
         const onBackPress = () => {
@@ -29,6 +42,22 @@ export default function ProfileScreen() {
 
         return () => subscription.remove();
     }, [router, modalVisible]);
+
+    const handleSave = async () => {
+        if (!fullname || !phone) {
+            Alert.alert('Error', 'Full Name and Phone Number are required.');
+            return;
+        }
+
+        try {
+            // Pass the pending image as well
+            await updateProfile({ fullname, phone }, pendingImage);
+            setPendingImage(null); // Clear pending state after success
+            Alert.alert('Success', 'Profile updated successfully.');
+        } catch (error: any) {
+            Alert.alert('Error', error.msg || error.message || 'Failed to update profile.');
+        }
+    };
 
     const pickImage = async () => {
         Alert.alert(
@@ -50,7 +79,7 @@ export default function ProfileScreen() {
                             quality: 1,
                         });
                         if (!result.canceled) {
-                            setImage(result.assets[0].uri);
+                            setPendingImage(result.assets[0].uri);
                         }
                     },
                 },
@@ -69,7 +98,7 @@ export default function ProfileScreen() {
                             quality: 1,
                         });
                         if (!result.canceled) {
-                            setImage(result.assets[0].uri);
+                            setPendingImage(result.assets[0].uri);
                         }
                     },
                 },
@@ -90,11 +119,15 @@ export default function ProfileScreen() {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => setImage(null),
+                    onPress: () => {
+                        setPendingImage('delete'); // Special flag for removal
+                    },
                 },
             ]
         );
     };
+
+    const currentDisplayImage = pendingImage && pendingImage !== 'delete' ? pendingImage : (pendingImage === 'delete' ? null : image);
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -103,9 +136,9 @@ export default function ProfileScreen() {
 
                 <View style={styles.headerSection}>
                     <View style={styles.imageContainer}>
-                        <TouchableOpacity onPress={() => image && setModalVisible(true)} disabled={!image}>
-                            {image ? (
-                                <Image source={{ uri: image }} style={styles.profileImage} />
+                        <TouchableOpacity onPress={() => currentDisplayImage && setModalVisible(true)} disabled={!currentDisplayImage}>
+                            {currentDisplayImage ? (
+                                <Image source={{ uri: currentDisplayImage }} style={styles.profileImage} />
                             ) : (
                                 <View style={[styles.profileImage, styles.placeholderImage, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E0E0E0' }]}>
                                     <Ionicons name="person" size={60} color={theme.icon} />
@@ -117,19 +150,67 @@ export default function ProfileScreen() {
                             <TouchableOpacity onPress={pickImage} style={[styles.actionButton, styles.editButton]}>
                                 <Ionicons name="camera" size={18} color="#fff" />
                             </TouchableOpacity>
-                            {image && (
+                            {currentDisplayImage && (
                                 <TouchableOpacity onPress={deleteImage} style={[styles.actionButton, styles.deleteButton]}>
                                     <Ionicons name="trash" size={18} color="#fff" />
                                 </TouchableOpacity>
                             )}
                         </View>
                     </View>
-                    <Text style={[styles.userIdText, { color: theme.text }]}>{userId}</Text>
+                    <Text style={[styles.userIdText, { color: theme.text }]}>{user?.fullname || 'Promoter'}</Text>
+                    <Text style={[styles.roleText, { color: theme.icon }]}>{user?.user_role?.toUpperCase()}</Text>
+                    {pendingImage && (
+                        <View style={styles.pendingBadge}>
+                            <Text style={styles.pendingText}>Unsaved Changes</Text>
+                        </View>
+                    )}
                 </View>
 
                 <View style={[styles.detailsContainer, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F9F9F9' }]}>
-                    <DetailItem label="User ID" value={userId} theme={theme} />
+                    {/* Read-only field Example */}
+                    <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
+                        <View style={styles.labelRow}>
+                            <Text style={[styles.label, { color: theme.icon }]}>Promoter ID</Text>
+                            <Ionicons name="lock-closed" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
+                        </View>
+                        <Text style={[styles.value, { color: theme.icon }]}>{user?.promoter_id || ''}</Text>
+                    </View>
+
+                    <View style={styles.editItem}>
+                        <Text style={[styles.label, { color: theme.icon }]}>Full Name</Text>
+                        <TextInput
+                            style={[styles.input, { color: theme.text, borderBottomColor: '#00B1EB' }]}
+                            value={fullname}
+                            onChangeText={setFullname}
+                            placeholder="Enter your full name"
+                            placeholderTextColor={theme.icon}
+                        />
+                    </View>
+
+                    <View style={styles.editItem}>
+                        <Text style={[styles.label, { color: theme.icon }]}>Phone Number</Text>
+                        <TextInput
+                            style={[styles.input, { color: theme.text, borderBottomColor: '#00B1EB' }]}
+                            value={phone}
+                            onChangeText={setPhone}
+                            placeholder="Enter your phone number"
+                            placeholderTextColor={theme.icon}
+                            keyboardType="phone-pad"
+                        />
+                    </View>
+
+                    <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
+                        <View style={styles.labelRow}>
+                            <Text style={[styles.label, { color: theme.icon }]}>Status</Text>
+                            <Ionicons name="lock-closed" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
+                        </View>
+                        <Text style={[styles.value, { color: user?.active ? '#4CAF50' : '#F44336' }]}>{user?.active ? 'Active' : 'Inactive'}</Text>
+                    </View>
                 </View>
+
+                <TouchableOpacity style={styles.updateButton} onPress={handleSave}>
+                    <Text style={styles.updateButtonText}>Update Profile</Text>
+                </TouchableOpacity>
 
             </ScrollView>
 
@@ -220,6 +301,11 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
     },
+    roleText: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginTop: 4,
+    },
     detailsContainer: {
         borderRadius: 12,
         padding: 20,
@@ -253,5 +339,52 @@ const styles = StyleSheet.create({
         right: 20,
         zIndex: 1,
         padding: 10,
+    },
+    pendingBadge: {
+        backgroundColor: '#FF9500',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginTop: 8,
+    },
+    pendingText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    editItem: {
+        marginBottom: 20,
+    },
+    readOnlyItem: {
+        backgroundColor: '#F0F0F0',
+        padding: 12,
+        borderRadius: 8,
+        borderBottomWidth: 0,
+        opacity: 0.8,
+    },
+    labelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    input: {
+        fontSize: 16,
+        fontWeight: '500',
+        borderBottomWidth: 1,
+        height: 40,
+        paddingVertical: 5,
+    },
+    updateButton: {
+        backgroundColor: '#0E2B63',
+        paddingVertical: 15,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 10,
+        marginBottom: 30,
+    },
+    updateButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
