@@ -107,35 +107,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [incidents, setIncidents] = useState<Incident[]>([
-    {
-      incident_id: "1",
-      incident_name: "Minor Accident",
-      created_at: "2 hours ago",
-      status: "Pending",
-      description:
-        "Two cars collided at the intersection. No injuries reported, but traffic is blocked.",
-      photo: "https://picsum.photos/300/200?random=1",
-    },
-    {
-      incident_id: "2",
-      incident_name: "Road Maintenance",
-      created_at: "5 hours ago",
-      status: "In Progress",
-      description:
-        "Road repair work ongoing near the city center. Expect delays.",
-      photo: "https://picsum.photos/300/200?random=2",
-    },
-    {
-      incident_id: "3",
-      incident_name: "Security Alert",
-      created_at: "1 day ago",
-      status: "Resolved",
-      description:
-        "Suspicious activity reported. Police investigated and cleared the area.",
-      photo: "https://picsum.photos/300/200?random=3",
-    },
-  ]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [apiError, setError] = useState<string | null>(null);
 

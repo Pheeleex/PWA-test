@@ -6,10 +6,12 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import CustomAlert from '@/components/CustomAlert';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context';
 
 export default function CustomDrawerContent(props: any) {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const { logout } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -19,8 +21,11 @@ export default function CustomDrawerContent(props: any) {
         setAlertVisible(true);
     };
 
-    const confirmLogout = () => {
+    const confirmLogout = async () => {
         setAlertVisible(false);
+        console.log("[Drawer] Confirming logout...");
+        await logout();
+        console.log("[Drawer] Logout complete, navigating to login");
         router.replace('/login');
     };
 

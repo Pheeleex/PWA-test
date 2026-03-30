@@ -111,6 +111,7 @@ export default function LoginScreen() {
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
+                                contextMenuHidden={true}
                             />
                             <TouchableOpacity
                                 style={styles.eyeIcon}

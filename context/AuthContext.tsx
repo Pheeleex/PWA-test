@@ -206,12 +206,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = async () => {
+    console.log("[AUTH] Logging out - clearing user, token, and apiKey");
     setUser(null);
     setToken(null);
+    setApiKey(null);
+    console.log("[AUTH] State cleared");
     await Promise.all([
       AsyncStorage.removeItem("jwt_token"),
       AsyncStorage.removeItem("user_data"),
+      AsyncStorage.removeItem("api_key"),
     ]);
+    console.log("[AUTH] AsyncStorage cleared");
   };
 
   const updateUser = (userData: Partial<User>) => {

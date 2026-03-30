@@ -25,6 +25,7 @@ export default function ReportScreen() {
   const router = useRouter();
   const { createIncident } = useApi();
   const { user } = useAuth();
+  console.log("User context in ReportScreen:", user);
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const params = useLocalSearchParams();
   const showBack = !!params.ref;
@@ -82,6 +83,10 @@ export default function ReportScreen() {
     if (user) {
       setUserId(user.user_id?.toString() || "");
       setPromoterId(user.promoter_id || "");
+    } else {
+      // Clear fields when user logs out
+      setUserId("");
+      setPromoterId("");
     }
   }, [user]);
 
@@ -229,25 +234,6 @@ export default function ReportScreen() {
         }
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* User ID Field */}
-        <Text style={[styles.label, { color: theme.text }]}>User ID</Text>
-        <TextInput
-          style={[
-            styles.inputContainer,
-            {
-              color: theme.text,
-              backgroundColor: colorScheme === "dark" ? "#2C2C2E" : "#fff",
-              opacity: user ? 0.6 : 1,
-            },
-          ]}
-          placeholder="Your User ID"
-          placeholderTextColor={theme.icon}
-          value={userId}
-          onChangeText={setUserId}
-          editable={!user}
-          keyboardType="numeric"
-        />
-
         {/* Promoter ID Field */}
         <Text style={[styles.label, { color: theme.text }]}>Promoter ID</Text>
         <TextInput
@@ -268,7 +254,7 @@ export default function ReportScreen() {
 
         {/* Incident Name */}
         <Text style={[styles.label, { color: theme.text }]}>
-          Incident Name/Title
+          Incident Title
         </Text>
         <TextInput
           style={[
@@ -278,7 +264,7 @@ export default function ReportScreen() {
               backgroundColor: colorScheme === "dark" ? "#2C2C2E" : "#fff",
             },
           ]}
-          placeholder="e.g., Building Maintenance Issue"
+          placeholder="Enter incident title"
           placeholderTextColor={theme.icon}
           value={incidentName}
           onChangeText={setIncidentName}
@@ -286,7 +272,7 @@ export default function ReportScreen() {
 
         {/* Issue Category */}
         <Text style={[styles.label, { color: theme.text }]}>
-          Issue Category (Optional)
+          Issue Category
         </Text>
         <Dropdown
           style={[
@@ -403,6 +389,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   label: {
     fontSize: 16,

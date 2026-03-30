@@ -110,6 +110,7 @@ export default function ChangePasswordScreen() {
                         secureTextEntry={!showCurrentPassword}
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
+                        contextMenuHidden={true}
                     />
                     <TouchableOpacity
                         style={styles.eyeIcon}
@@ -133,6 +134,7 @@ export default function ChangePasswordScreen() {
                         secureTextEntry={!showNewPassword}
                         value={newPassword}
                         onChangeText={setNewPassword}
+                        contextMenuHidden={true}
                     />
                     <TouchableOpacity
                         style={styles.eyeIcon}
@@ -156,6 +158,7 @@ export default function ChangePasswordScreen() {
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
+                        contextMenuHidden={true}
                     />
                     <TouchableOpacity
                         style={styles.eyeIcon}
