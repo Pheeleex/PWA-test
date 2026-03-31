@@ -8,7 +8,6 @@ export interface Incident {
   id?: string;
   incident_name?: string;
   title?: string;
-  issue_category?: string;
   type?: string;
   description: string;
   status: string;
@@ -44,7 +43,6 @@ export interface Location {
 
 interface CreateIncidentPayload {
   incident_name: string;
-  issue_category?: string;
   description?: string;
   photo?: string | null;
   user_id?: string | number; // Required if user is not logged in
@@ -54,7 +52,6 @@ interface CreateIncidentPayload {
 interface GetIncidentsFilters {
   incident_id?: string | number;
   status?: "Pending" | "In Progress" | "Resolved";
-  issue_category?: string;
 }
 
 interface GetActiveLocationsFilters {
@@ -192,7 +189,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
    */
   const createIncident = async ({
     incident_name,
-    issue_category,
     description,
     photo,
     user_id: payloadUserId,
@@ -223,9 +219,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       if (finalPromoterId) formData.append("promoter_id", finalPromoterId);
       formData.append("incident_name", incident_name);
 
-      if (issue_category) {
-        formData.append("issue_category", issue_category);
-      }
       if (description) {
         formData.append("description", description);
       }
@@ -245,7 +238,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         user_id: finalUserId,
         promoter_id: finalPromoterId,
         incident_name,
-        issue_category,
         description,
         hasPhoto: !!photo,
         endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_INCIDENT}`,

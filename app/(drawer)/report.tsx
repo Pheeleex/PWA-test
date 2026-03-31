@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
-import { Dropdown } from "react-native-element-dropdown";
 import ScreenHeader from "@/components/ScreenHeader";
 import CustomAlert from "@/components/CustomAlert";
 import { useRouter, useNavigation, useLocalSearchParams } from "expo-router";
@@ -33,16 +32,7 @@ export default function ReportScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
 
-  const issueCategoryOptions = [
-    { label: "Maintenance", value: "Maintenance" },
-    { label: "Security", value: "Security" },
-    { label: "Safety", value: "Safety" },
-    { label: "Equipment", value: "Equipment" },
-    { label: "Other", value: "Other" },
-  ];
-
   const [incidentName, setIncidentName] = useState("");
-  const [issueCategory, setIssueCategory] = useState("");
   const [description, setDescription] = useState("");
   const [userId, setUserId] = useState(user?.user_id?.toString() || "");
   const [promoterId, setPromoterId] = useState(user?.promoter_id || "");
@@ -72,7 +62,6 @@ export default function ReportScreen() {
     if (alertConfig.type === "success") {
       // Clear fields on success
       setIncidentName("");
-      setIssueCategory("");
       setDescription("");
       setImage(null);
 
@@ -153,7 +142,6 @@ export default function ReportScreen() {
     try {
       await createIncident({
         incident_name: incidentName,
-        issue_category: issueCategory || undefined,
         description,
         photo: image || undefined,
         user_id: userId,
@@ -273,54 +261,6 @@ export default function ReportScreen() {
           onChangeText={setIncidentName}
         />
 
-        {/* Issue Category */}
-        <Text style={[styles.label, { color: theme.text }]}>
-          Issue Category
-        </Text>
-        <Dropdown
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor: colorScheme === "dark" ? "#2C2C2E" : "#fff",
-              borderColor: "#00B1EB",
-            },
-          ]}
-          placeholderStyle={{
-            color: theme.icon,
-            fontSize: 16,
-          }}
-          selectedTextStyle={{
-            color: theme.text,
-            fontSize: 16,
-          }}
-          inputSearchStyle={{
-            height: 40,
-            borderRadius: 8,
-            borderColor: "#00B1EB",
-            borderWidth: 1,
-            paddingHorizontal: 8,
-            color: theme.text,
-            fontSize: 16,
-          }}
-          itemContainerStyle={{
-            backgroundColor: colorScheme === "dark" ? "#2C2C2E" : "#fff",
-          }}
-          itemTextStyle={{
-            color: theme.text,
-            fontSize: 16,
-          }}
-          activeColor={colorScheme === "dark" ? "#3C3C3E" : "#E8F4FF"}
-          data={issueCategoryOptions}
-          labelField="label"
-          valueField="value"
-          placeholder="Select a category"
-          value={issueCategory}
-          onChange={(item) => {
-            setIssueCategory(item.value);
-          }}
-        />
-
-        {/* Description */}
         <Text style={[styles.label, { color: theme.text }]}>Description</Text>
         <TextInput
           style={[
