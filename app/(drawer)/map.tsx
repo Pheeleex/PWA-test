@@ -7,14 +7,14 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import MapView, { Circle, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
-import ScreenHeader from '@/components/ScreenHeader';
-import { Colors } from '@/constants/theme';
-
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import MapView, { Circle, Region } from "react-native-maps";
+import * as Location from "expo-location";
+import ScreenHeader from "@/components/ScreenHeader";
+import { Colors } from "@/constants/theme";
+import { useApi, useAuth } from "@/context";
 
 type LatLng = {
   latitude: number;
@@ -51,38 +51,6 @@ const LABEL_WIDTH = 112;
 const LABEL_HEIGHT = 34;
 const LABEL_VERTICAL_OFFSET = 54;
 
-const ACTIVATION_ZONES: ActivationZone[] = [
-  {
-    id: 'activation-point-1',
-    name: 'Activation Point 1',
-    center: { latitude: 52.464149932863826, longitude: 9.596046764111339 },
-    radius: 50,
-  },
-  {
-    id: 'activation-point-2',
-    name: 'Activation Point 2',
-    center: { latitude: 52.50087535085899, longitude: 13.322425441755252 },
-    radius: 50,
-  },
-  {
-    id: 'activation-point-3',
-    name: 'Activation Point 3',
-    center: { latitude: 52.54369896093982, longitude: 13.34714467895819 },
-    radius: 50,
-  },
-  {
-    id: 'activation-point-4',
-    name: 'Activation Point 4',
-    center: { latitude: 52.47976153691424, longitude: 13.43812520477455 },
-    radius: 50,
-  },
-  {
-    id: 'activation-point-5',
-    name: 'Activation Point 5',
-    center: { latitude: 52.53471990733561, longitude: 13.19608267382913 },
-    radius: 50,
-  },
-];
 
 function haversineDistanceInMeters(point1: LatLng, point2: LatLng) {
   const toRad = (value: number) => (value * Math.PI) / 180;
@@ -121,21 +89,21 @@ function getHeadingDirection(from: LatLng, to: LatLng) {
     Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
   const bearing = (toDeg(Math.atan2(y, x)) + 360) % 360;
   const directions = [
-    'north',
-    'north-east',
-    'east',
-    'south-east',
-    'south',
-    'south-west',
-    'west',
-    'north-west',
+    "north",
+    "north-east",
+    "east",
+    "south-east",
+    "south",
+    "south-west",
+    "west",
+    "north-west",
   ];
   return directions[Math.round(bearing / 45) % directions.length];
 }
 
 function getZoneDistanceLabel(zone: ActivationZoneWithDistance) {
-  if (zone.distanceToZone === null) return 'Locating...';
-  if (zone.isInside) return 'Inside zone';
+  if (zone.distanceToZone === null) return "Locating...";
+  if (zone.isInside) return "Inside zone";
   return `${formatDistance(zone.distanceToZone)} away`;
 }
 
@@ -145,7 +113,9 @@ function clamp(value: number, min: number, max: number) {
 
 export default function MapScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? 'light';
+  const { getActiveLocations, locations } = useApi();
+  const { apiKey } = useAuth();
+  const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
   const mapRef = useRef<MapView | null>(null);
   const hasAnimated = useRef(false);
@@ -161,6 +131,38 @@ export default function MapScreen() {
     Record<string, ZoneLabelPosition>
   >({});
 
+  // Map API locations to ActivationZone format
+  const mappedZones = useMemo<ActivationZone[]>(() => {
+    return locations.map((loc) => ({
+      id: String(loc.id || loc.location_id || Math.random()),
+      name: loc.name || loc.location_name || "Unknown Location",
+      center: {
+        latitude: Number(loc.latitude) || 0,
+        longitude: Number(loc.longitude) || 0,
+      },
+      radius: Number(loc.radius) || 50,
+    }));
+  }, [locations]);
+
+  // Fetch active locations on component mount and when apiKey is available
+  useEffect(() => {
+    const fetchLocations = async () => {
+      if (!apiKey) {
+        console.log("[Map] Waiting for API key to be loaded...");
+        return;
+      }
+
+      try {
+        console.log("[Map] Fetching active locations with API key present");
+        await getActiveLocations();
+      } catch (error) {
+        console.error("[Map] Error fetching active locations:", error);
+      }
+    };
+
+    fetchLocations();
+  }, [apiKey]);
+
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
 
@@ -168,7 +170,7 @@ export default function MapScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
 
-        if (status !== 'granted') {
+        if (status !== "granted") {
           setPermissionDenied(true);
           setLoading(false);
           return;
@@ -210,14 +212,14 @@ export default function MapScreen() {
                   latitudeDelta: 0.003,
                   longitudeDelta: 0.003,
                 },
-                1000
+                1000,
               );
             }
-          }
+          },
         );
       } catch (error) {
-        console.error('Error getting location:', error);
-        Alert.alert('Location Error', 'Could not get your current location.');
+        console.error("Error getting location:", error);
+        Alert.alert("Location Error", "Could not get your current location.");
       } finally {
         setLoading(false);
       }
@@ -229,8 +231,10 @@ export default function MapScreen() {
     };
   }, []);
 
-  const activationZonesWithDistance = useMemo<ActivationZoneWithDistance[]>(() => {
-    return ACTIVATION_ZONES.map((zone) => {
+  const activationZonesWithDistance = useMemo<
+    ActivationZoneWithDistance[]
+  >(() => {
+    return mappedZones.map((zone) => {
       const centerDistance = location
         ? haversineDistanceInMeters(location, zone.center)
         : null;
@@ -239,7 +243,9 @@ export default function MapScreen() {
         ...zone,
         centerDistance,
         distanceToZone:
-          centerDistance === null ? null : Math.max(0, centerDistance - zone.radius),
+          centerDistance === null
+            ? null
+            : Math.max(0, centerDistance - zone.radius),
         isInside,
       };
     });
@@ -251,7 +257,7 @@ export default function MapScreen() {
     return inside.reduce((best, zone) =>
       (zone.centerDistance ?? Infinity) < (best.centerDistance ?? Infinity)
         ? zone
-        : best
+        : best,
     );
   }, [activationZonesWithDistance]);
 
@@ -282,20 +288,21 @@ export default function MapScreen() {
     return getHeadingDirection(location, nearestZoneInfo.center);
   }, [location, nearestZoneInfo]);
 
-  const isGpsReliable = locationAccuracy !== null && locationAccuracy <= GPS_ACCURACY_THRESHOLD;
+  const isGpsReliable =
+    locationAccuracy !== null && locationAccuracy <= GPS_ACCURACY_THRESHOLD;
   const isInsideZone = !!activeZone && isGpsReliable;
 
   const statusDotColor = isInsideZone
-    ? '#16A34A'
+    ? "#16A34A"
     : activeZone && !isGpsReliable
-    ? '#F59E0B'
-    : '#EF4444';
+      ? "#F59E0B"
+      : "#EF4444";
 
   const statusTitle = isInsideZone
-    ? 'Inside activation zone'
+    ? "Inside activation zone"
     : activeZone && !isGpsReliable
-    ? 'GPS signal too weak'
-    : 'Outside activation zone';
+      ? "GPS signal too weak"
+      : "Outside activation zone";
 
   const initialRegion: Region = {
     latitude: 52.50392444690182,
@@ -305,7 +312,12 @@ export default function MapScreen() {
   };
 
   const updateZoneLabelPositions = useCallback(async () => {
-    if (!mapReady || !mapRef.current || mapSize.width === 0 || mapSize.height === 0) {
+    if (
+      !mapReady ||
+      !mapRef.current ||
+      mapSize.width === 0 ||
+      mapSize.height === 0
+    ) {
       return;
     }
 
@@ -314,10 +326,12 @@ export default function MapScreen() {
 
     try {
       const points = await Promise.all(
-        ACTIVATION_ZONES.map(async (zone) => ({
+        mappedZones.map(async (zone) => ({
           id: zone.id,
-          point: (await mapRef.current?.pointForCoordinate(zone.center)) as ScreenPoint | undefined,
-        }))
+          point: (await mapRef.current?.pointForCoordinate(zone.center)) as
+            | ScreenPoint
+            | undefined,
+        })),
       );
 
       if (updatePositionsRequestRef.current !== requestId) {
@@ -334,13 +348,13 @@ export default function MapScreen() {
         const left = clamp(
           entry.point.x - LABEL_WIDTH / 2,
           8,
-          Math.max(8, mapSize.width - LABEL_WIDTH - 8)
+          Math.max(8, mapSize.width - LABEL_WIDTH - 8),
         );
 
         const top = clamp(
           entry.point.y - LABEL_VERTICAL_OFFSET,
           8,
-          Math.max(8, mapSize.height - LABEL_HEIGHT - 8)
+          Math.max(8, mapSize.height - LABEL_HEIGHT - 8),
         );
 
         nextPositions[entry.id] = { left, top };
@@ -348,7 +362,7 @@ export default function MapScreen() {
 
       setZoneLabelPositions(nextPositions);
     } catch (error) {
-      console.error('Error updating zone label positions:', error);
+      console.error("Error updating zone label positions:", error);
     }
   }, [mapReady, mapSize.height, mapSize.width]);
 
@@ -358,7 +372,12 @@ export default function MapScreen() {
     }
 
     void updateZoneLabelPositions();
-  }, [activationZonesWithDistance.length, mapReady, mapSize, updateZoneLabelPositions]);
+  }, [
+    activationZonesWithDistance.length,
+    mapReady,
+    mapSize,
+    updateZoneLabelPositions,
+  ]);
 
   const handleMapLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -379,44 +398,47 @@ export default function MapScreen() {
         latitudeDelta: 0.003,
         longitudeDelta: 0.003,
       },
-      1000
+      1000,
     );
   };
 
   const showAllZones = () => {
     if (!mapRef.current) return;
     mapRef.current.fitToCoordinates(
-      ACTIVATION_ZONES.map((zone) => zone.center),
+      mappedZones.map((zone) => zone.center),
       {
         edgePadding: { top: 160, right: 60, bottom: 160, left: 60 },
         animated: true,
-      }
+      },
     );
   };
 
   const handleOpenQr = () => {
     if (!location) {
-      Alert.alert('Location not ready', 'Please wait for your location to load.');
+      Alert.alert(
+        "Location not ready",
+        "Please wait for your location to load.",
+      );
       return;
     }
 
     if (!activeZone) {
       Alert.alert(
-        'QR Locked',
-        'You must be inside an activation zone before the QR code can be shown.'
+        "QR Locked",
+        "You must be inside an activation zone before the QR code can be shown.",
       );
       return;
     }
 
     if (!isGpsReliable) {
       Alert.alert(
-        'GPS Signal Weak',
-        `Your GPS accuracy is currently ±${Math.round(locationAccuracy ?? 0)}m. Move to an open area to improve signal.`
+        "GPS Signal Weak",
+        `Your GPS accuracy is currently ±${Math.round(locationAccuracy ?? 0)}m. Move to an open area to improve signal.`,
       );
       return;
     }
 
-    router.push('/(drawer)/qr-code');
+    router.push("/(drawer)/qr-code");
   };
 
   return (
@@ -433,7 +455,12 @@ export default function MapScreen() {
           </View>
         ) : permissionDenied ? (
           <View style={styles.centered}>
-            <Text style={[styles.infoText, { color: theme.text, textAlign: 'center' }]}>
+            <Text
+              style={[
+                styles.infoText,
+                { color: theme.text, textAlign: "center" },
+              ]}
+            >
               Location permission is required to use activation zones.
             </Text>
           </View>
@@ -451,7 +478,7 @@ export default function MapScreen() {
                   void updateZoneLabelPositions();
                 }}
                 onLongPress={(event) => {
-                  console.log('Long press:', event.nativeEvent.coordinate);
+                  console.log("Long press:", event.nativeEvent.coordinate);
                 }}
               >
                 {activationZonesWithDistance.map((zone) => {
@@ -466,13 +493,13 @@ export default function MapScreen() {
                       lineDashPattern={[8, 5]}
                       strokeColor={
                         isActive
-                          ? 'rgba(22,163,74,0.95)'
-                          : 'rgba(22,163,74,0.6)'
+                          ? "rgba(22,163,74,0.95)"
+                          : "rgba(22,163,74,0.6)"
                       }
                       fillColor={
                         isActive
-                          ? 'rgba(22,163,74,0.14)'
-                          : 'rgba(22,163,74,0.07)'
+                          ? "rgba(22,163,74,0.14)"
+                          : "rgba(22,163,74,0.07)"
                       }
                     />
                   );
@@ -489,8 +516,8 @@ export default function MapScreen() {
                       strokeWidth={0}
                       fillColor={
                         isActive
-                          ? 'rgba(22,163,74,0.28)'
-                          : 'rgba(22,163,74,0.18)'
+                          ? "rgba(22,163,74,0.28)"
+                          : "rgba(22,163,74,0.18)"
                       }
                     />
                   );
@@ -506,7 +533,7 @@ export default function MapScreen() {
                       radius={3}
                       strokeWidth={2}
                       strokeColor="#FFFFFF"
-                      fillColor={isActive ? '#15803D' : '#16A34A'}
+                      fillColor={isActive ? "#15803D" : "#16A34A"}
                     />
                   );
                 })}
@@ -553,13 +580,19 @@ export default function MapScreen() {
               <View style={styles.statusRow}>
                 <View style={styles.statusTitleGroup}>
                   <View
-                    style={[styles.statusDot, { backgroundColor: statusDotColor }]}
+                    style={[
+                      styles.statusDot,
+                      { backgroundColor: statusDotColor },
+                    ]}
                   />
                   <Text style={styles.statusTitle}>{statusTitle}</Text>
                 </View>
                 {locationAccuracy !== null && (
                   <View
-                    style={[styles.gpsChip, !isGpsReliable && styles.gpsChipWeak]}
+                    style={[
+                      styles.gpsChip,
+                      !isGpsReliable && styles.gpsChipWeak,
+                    ]}
                   >
                     <Text
                       style={[
@@ -575,28 +608,32 @@ export default function MapScreen() {
 
               {isInsideZone && activeZone ? (
                 <Text style={styles.statusMessage}>
-                  {'You are in '}
+                  {"You are in "}
                   <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                  {'. '}
+                  {". "}
                   <Text style={styles.statusGreen}>QR unlocked.</Text>
                 </Text>
               ) : activeZone && !isGpsReliable ? (
                 <Text style={styles.statusMessage}>
-                  {'Inside '}
+                  {"Inside "}
                   <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                  {' but '}
-                  <Text style={styles.statusAmber}>GPS needs a cleaner fix.</Text>
-                  {' Move to open space.'}
+                  {" but "}
+                  <Text style={styles.statusAmber}>
+                    GPS needs a cleaner fix.
+                  </Text>
+                  {" Move to open space."}
                 </Text>
               ) : nearestZoneInfo ? (
                 <Text style={styles.statusMessage}>
-                  {'Nearest: '}
-                  <Text style={styles.statusStrong}>{nearestZoneInfo.name}</Text>
-                  {' — '}
+                  {"Nearest: "}
+                  <Text style={styles.statusStrong}>
+                    {nearestZoneInfo.name}
+                  </Text>
+                  {" — "}
                   <Text style={styles.statusGreen}>
                     {getZoneDistanceLabel(nearestZoneInfo)}
                   </Text>
-                  {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : '.'}
+                  {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : "."}
                 </Text>
               ) : (
                 <Text style={styles.statusMessage}>
@@ -615,13 +652,18 @@ export default function MapScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.qrButton, !isInsideZone && styles.qrButtonDisabled]}
+              style={[
+                styles.qrButton,
+                !isInsideZone && styles.qrButtonDisabled,
+              ]}
               onPress={handleOpenQr}
               disabled={!isInsideZone}
               activeOpacity={0.85}
             >
               <Text style={styles.qrButtonText}>
-                {isInsideZone ? 'Activation QR code' : 'QR locked — enter a zone'}
+                {isInsideZone
+                  ? "Activation QR code"
+                  : "QR locked — enter a zone"}
               </Text>
             </TouchableOpacity>
           </>
@@ -633,28 +675,28 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, position: 'relative' },
+  content: { flex: 1, position: "relative" },
   mapWrap: { flex: 1 },
   map: { flex: 1 },
 
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 24,
   },
   infoText: { marginTop: 12, fontSize: 16 },
 
   zoneLabelOverlay: {
     ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   zoneLabelWrap: {
-    position: 'absolute',
+    position: "absolute",
     width: LABEL_WIDTH,
     height: LABEL_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   zoneDistancePill: {
     minWidth: 96,
@@ -662,82 +704,82 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: '#16A34A',
-    shadowColor: '#000',
+    backgroundColor: "#16A34A",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
-  zoneDistancePillActive: { backgroundColor: '#15803D' },
+  zoneDistancePillActive: { backgroundColor: "#15803D" },
   zoneDistancePillText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: "800",
+    color: "#fff",
+    textAlign: "center",
   },
 
   topOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     left: 14,
     right: 14,
-    backgroundColor: 'rgba(255,255,255,0.98)',
+    backgroundColor: "rgba(255,255,255,0.98)",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    shadowColor: '#0F172A',
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 14,
     elevation: 8,
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
   statusTitleGroup: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   statusDot: { width: 14, height: 14, borderRadius: 999 },
   statusTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0E2B63',
+    fontWeight: "700",
+    color: "#0E2B63",
     flexShrink: 1,
   },
   gpsChip: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     marginLeft: 8,
   },
-  gpsChipWeak: { backgroundColor: '#FEF3C7' },
-  gpsChipText: { fontSize: 11, fontWeight: '700', color: '#64748B' },
-  gpsChipTextWeak: { color: '#B45309' },
-  statusMessage: { fontSize: 13, lineHeight: 20, color: '#4B5563' },
-  statusStrong: { fontWeight: '700', color: '#1E293B' },
-  statusGreen: { fontWeight: '700', color: '#16A34A' },
-  statusAmber: { fontWeight: '700', color: '#B45309' },
+  gpsChipWeak: { backgroundColor: "#FEF3C7" },
+  gpsChipText: { fontSize: 11, fontWeight: "700", color: "#64748B" },
+  gpsChipTextWeak: { color: "#B45309" },
+  statusMessage: { fontSize: 13, lineHeight: 20, color: "#4B5563" },
+  statusStrong: { fontWeight: "700", color: "#1E293B" },
+  statusGreen: { fontWeight: "700", color: "#16A34A" },
+  statusAmber: { fontWeight: "700", color: "#B45309" },
 
   actionCol: {
-    position: 'absolute',
+    position: "absolute",
     right: 14,
     bottom: 110,
     gap: 10,
   },
   mapBtn: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -745,30 +787,30 @@ const styles = StyleSheet.create({
   },
   mapBtnText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#0E2B63',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#0E2B63",
+    textAlign: "center",
   },
 
   qrButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 36,
     left: 16,
     right: 16,
-    backgroundColor: '#0E2B63',
+    backgroundColor: "#0E2B63",
     paddingVertical: 16,
     borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#0E2B63',
+    alignItems: "center",
+    shadowColor: "#0E2B63",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 8,
   },
-  qrButtonDisabled: { backgroundColor: '#94A3B8', shadowOpacity: 0 },
+  qrButtonDisabled: { backgroundColor: "#94A3B8", shadowOpacity: 0 },
   qrButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

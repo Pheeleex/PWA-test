@@ -12,7 +12,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#0E2B63"
     },
-    "newArchEnabled": true,
     "ios": {
       "buildNumber": "10",
       "supportsTablet": true,

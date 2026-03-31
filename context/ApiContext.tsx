@@ -331,56 +331,26 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   const getActiveLocations = async (
     filters?: GetActiveLocationsFilters,
   ): Promise<Location[] | null> => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      console.log("[API] Get Active Locations - Token available:", !!apiKey);
       console.log(
         "[API] Get Active Locations - Token value:",
-        apiKey ? `${apiKey.substring(0, 10)}...` : "NULL",
-      );
-      console.log(
-        "[API] Get Active Locations - Filters:",
-        filters || "No filters",
+        apiKey ? `${apiKey}...` : "NULL",
       );
 
-      const formData = new FormData();
-      formData.append("token", apiKey || "");
+      const payload = {
+        token: apiKey || "",
+        ...(filters || {}),
+      };
 
-      if (filters?.id) {
-        formData.append("id", String(filters.id));
-      }
-      if (filters?.category) {
-        formData.append("category", filters.category);
-      }
-      if (filters?.city) {
-        formData.append("city", filters.city);
-      }
-      if (filters?.search) {
-        formData.append("search", filters.search);
-      }
+      const data = await fetchData<any>(
+        API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS,
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        },
+      );
 
-      console.log("[API POST] Get Active Locations Payload:", {
-        token: apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING",
-        filters: filters || "No filters",
-        endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`,
-      });
-
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_LOCATIONS}`;
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log("[API Response] Get Active Locations:", {
-        status: response.status,
-        data: data,
-        total: Array.isArray(data) ? data.length : data.locations?.length || 0,
-      });
-
-      if (response.status === 200) {
+      if (data) {
         // Handle both array and object responses
         const locationsList = Array.isArray(data)
           ? data
@@ -388,15 +358,11 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         setLocations(locationsList);
         return locationsList;
       } else {
-        throw new Error(data.message || "Failed to fetch locations");
+        return null;
       }
     } catch (error: any) {
-      const message = error.message || "Failed to fetch locations";
-      setError(message);
       console.error("[API Error] Get Active Locations:", error);
       return null;
-    } finally {
-      setIsLoading(false);
     }
   };
 
