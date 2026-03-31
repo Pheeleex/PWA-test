@@ -438,7 +438,17 @@ export default function MapScreen() {
       return;
     }
 
-    router.push("/(drawer)/qr-code");
+    // Find original location to get image_url
+    const originalLocation = locations.find(
+      (loc) => String(loc.id || loc.location_id) === activeZone.id,
+    );
+
+    const qrUrl = (originalLocation as any)?.image_url || "";
+
+    router.push({
+      pathname: "/(drawer)/qr-code",
+      params: { url: qrUrl },
+    });
   };
 
   return (
@@ -794,7 +804,7 @@ const styles = StyleSheet.create({
 
   qrButton: {
     position: "absolute",
-    bottom: 36,
+    bottom: 60,
     left: 16,
     right: 16,
     backgroundColor: "#0E2B63",

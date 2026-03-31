@@ -2,14 +2,17 @@ import { StyleSheet, Text, View, BackHandler, useColorScheme } from 'react-nativ
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors } from '@/constants/theme';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function QRCodeScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const url = params.url as string;
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
-
+    console.log(url)
     useEffect(() => {
         const onBackPress = () => {
             router.back();
@@ -32,8 +35,19 @@ export default function QRCodeScreen() {
             <View style={styles.content}>
 
                 <View style={[styles.qrContainer, { backgroundColor: '#fff', borderColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
-                    {/* Placeholder for QR Code - typically QR codes are black on white for readability */}
-                    <Ionicons name="qr-code" size={300} color="#000" />
+                    {url ? (
+                        <QRCode
+                            value={url}
+                            size={260}
+                            color="black"
+                            backgroundColor="white"
+                        />
+                    ) : (
+                        <View style={styles.errorContainer}>
+                            <Ionicons name="alert-circle-outline" size={80} color="#FF3B30" />
+                            <Text style={styles.errorText}>No URL found for this location</Text>
+                        </View>
+                    )}
                 </View>
 
                 <Text style={[styles.availabilityText, { color: theme.icon }]}>
@@ -73,5 +87,18 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
         maxWidth: 280,
+    },
+    errorContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+        height: 260,
+        width: 260,
+    },
+    errorText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
     }
 });
