@@ -437,7 +437,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
           body: JSON.stringify({
             token: apiKey,
             user_id: user.user_id,
-            fcm_token: fcmToken,
+            user_token: fcmToken,
           }),
         },
       );
