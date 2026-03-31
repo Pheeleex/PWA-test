@@ -10,8 +10,10 @@ import {
   Dimensions,
   Image,
   Platform,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MapView, { Circle, Region } from "react-native-maps";
 import * as Location from "expo-location";
@@ -551,15 +553,30 @@ export default function MapScreen() {
             </Text>
           </View>
         ) : permissionDenied ? (
-          <View style={styles.centered}>
-            <Text
-              style={[
-                styles.infoText,
-                { color: theme.text, textAlign: "center" },
-              ]}
-            >
-              Location permission is required to use activation zones.
-            </Text>
+          <View style={{
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 24,
+          }}>
+            <View style={styles.permissionCard}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="location-outline" size={42} color="#0E2B63" />
+              </View>
+              <Text style={[styles.permissionTitle, { color: theme.text }]}>
+                Location Required
+              </Text>
+              <Text style={[styles.permissionDescription, { color: "#64748B" }]}>
+                Enable location permissions to discover activation zones and
+                view your position on the map.
+              </Text>
+              <TouchableOpacity
+                style={styles.settingsButton}
+                activeOpacity={0.8}
+                onPress={() => Linking.openSettings()}
+              >
+                <Text style={styles.settingsButtonText}>Enable in Settings</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <>
@@ -909,5 +926,48 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  permissionCard: {
+    padding: 32,
+    borderRadius: 24,
+    backgroundColor: "#F8FAFC",
+    alignItems: "center",
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  permissionTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  permissionDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: 28,
+  },
+  settingsButton: {
+    backgroundColor: "#0E2B63",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    width: "100%",
+  },
+  settingsButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
   },
 });
