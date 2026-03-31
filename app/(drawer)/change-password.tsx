@@ -243,7 +243,7 @@ export default function ChangePasswordScreen() {
         </TouchableOpacity>
 
         {/* Forgot Password Link */}
-        <TouchableOpacity
+        {(showBack && <TouchableOpacity
           onPress={handleForgotPassword}
           style={styles.linkContainer}
         >
@@ -255,7 +255,7 @@ export default function ChangePasswordScreen() {
           >
             Forgot Password?
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity>)}
       </ScrollView>
       <CustomAlert
         visible={alertVisible}

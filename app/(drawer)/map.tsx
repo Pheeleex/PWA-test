@@ -19,6 +19,7 @@ import MapView, { Circle, Region } from "react-native-maps";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { GEOFENCING_TASK_NAME } from "@/services/GeofencingTask";
 import ScreenHeader from "@/components/ScreenHeader";
 import { Colors } from "@/constants/theme";
@@ -138,7 +139,17 @@ async function registerForPushNotificationsAsync() {
   }
 
   try {
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    const projectId =
+      Constants?.expoConfig?.extra?.eas?.projectId ??
+      Constants?.easConfig?.projectId;
+    if (!projectId) {
+      console.warn("Project ID not found in expo config");
+    }
+    const token = (
+      await Notifications.getExpoPushTokenAsync({
+        projectId,
+      })
+    ).data;
     return token;
   } catch (e) {
     console.error("Error getting push token:", e);

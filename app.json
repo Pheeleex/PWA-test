@@ -45,6 +45,7 @@
         "monochromeImage": "./assets/images/adaptive-icon.png"
       },
       "package": "com.bat.promolocation",
+      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyARPJh5jl6Qy9ilQT8e6tJQUIKtyrP19AQ"
