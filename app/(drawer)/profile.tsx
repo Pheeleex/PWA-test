@@ -19,7 +19,6 @@ export default function ProfileScreen() {
     const [image, setImage] = useState<string | null>(user?.avatar || null);
     const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
-
     useEffect(() => {
         if (user) {
             setFullname(user.fullname);
@@ -150,15 +149,11 @@ export default function ProfileScreen() {
                             <TouchableOpacity onPress={pickImage} style={[styles.actionButton, styles.editButton]}>
                                 <Ionicons name="camera" size={18} color="#fff" />
                             </TouchableOpacity>
-                            {currentDisplayImage && (
-                                <TouchableOpacity onPress={deleteImage} style={[styles.actionButton, styles.deleteButton]}>
-                                    <Ionicons name="trash" size={18} color="#fff" />
-                                </TouchableOpacity>
-                            )}
+
                         </View>
                     </View>
                     <Text style={[styles.userIdText, { color: theme.text }]}>{user?.fullname || 'Promoter'}</Text>
-                    <Text style={[styles.roleText, { color: theme.icon }]}>{user?.user_role?.toUpperCase()}</Text>
+                    {/*<Text style={[styles.roleText, { color: theme.icon }]}>{user?.user_role?.toUpperCase()}</Text>*/}
                     {pendingImage && (
                         <View style={styles.pendingBadge}>
                             <Text style={styles.pendingText}>Unsaved Changes</Text>

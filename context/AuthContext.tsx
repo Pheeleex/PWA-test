@@ -270,101 +270,93 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     imageUri?: string | null,
   ) => {
     setIsLoading(true);
+    console.log("[DEBUG] updateProfile started", { profileData, hasImage: !!imageUri });
+
     try {
-      // Validate that we have both token and jwt
-      if (!apiKey) {
-        throw new Error("API key is missing. Please log in again.");
-      }
-      if (!token) {
-        throw new Error("Access token is missing. Please log in again.");
-      }
-      if (!user?.user_id) {
-        throw new Error("User ID is missing. Please log in again.");
+      if (!apiKey || !token || !user?.user_id) {
+        console.error("[DEBUG] Missing session data", { apiKey: !!apiKey, token: !!token, userId: user?.user_id });
+        logout()
+        throw new Error("Session data missing. Please log in again.");
       }
 
-      const formData = new FormData();
+      const isRemovingImage = imageUri === "delete";
+      const hasNewImage = imageUri && !isRemovingImage;
 
-      // Add authentication tokens FIRST
-      formData.append("token", apiKey);
-      formData.append("jwt", token);
-      formData.append("user_id", String(user.user_id));
+      let response;
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROFILE}`;
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
 
-      // Handle fullname: if provided, split into first_name and last_name
+      // Determine fields to send
+      const fields: any = {
+        token: apiKey,
+        jwt: token,
+        user_id: user.user_id,
+        ...profileData,
+      };
+
+      // Handle fullname splitting if present
       if (profileData.fullname) {
-        const nameParts = profileData.fullname.trim().split(/\s+/);
-        const first_name = nameParts[0];
-        const last_name = nameParts.slice(1).join(" ") || nameParts[0];
-
-        formData.append("fullname", profileData.fullname);
-        formData.append("first_name", first_name);
-        formData.append("last_name", last_name);
+        const parts = profileData.fullname.trim().split(/\s+/);
+        fields.first_name = parts[0];
+        fields.last_name = parts.slice(1).join(" ") || parts[0];
       }
 
-      // Append other profile fields (excluding fields we've already handled)
-      Object.keys(profileData).forEach((key) => {
-        if (
-          key !== "fullname" &&
-          key !== "first_name" &&
-          key !== "last_name" &&
-          key !== "user_id"
-        ) {
-          const value = (profileData as any)[key];
-          if (value !== undefined && value !== null) {
-            formData.append(key, String(value));
-          }
+      if (hasNewImage) {
+        // Use FormData for image upload or deletion
+        const formData = new FormData();
+        Object.keys(fields).forEach((key) => {
+          formData.append(key, String(fields[key]));
+        });
+
+        if (hasNewImage) {
+          const uriParts = imageUri!.split(".");
+          const fileType = uriParts[uriParts.length - 1];
+          formData.append("avatar", {
+            uri: imageUri,
+            name: `avatar.${fileType}`,
+            type: `image/${fileType}`,
+          } as any);
         }
-      });
 
-      if (imageUri) {
-        const uriParts = imageUri.split(".");
-        const fileType = uriParts[uriParts.length - 1];
-        formData.append("avatar", {
-          uri: imageUri,
-          name: `avatar.${fileType}`,
-          type: `image/${fileType}`,
-        } as any);
+        console.log("[API POST] Update Profile (FormData):", formData);
+        response = await fetch(url, {
+          method: "POST",
+          headers, // No Content-Type for FormData
+          body: formData,
+        });
+      } else {
+        // Use JSON for metadata-only updates
+        headers["Content-Type"] = "application/json";
+        console.log("[API POST] Update Profile (JSON):", fields);
+        response = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(fields),
+        });
       }
 
-      console.log("[API POST] Update Profile Request (FormData):", {
-        token: apiKey ? `${apiKey}` : "MISSING",
-        jwt: token ? `${token}` : "MISSING",
-        userId: user?.user_id,
-        profileData,
-      });
-
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROFILE}`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const data = await response.json();
-      console.log("[API Response] Update Profile:", {
-        status: response.status,
-        data,
-      });
+      const data = await response.json().catch(() => ({}));
+      console.log("[API Response Status]:", response, data);
 
       if (response.status === 401) {
-        console.error(
-          "[API Error] Unauthorized - Invalid or expired token. Please log in again.",
-        );
+        console.error("[API Error] Unauthorized in updateProfile");
         await logout();
         throw new Error("Your session has expired. Please log in again.");
       }
 
       if (response.status === 200) {
-        const updatedUser = data.user || data;
+        const updatedUser = data.user || data.data || data;
         setUser((prev: User | null) =>
-          prev ? { ...prev, ...updatedUser } : null,
+          prev ? { ...prev, ...updatedUser } : (updatedUser as User),
         );
         await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
       } else {
         throw new Error(data.message || "Failed to update profile");
       }
     } catch (error: any) {
-      console.error("[API Error] Update Profile:", error);
+      console.error("[API Error] Update Profile Catch:", error);
       throw error;
     } finally {
       setIsLoading(false);
