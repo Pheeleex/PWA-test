@@ -22,6 +22,7 @@ interface User {
   email_verified: boolean;
   is_approved: boolean;
   area?: string;
+  resetKey?: string;
 }
 
 interface AuthContextType {
@@ -35,7 +36,7 @@ interface AuthContextType {
   login: (credentials: {
     promoter_id: string;
     password: string;
-  }) => Promise<void>;
+  }) => Promise<{ resetKey?: string }>;
   logout: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
@@ -178,6 +179,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           active: data.active,
           email_verified: data.email_verified,
           is_approved: data.is_approved,
+          resetKey: data.resetKey || data.reset_key || "No",
         };
         setUser(userData);
 
@@ -185,6 +187,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           AsyncStorage.setItem("jwt_token", access_token),
           AsyncStorage.setItem("user_data", JSON.stringify(userData)),
         ]);
+        return { resetKey: userData.resetKey };
       } else {
         let errorMsg = data.message || "Login failed";
         if (response.status === 404)

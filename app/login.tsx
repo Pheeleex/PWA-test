@@ -38,6 +38,9 @@ export default function LoginScreen() {
     message: "",
     type: "success",
   });
+  const [loginResult, setLoginResult] = useState<{ resetKey?: string } | null>(
+    null,
+  );
 
   const showAlert = (
     title: string,
@@ -51,7 +54,11 @@ export default function LoginScreen() {
   const handleCloseAlert = () => {
     setAlertVisible(false);
     if (alertConfig.type === "success") {
-      router.replace("/(drawer)/map" as any);
+      if (loginResult?.resetKey === "Yes") {
+        router.replace("/(drawer)/change-password?ref=reset" as any);
+      } else {
+        router.replace("/(drawer)/map" as any);
+      }
     }
   };
 
@@ -67,7 +74,8 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      await login({ promoter_id: userId, password });
+      const result = await login({ promoter_id: userId, password });
+      setLoginResult(result);
       showAlert("Success", "Login successful!", "success");
     } catch (error: any) {
       showAlert(

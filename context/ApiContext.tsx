@@ -277,7 +277,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
    * Get incident reports with optional filters
    * GET/POST /api/get_incidents
    * REQUIRED: token, user_id
-   * OPTIONAL: incident_id, status, issue_category
+   * OPTIONAL: incident_id, status, 
    */
   const getIncidents = async (
     filters?: GetIncidentsFilters,

@@ -22,7 +22,8 @@ export default function ChangePasswordScreen() {
   const router = useRouter();
   const { updatePassword } = useAuth();
   const params = useLocalSearchParams();
-  const showBack = !!params.ref;
+  const isForcedReset = params.ref === "reset";
+  const showBack = !!params.ref && !isForcedReset;
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
 
@@ -85,7 +86,11 @@ export default function ChangePasswordScreen() {
       alertConfig.type === "success" &&
       alertConfig.title !== "Forgot Password"
     ) {
-      router.back();
+      if (isForcedReset) {
+        router.replace("/(drawer)/map" as any);
+      } else {
+        router.back();
+      }
     } else if (alertConfig.title === "Forgot Password") {
       // Navigate to forgot password flow if needed
       router.push("/forgot-password");
