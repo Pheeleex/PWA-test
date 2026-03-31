@@ -55,6 +55,13 @@
     },
     "plugins": [
       "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUseUsageDescription": "Allow Promolocation to use your location so you can view nearby promotion zones and track your compliance.",
+          "locationWhenInUseUsageDescription": "Allow Promolocation to use your location so you can view nearby promotion zones and track your compliance."
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
