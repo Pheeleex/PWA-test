@@ -23,7 +23,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
         "NSLocationAlwaysUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
         "UIBackgroundModes": [
-          "remote-notification"
+          "remote-notification",
+          "location"
         ]
       },
       "config": {
@@ -32,7 +33,10 @@
     },
     "android": {
       "permissions": [
-        "NOTIFICATIONS"
+        "NOTIFICATIONS",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -40,8 +44,6 @@
         "backgroundImage": "./assets/images/adaptive-icon.png",
         "monochromeImage": "./assets/images/adaptive-icon.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.bat.promolocation",
       "config": {
         "googleMaps": {
@@ -59,7 +61,9 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUseUsageDescription": "Allow Promolocation to use your location so you can view nearby promotion zones and track your compliance.",
-          "locationWhenInUseUsageDescription": "Allow Promolocation to use your location so you can view nearby promotion zones and track your compliance."
+          "locationWhenInUseUsageDescription": "Allow Promolocation to use your location so you can view nearby promotion zones and track your compliance.",
+          "locationAlwaysUsageDescription": "Allow Promolocation to use your location always so we can notify you when you enter activation zones even in background.",
+          "isAndroidBackgroundEnabled": true
         }
       ],
       "expo-router",

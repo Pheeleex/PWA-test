@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import * as Notifications from 'expo-notifications';
+import '@/services/GeofencingTask';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlobalProvider, useAuth, useApi } from '@/context';

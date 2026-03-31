@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
+  Dimensions,
+  Image,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +17,7 @@ import MapView, { Circle, Region } from "react-native-maps";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import { GEOFENCING_TASK_NAME } from "@/services/GeofencingTask";
 import ScreenHeader from "@/components/ScreenHeader";
 import { Colors } from "@/constants/theme";
 import { useApi, useAuth } from "@/context";
@@ -274,6 +278,45 @@ export default function MapScreen() {
 
     setupNotifications();
   }, [user]);
+
+  // Handle Geofencing setup
+  useEffect(() => {
+    if (!user || !pushEnabled || locations.length === 0) return;
+
+    const setupGeofencing = async () => {
+      try {
+        const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+        if (foregroundStatus !== 'granted') {
+          console.warn("[Geofencing] Foreground location permission denied");
+          return;
+        }
+
+        // On iOS we need background permission for geofencing specifically
+        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+        if (backgroundStatus !== 'granted') {
+          console.warn("[Geofencing] Background location permission denied");
+          return;
+        }
+
+        const regions = locations.map(zone => ({
+          identifier: `${zone.id || zone.location_id}|${zone.name || zone.location_name || "Promotion Zone"}`,
+          latitude: parseFloat(String(zone.latitude)),
+          longitude: parseFloat(String(zone.longitude)),
+          radius: zone.radius || 100, // meters
+          notifyOnEnter: true,
+          notifyOnExit: true,
+        }));
+
+
+        await Location.startGeofencingAsync(GEOFENCING_TASK_NAME, regions as any);
+        console.log(`[Geofencing] Monitoring ${regions.length} activation zones.`);
+      } catch (error) {
+        console.error("[Geofencing] Setup error:", error);
+      }
+    };
+
+    setupGeofencing();
+  }, [user, pushEnabled, locations]);
 
   const activationZonesWithDistance = useMemo<
     ActivationZoneWithDistance[]
