@@ -12,6 +12,8 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MapView, { Circle, Region } from "react-native-maps";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
 import ScreenHeader from "@/components/ScreenHeader";
 import { Colors } from "@/constants/theme";
 import { useApi, useAuth } from "@/context";
@@ -111,10 +113,37 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Push notification helper
+async function registerForPushNotificationsAsync() {
+  if (!Device.isDevice) {
+    console.log("Must use physical device for Push Notifications");
+    return null;
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== "granted") {
+    console.log("Failed to get push token for push notification!");
+    return null;
+  }
+
+  try {
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    return token;
+  } catch (e) {
+    console.error("Error getting push token:", e);
+    return null;
+  }
+}
+
 export default function MapScreen() {
   const router = useRouter();
-  const { getActiveLocations, locations } = useApi();
-  const { apiKey } = useAuth();
+  const { getActiveLocations, locations, savePushToken } = useApi();
+  const { apiKey, user, pushEnabled } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
   const mapRef = useRef<MapView | null>(null);
@@ -230,6 +259,21 @@ export default function MapScreen() {
       subscription?.remove();
     };
   }, []);
+
+  // Handle push notifications setup
+  useEffect(() => {
+    if (!user || !pushEnabled) return; // Only for logged in users with push enabled
+
+    const setupNotifications = async () => {
+      const token = await registerForPushNotificationsAsync();
+      if (token) {
+        console.log("[Push] Sending token to server:", token);
+        await savePushToken(token);
+      }
+    };
+
+    setupNotifications();
+  }, [user]);
 
   const activationZonesWithDistance = useMemo<
     ActivationZoneWithDistance[]

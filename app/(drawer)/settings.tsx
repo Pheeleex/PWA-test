@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import ScreenHeader from '@/components/ScreenHeader';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context';
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const { pushEnabled, toggleNotifications } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -64,6 +66,22 @@ export default function SettingsScreen() {
                             <Ionicons name="chevron-forward" size={20} color={theme.icon} />
                         </TouchableOpacity>
                     ))}
+
+                    {/* Notifications Toggle */}
+                    <View style={[styles.menuItem, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#F5F5F5', justifyContent: 'space-between' }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                            <View style={[styles.iconContainer, { backgroundColor: '#fff' }]}>
+                                <Ionicons name="notifications-outline" size={20} color="#0E2B63" />
+                            </View>
+                            <Text style={[styles.menuItemText, { color: theme.text }]}>Enable Notifications</Text>
+                        </View>
+                        <Switch
+                            value={pushEnabled}
+                            onValueChange={toggleNotifications}
+                            trackColor={{ false: "#767577", true: "#81b0ff" }}
+                            thumbColor={pushEnabled ? "#0E2B63" : "#f4f3f4"}
+                        />
+                    </View>
                 </View>
             </ScrollView>
         </View>

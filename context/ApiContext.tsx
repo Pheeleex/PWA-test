@@ -94,6 +94,9 @@ interface ApiContextType {
   apiError: string | null;
   setError: (error: string | null) => void;
 
+  // Push notifications
+  savePushToken: (token: string) => Promise<boolean>;
+
   // Generic data fetching utility (placeholder)
   fetchData: <T>(endpoint: string, options?: any) => Promise<T | null>;
 }
@@ -420,6 +423,36 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const savePushToken = async (fcmToken: string) => {
+    if (!user?.user_id || !apiKey) return false;
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_PUSH_TOKEN || "save_push_token"}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            token: apiKey,
+            user_id: user.user_id,
+            fcm_token: fcmToken,
+          }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      console.log("[API Response] Save Push Token:", {
+        status: response.status,
+        data,
+      });
+      return response.status === 200;
+    } catch (e) {
+      console.error("[API Error] Save Push Token:", e);
+      return false;
+    }
+  };
+
   const setLoading = (loading: boolean) => setIsLoading(loading);
 
   return (
@@ -435,6 +468,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         getIncidents,
         getActiveLocations,
         submitReport,
+        savePushToken,
         apiError,
         setError,
         fetchData,

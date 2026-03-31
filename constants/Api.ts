@@ -10,6 +10,7 @@ export const API_CONFIG = {
     GET_INCIDENTS: "get_incidents",
     GET_ACTIVE_LOCATIONS: "activate_location",
     RESET_PASSWORD: "reset_password",
+    SAVE_PUSH_TOKEN: "save_push_token",
   },
 };
 

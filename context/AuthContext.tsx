@@ -23,6 +23,7 @@ interface User {
   is_approved: boolean;
   area?: string;
   resetKey?: string;
+  fcm_token?: string;
 }
 
 interface AuthContextType {
@@ -51,6 +52,8 @@ interface AuthContextType {
   ) => Promise<void>;
   resetPassword: (promoter_id: string) => Promise<void>;
   fetchApiKey: () => Promise<string | null>;
+  pushEnabled: boolean;
+  toggleNotifications: (enabled: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,23 +68,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [pushEnabled, setPushEnabled] = useState<boolean>(true);
 
   // Initial load from storage
   useEffect(() => {
     const initialize = async () => {
       try {
-        const [storedToken, storedApiKey, onboardingStatus, storedUser] =
+        const [storedToken, storedApiKey, onboardingStatus, storedUser, pushStatus] =
           await Promise.all([
             AsyncStorage.getItem("jwt_token"),
             AsyncStorage.getItem("api_key"),
             AsyncStorage.getItem("onboarding_complete"),
             AsyncStorage.getItem("user_data"),
+            AsyncStorage.getItem("push_notifications_enabled"),
           ]);
 
         if (storedToken) setToken(storedToken);
         if (storedApiKey) setApiKey(storedApiKey);
         if (onboardingStatus === "true") setIsOnboardingComplete(true);
         if (storedUser) setUser(JSON.parse(storedUser));
+        if (pushStatus !== null) setPushEnabled(pushStatus === "true");
       } catch (error) {
         console.error("Initialization Error:", error);
       } finally {
@@ -428,6 +434,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const isAuthenticated = !!token;
 
+  const toggleNotifications = async (enabled: boolean) => {
+    setPushEnabled(enabled);
+    await AsyncStorage.setItem("push_notifications_enabled", enabled ? "true" : "false");
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -446,6 +457,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updateProfile,
         resetPassword,
         fetchApiKey,
+        pushEnabled,
+        toggleNotifications,
       }}
     >
       {children}
