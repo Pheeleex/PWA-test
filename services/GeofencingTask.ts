@@ -15,7 +15,7 @@ TaskManager.defineTask(GEOFENCING_TASK_NAME, async ({ data: { eventType, region 
 
   if (eventType === Location.GeofencingEventType.Enter) {
     console.log(`[Geofencing] Entered region: ${regionId}`);
-    
+
     Notifications.scheduleNotificationAsync({
       content: {
         title: "You've entered an Activation Zone!",
@@ -24,16 +24,17 @@ TaskManager.defineTask(GEOFENCING_TASK_NAME, async ({ data: { eventType, region 
       },
       trigger: null,
     });
-  } else if (eventType === Location.GeofencingEventType.Exit) {
-    console.log(`[Geofencing] Exited region: ${regionId}`);
-    
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Exited Activation Zone",
-        body: `You have left ${regionName}. Stay safe!`,
-        data: { locationId: regionId, type: 'geofence_exit' },
-      },
-      trigger: null,
-    });
   }
+  // else if (eventType === Location.GeofencingEventType.Exit) {
+  //   console.log(`[Geofencing] Exited region: ${regionId}`);
+
+  //   Notifications.scheduleNotificationAsync({
+  //     content: {
+  //       title: "Exited Activation Zone",
+  //       body: `You have left ${regionName}. Stay safe!`,
+  //       data: { locationId: regionId, type: 'geofence_exit' },
+  //     },
+  //     trigger: null,
+  //   });
+  // }
 });

@@ -267,19 +267,19 @@ export default function MapScreen() {
   }, []);
 
   // Handle push notifications setup
-  useEffect(() => {
-    if (!user || !pushEnabled) return; // Only for logged in users with push enabled
+  // useEffect(() => {
+  //   if (!user || !pushEnabled) return; // Only for logged in users with push enabled
 
-    const setupNotifications = async () => {
-      const token = await registerForPushNotificationsAsync();
-      if (token) {
-        console.log("[Push] Sending token to server:", token);
-        await savePushToken(token);
-      }
-    };
+  //   const setupNotifications = async () => {
+  //     const token = await registerForPushNotificationsAsync();
+  //     if (token) {
+  //       console.log("[Push] Sending token to server:", token);
+  //       await savePushToken(token);
+  //     }
+  //   };
 
-    setupNotifications();
-  }, [user]);
+  //   setupNotifications();
+  // }, [user]);
 
   // Handle Geofencing setup
   useEffect(() => {
