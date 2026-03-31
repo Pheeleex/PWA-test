@@ -20,9 +20,9 @@ import { useAuth } from "@/context";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const { updatePassword } = useAuth();
+  const { updatePassword, user } = useAuth();
   const params = useLocalSearchParams();
-  const isForcedReset = params.ref === "reset";
+  const isForcedReset = params.ref === "reset" || user?.resetKey === "Yes";
   const showBack = !!params.ref && !isForcedReset;
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
@@ -57,10 +57,10 @@ export default function ChangePasswordScreen() {
     const onBackPress = () => {
       if (showBack) {
         router.navigate("/(drawer)/settings");
-      } else {
-        router.back();
+        return true;
       }
-      return true;
+      // If it's a forced reset, we don't allow going back at all.
+      return true; 
     };
 
     const subscription = BackHandler.addEventListener(

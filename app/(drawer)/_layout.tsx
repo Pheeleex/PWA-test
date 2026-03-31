@@ -5,12 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context';
 
 export const unstable_settings = {
     initialRouteName: 'map',
 };
 
 export default function DrawerLayout() {
+    const { user } = useAuth();
+    const isLocked = user?.resetKey?.toLowerCase() === 'yes';
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -29,14 +32,18 @@ export default function DrawerLayout() {
                     },
                     headerTintColor: '#fff',
                     headerLeft: () => (
-                        <TouchableOpacity onPress={() => navigation.navigate('map')} style={{ marginBottom: 10 }}>
+                        <TouchableOpacity 
+                            onPress={isLocked ? undefined : () => navigation.navigate('map')} 
+                            style={{ marginBottom: 10 }}
+                            activeOpacity={isLocked ? 1 : 0.7}
+                        >
                             <Image
                                 source={require('@/assets/images/Logo.png')}
                                 style={{ width: 30, height: 30, marginLeft: 16, resizeMode: 'contain' }}
                             />
                         </TouchableOpacity>
                     ),
-                    headerRight: () => (
+                    headerRight: isLocked ? undefined : () => (
                         <TouchableOpacity
                             onPress={() => navigation.toggleDrawer()}
                             style={{ marginRight: 16, marginBottom: 10 }}
@@ -44,6 +51,8 @@ export default function DrawerLayout() {
                             <Ionicons name="menu" size={28} color="#fff" />
                         </TouchableOpacity>
                     ),
+                    swipeEnabled: !isLocked,
+                    drawerLockMode: isLocked ? 'locked-closed' : 'unlocked' as any,
                     headerTitle: '',
                     drawerStyle: { width: '75%', backgroundColor: theme.background },
                     drawerActiveTintColor: theme.tint,

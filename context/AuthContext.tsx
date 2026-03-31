@@ -266,6 +266,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.status !== 200) {
         throw new Error(data.message || "Failed to update password");
       }
+      
+      // Update local state to clear resetKey
+      if (user) {
+        const updatedUser = { ...user, resetKey: 'No' };
+        setUser(updatedUser);
+        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+      }
     } catch (error: any) {
       console.error("[API Error] Update Password:", error);
       throw error;

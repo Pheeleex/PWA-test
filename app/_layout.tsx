@@ -29,7 +29,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { isInitialized, isOnboardingComplete, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isInitialized, isOnboardingComplete, isAuthenticated, user, isLoading: authLoading } = useAuth();
   const apiContext = useApi();
   const apiLoading = apiContext?.isLoading || false;
   const segments = useSegments();
@@ -45,6 +45,15 @@ function RootLayoutNav() {
     const publicScreens = ["onboarding", "login", "forgot-password", "activation"];
     const isPublic = publicScreens.includes(rootSegment) || isReportPath;
 
+    // Enforce password change if resetKey is 'Yes'
+    const isLocked = user?.resetKey?.toLowerCase() === 'yes';
+    if (isAuthenticated && isLocked) {
+      if (segments[0] !== "(drawer)" || segments[1] !== "change-password") {
+        router.replace("/(drawer)/change-password");
+        return;
+      }
+    }
+
     if (isOnboardingComplete && rootSegment === "onboarding") {
       router.replace("/login");
     } else if (isAuthenticated && !isPublic) {
@@ -54,7 +63,7 @@ function RootLayoutNav() {
     } else if (!isAuthenticated && !isPublic) {
       router.replace("/login");
     }
-  }, [isInitialized, isOnboardingComplete, isAuthenticated, segments]);
+  }, [isInitialized, isOnboardingComplete, isAuthenticated, user, segments]);
 
   if (!isInitialized) {
     return <View style={{ flex: 1, backgroundColor: '#000' }} />; // Simple splash or empty color
