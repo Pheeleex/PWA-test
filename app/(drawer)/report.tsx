@@ -70,11 +70,17 @@ export default function ReportScreen() {
   const handleCloseAlert = () => {
     setAlertVisible(false);
     if (alertConfig.type === "success") {
+      // Clear fields on success
+      setIncidentName("");
+      setIssueCategory("");
+      setDescription("");
+      setImage(null);
+
+      // Only navigate if we were in the pre-login reporting flow
       if (isFromLogin) {
         router.replace("/login");
-      } else {
-        router.replace("/(drawer)/map");
       }
+      // Stay on the screen otherwise as requested
     }
   };
 
@@ -138,10 +144,7 @@ export default function ReportScreen() {
       );
       return;
     }
-    if (!userId.trim()) {
-      showAlert("Error", "Please provide your User ID.", "error");
-      return;
-    }
+
     if (!promoterId.trim()) {
       showAlert("Error", "Please provide your Promoter ID.", "error");
       return;
@@ -222,14 +225,14 @@ export default function ReportScreen() {
         onBack={
           showBack
             ? () => {
-                if (isFromLogin) {
-                  router.replace("/login");
-                } else if (params.ref === "settings") {
-                  router.navigate("/(drawer)/settings");
-                } else {
-                  router.back();
-                }
+              if (isFromLogin) {
+                router.replace("/login");
+              } else if (params.ref === "settings") {
+                router.navigate("/(drawer)/settings");
+              } else {
+                router.back();
               }
+            }
             : undefined
         }
       />
@@ -352,11 +355,19 @@ export default function ReportScreen() {
           onPress={pickImage}
         >
           {image ? (
-            <Image
-              source={{ uri: image }}
-              style={{ width: "100%", height: "100%", borderRadius: 12 }}
-              resizeMode="cover"
-            />
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: image }}
+                style={styles.previewImage}
+                resizeMode="cover"
+              />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => setImage(null)}
+              >
+                <Ionicons name="close-circle" size={28} color="#FF3B30" />
+              </TouchableOpacity>
+            </View>
           ) : (
             <>
               <Ionicons name="camera-outline" size={32} color="#00B1EB" />
@@ -445,5 +456,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  imagePreviewContainer: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 14,
+    padding: 2,
   },
 });

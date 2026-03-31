@@ -8,8 +8,8 @@ import {
   BackHandler,
   useColorScheme,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useEffect, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import ScreenHeader from "@/components/ScreenHeader";
 import CustomAlert from "@/components/CustomAlert";
@@ -29,6 +29,15 @@ export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Clear fields when the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    }, []),
+  );
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

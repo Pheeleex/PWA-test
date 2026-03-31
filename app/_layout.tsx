@@ -27,17 +27,18 @@ function RootLayoutNav() {
     if (!isInitialized) return;
 
     const rootSegment = segments[0] as string;
-    const publicScreens = ['onboarding', 'login', 'forgot-password', 'activation'];
-    const isPublic = publicScreens.includes(rootSegment);
+    const isReportPath = rootSegment === "(drawer)" && segments[1] === "report";
+    const publicScreens = ["onboarding", "login", "forgot-password", "activation"];
+    const isPublic = publicScreens.includes(rootSegment) || isReportPath;
 
-    if (isOnboardingComplete && rootSegment === 'onboarding') {
-        router.replace('/login');
+    if (isOnboardingComplete && rootSegment === "onboarding") {
+      router.replace("/login");
     } else if (isAuthenticated && !isPublic) {
-      if (rootSegment === 'login') {
-         router.replace('/(drawer)/map');
+      if (rootSegment === "login") {
+        router.replace("/(drawer)/map");
       }
     } else if (!isAuthenticated && !isPublic) {
-      router.replace('/login');
+      router.replace("/login");
     }
   }, [isInitialized, isOnboardingComplete, isAuthenticated, segments]);
 

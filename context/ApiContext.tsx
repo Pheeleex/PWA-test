@@ -111,7 +111,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   const [locations, setLocations] = useState<Location[]>([]);
   const [apiError, setError] = useState<string | null>(null);
 
-  const { token, apiKey, logout, user } = useAuth();
+  const { token, apiKey, logout, user, fetchApiKey } = useAuth();
 
   // Helper for actual fetch calls.
   // This can be used as a shared utility throughout the app.
@@ -202,12 +202,23 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     setError(null);
 
     try {
+      let currentApiKey = apiKey;
+
+      if (!currentApiKey) {
+        console.log("[DEBUG] apiKey missing in createIncident, fetching...");
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error("Unable to authorize request. Please check your internet connection.");
+      }
+
       // Determine user_id and promoter_id (logged-in user takes precedence)
       const finalUserId = user?.user_id || payloadUserId;
       const finalPromoterId = user?.promoter_id || payloadPromoterId;
 
       const formData = new FormData();
-      formData.append("token", apiKey || "");
+      formData.append("token", currentApiKey);
       if (finalUserId) formData.append("user_id", String(finalUserId));
       if (finalPromoterId) formData.append("promoter_id", finalPromoterId);
       formData.append("incident_name", incident_name);

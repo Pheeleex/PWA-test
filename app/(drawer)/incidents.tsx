@@ -11,6 +11,7 @@ import {
   BackHandler,
   useColorScheme,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,6 +32,17 @@ export default function IncidentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
+
+  useEffect(() => {
+    getIncidents();
+  }, []);
+
+  useEffect(() => {
+    if (!modalVisible) {
+      setImageLoading(false);
+    }
+  }, [modalVisible]);
 
   useEffect(() => {
     const onBackPress = () => {
@@ -60,7 +72,7 @@ export default function IncidentsScreen() {
       setRefreshing(false);
     }
   };
-
+  console.log(incidents)
   const filteredIncidents = incidents.filter((incident) => {
     const title = incident?.incident_name || incident?.title || "";
     return title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -94,13 +106,34 @@ export default function IncidentsScreen() {
   };
 
   const handlePressItem = (item: any) => {
+    setImageLoading(false); // Reset for new selection
     setSelectedIncident(item);
     setModalVisible(true);
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "No date";
+    try {
+      // Handle the common "2026-03-31 10:45:03" format
+      const date = new Date(dateString.replace(" ", "T"));
+      if (isNaN(date.getTime())) return dateString;
+
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     const title = item.incident_name || item.title || "Untitled";
-    const date = item.created_at || item.date || "No date";
+    const date = item.created_at || item.date;
     return (
       <TouchableOpacity
         style={[styles.card, { backgroundColor: getStatusColor(item.status) }]}
@@ -130,7 +163,7 @@ export default function IncidentsScreen() {
             { color: colorScheme === "dark" ? "#BBB" : "#666" },
           ]}
         >
-          {date}
+          {formatDate(date)}
         </Text>
       </TouchableOpacity>
     );
@@ -246,7 +279,7 @@ export default function IncidentsScreen() {
                       {selectedIncident.status}
                     </Text>
                     <Text style={[styles.modalDate, { color: theme.icon }]}>
-                      {selectedIncident.created_at || selectedIncident.date}
+                      {formatDate(selectedIncident.created_at || selectedIncident.date)}
                     </Text>
                   </View>
 
@@ -257,13 +290,22 @@ export default function IncidentsScreen() {
                   </Text>
 
                   {selectedIncident.photo || selectedIncident.image ? (
-                    <Image
-                      source={{
-                        uri: selectedIncident.photo || selectedIncident.image,
-                      }}
-                      style={styles.modalImage}
-                      resizeMode="cover"
-                    />
+                    <View style={styles.modalImageContainer}>
+                      <Image
+                        source={{
+                          uri: selectedIncident.photo || selectedIncident.image,
+                        }}
+                        style={styles.modalImage}
+                        resizeMode="cover"
+                        onLoadStart={() => setImageLoading(true)}
+                        onLoadEnd={() => setImageLoading(false)}
+                      />
+                      {imageLoading && (
+                        <View style={styles.imageLoader}>
+                          <ActivityIndicator size="small" color="#0E2B63" />
+                        </View>
+                      )}
+                    </View>
                   ) : (
                     <View
                       style={[
@@ -407,10 +449,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 24,
   },
-  modalImage: {
+  modalImageContainer: {
     width: "100%",
     height: 200,
     borderRadius: 12,
+    overflow: "hidden",
+    position: "relative",
+  },
+  modalImage: {
+    width: "100%",
+    height: "100%",
+  },
+  imageLoader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.05)",
   },
   noImageContainer: {
     width: "100%",
