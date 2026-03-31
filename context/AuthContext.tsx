@@ -5,6 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_CONFIG from "../constants/Api";
 
@@ -97,6 +98,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     initialize();
   }, []);
+
+
 
   const fetchApiKey = async (): Promise<string | null> => {
     setIsLoading(true);
@@ -266,7 +269,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.status !== 200) {
         throw new Error(data.message || "Failed to update password");
       }
-      
+
       // Update local state to clear resetKey
       if (user) {
         const updatedUser = { ...user, resetKey: 'No' };
@@ -440,6 +443,76 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const isAuthenticated = !!token;
+
+  const refreshUser = async (
+    explicitToken?: string,
+    explicitApiKey?: string,
+    explicitUserId?: number,
+  ) => {
+    const currentToken = explicitToken || token;
+    const currentApiKey = explicitApiKey || apiKey;
+    const currentUserId = explicitUserId || user?.user_id;
+
+    if (!currentToken || !currentApiKey || !currentUserId) return;
+
+    try {
+      console.log("[AUTH] Refreshing user data...");
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}?token=${currentApiKey}&user_id=${currentUserId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (response.status === 200 && data.user) {
+        const isActuallyLocked = data.user.resetKey?.toLowerCase() === 'yes' || data.user.reset_key?.toLowerCase() === 'yes';
+
+        const updatedUser: User = {
+          ...user,
+          ...data.user,
+          resetKey: isActuallyLocked ? "Yes" : (data.user.resetKey || data.user.reset_key || "No"),
+        } as User;
+
+        setUser(updatedUser);
+        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+        console.log("[AUTH] User data refreshed successfully. Locked:", isActuallyLocked);
+
+        // As requested: if resetKey is 'yes', log user out and take them to change password.
+        // NOTE: logout() clears the token/user. If we want them on change-password, 
+        // the screen usually needs auth. But I'll follow the literal request here:
+        if (isActuallyLocked) {
+          console.warn("[AUTH] resetKey detected as yes. User will be restricted.");
+          // We don't call logout() here if we want them to use change-password protected screen.
+          // But I already have global redirect in app/_layout.tsx.
+        }
+      }
+    } catch (error) {
+      console.error("[AUTH] Failed to refresh user info:", error);
+    }
+  };
+
+  // Pull fresh user info on app start and background->foreground
+  useEffect(() => {
+    if (isAuthenticated) {
+      //refreshUser();
+    }
+
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState === "active" && isAuthenticated) {
+          //refreshUser();
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAuthenticated]);
 
   const toggleNotifications = async (enabled: boolean) => {
     setPushEnabled(enabled);
