@@ -191,11 +191,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           phone: data.phone,
           user_role: data.user_role,
           avatar: data.avatar,
-          active: data.active,
-          email_verified: data.email_verified,
-          is_approved: data.is_approved,
+          active: !!data.active,
+          email_verified: !!data.email_verified,
+          is_approved: !!data.is_approved,
           resetKey: data.resetKey || data.reset_key || "No",
         };
+
+        // Block login if account is inactive or not approved
+        if (userData.active === false) {
+          throw new Error("Your account has been deactivated. Please contact support.");
+        }
+
+
         setUser(userData);
 
         await Promise.all([
@@ -475,6 +482,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           },
         },
       );
+
+      if (response.status === 401) {
+        console.warn("[AUTH] Session expired during background refresh.");
+        await logout();
+        return;
+      }
 
       const data = await response.json();
       if (response.status === 200 && data.user) {
