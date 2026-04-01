@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
+import { useNetwork } from "./NetworkContext";
 import API_CONFIG from "../constants/Api";
 
 export interface Incident {
@@ -103,11 +104,16 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   const [apiError, setError] = useState<string | null>(null);
 
   const { token, apiKey, logout, user, fetchApiKey } = useAuth();
+  const { isConnected, isInternetReachable } = useNetwork();
 
   const fetchData = async <T,>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T | null> => {
+    if (isConnected === false || isInternetReachable === false) {
+      console.log("[API] Aborted: No internet connection");
+      return null;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -181,6 +187,9 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     user_id: payloadUserId,
     promoter_id: payloadPromoterId,
   }: CreateIncidentPayload): Promise<Incident | null> => {
+    if (isConnected === false || isInternetReachable === false) {
+      return null;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -262,6 +271,9 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   const getIncidents = async (
     filters?: GetIncidentsFilters,
   ): Promise<Incident[] | null> => {
+    if (isConnected === false || isInternetReachable === false) {
+      return null;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -394,7 +406,7 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const savePushToken = async (fcmToken: string) => {
-    if (!user?.user_id || !apiKey) return false;
+    if (!user?.user_id || !apiKey || isConnected === false || isInternetReachable === false) return false;
     try {
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_PUSH_TOKEN || "save_push_token"}`,

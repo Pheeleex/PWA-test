@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNetwork } from "./NetworkContext";
 import API_CONFIG from "../constants/Api";
 
 interface User {
@@ -70,6 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [pushEnabled, setPushEnabled] = useState<boolean>(true);
+  const { isConnected, isInternetReachable } = useNetwork();
 
   // Initial load from storage
   useEffect(() => {
@@ -102,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
 
   const fetchApiKey = async (): Promise<string | null> => {
+    if (isConnected === false || isInternetReachable === false) return null;
     setIsLoading(true);
     try {
       console.log(`[API GET] Requesting API Key...`);
@@ -134,6 +137,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     promoter_id: string;
     password: string;
   }) => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection. Please check your network settings.");
+    }
     setIsLoading(true);
     try {
       let currentApiKey = apiKey;
@@ -242,6 +248,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     new_password: string;
     confirm_password: string;
   }) => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection.");
+    }
     setIsLoading(true);
     try {
       console.log("[API POST] Update Password Request:", passwords);
@@ -287,6 +296,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     profileData: Partial<User>,
     imageUri?: string | null,
   ) => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection.");
+    }
     setIsLoading(true);
     console.log("[DEBUG] updateProfile started", { profileData, hasImage: !!imageUri });
 
@@ -378,6 +390,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const resetPassword = async (promoter_id: string) => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection.");
+    }
     setIsLoading(true);
     try {
       let currentApiKey = apiKey;
@@ -443,6 +458,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     explicitApiKey?: string,
     explicitUserId?: number,
   ) => {
+    if (isConnected === false || isInternetReachable === false) return;
     const currentToken = explicitToken || token;
     const currentApiKey = explicitApiKey || apiKey;
     const currentUserId = explicitUserId || user?.user_id;
