@@ -13,9 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --------------------------------------------------------
-// DATA
-// --------------------------------------------------------
 const slides = [
     {
         id: '1',
@@ -43,9 +40,6 @@ const slides = [
     },
 ];
 
-// --------------------------------------------------------
-// COMPONENTS
-// --------------------------------------------------------
 
 function OnboardingItem({ item }: { item: typeof slides[0] }) {
     const { width } = useWindowDimensions();
@@ -61,7 +55,6 @@ function OnboardingItem({ item }: { item: typeof slides[0] }) {
                     {item.title}
                 </ThemedText>
 
-                {/* Modified Subtitle for checking id '2' */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
 
                     <ThemedText style={[styles.subtitle, { marginBottom: 0 }]}>
@@ -86,7 +79,6 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
             {data.map((_, i) => {
                 const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
 
-                // Active dot should not be wider (kept constant 10)
                 const dotWidth = scrollX.interpolate({
                     inputRange,
                     outputRange: [10, 10, 10],
@@ -99,7 +91,6 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
                     extrapolate: 'clamp',
                 });
 
-                // Active color #00B1EB, inactive white
                 const backgroundColor = scrollX.interpolate({
                     inputRange,
                     outputRange: ['#FFFFFF', '#00B1EB', '#FFFFFF'],
@@ -120,9 +111,6 @@ function Paginator({ data, scrollX }: { data: typeof slides; scrollX: Animated.V
     );
 }
 
-// --------------------------------------------------------
-// MAIN SCREEN
-// --------------------------------------------------------
 
 import { useAuth } from '@/context';
 

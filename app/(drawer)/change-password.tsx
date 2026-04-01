@@ -60,7 +60,7 @@ export default function ChangePasswordScreen() {
         return true;
       }
       // If it's a forced reset, we don't allow going back at all.
-      return true; 
+      return true;
     };
 
     const subscription = BackHandler.addEventListener(
@@ -166,7 +166,6 @@ export default function ChangePasswordScreen() {
             contextMenuHidden={true}
           />
           <TouchableOpacity
-            style={styles.eyeIcon}
             onPress={() => setShowCurrentPassword(!showCurrentPassword)}
           >
             <Ionicons
@@ -195,7 +194,6 @@ export default function ChangePasswordScreen() {
             contextMenuHidden={true}
           />
           <TouchableOpacity
-            style={styles.eyeIcon}
             onPress={() => setShowNewPassword(!showNewPassword)}
           >
             <Ionicons
@@ -226,7 +224,6 @@ export default function ChangePasswordScreen() {
             contextMenuHidden={true}
           />
           <TouchableOpacity
-            style={styles.eyeIcon}
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
           >
             <Ionicons
@@ -298,11 +295,9 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     fontSize: 16,
-    height: "100%",
+    height: "80%",
   },
-  eyeIcon: {
-    padding: 4,
-  },
+
   updateButton: {
     backgroundColor: "#0E2B63",
     width: 210,

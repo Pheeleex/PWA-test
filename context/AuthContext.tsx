@@ -270,7 +270,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         throw new Error(data.message || "Failed to update password");
       }
 
-      // Update local state to clear resetKey
       if (user) {
         const updatedUser = { ...user, resetKey: 'No' };
         setUser(updatedUser);
@@ -307,7 +306,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         Authorization: `Bearer ${token}`,
       };
 
-      // Determine fields to send
       const fields: any = {
         token: apiKey,
         jwt: token,
@@ -315,7 +313,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         ...profileData,
       };
 
-      // Handle fullname splitting if present
       if (profileData.fullname) {
         const parts = profileData.fullname.trim().split(/\s+/);
         fields.first_name = parts[0];
@@ -323,7 +320,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       if (hasNewImage) {
-        // Use FormData for image upload or deletion
         const formData = new FormData();
         Object.keys(fields).forEach((key) => {
           formData.append(key, String(fields[key]));
@@ -342,11 +338,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.log("[API POST] Update Profile (FormData):", formData);
         response = await fetch(url, {
           method: "POST",
-          headers, // No Content-Type for FormData
+          headers,
           body: formData,
         });
       } else {
-        // Use JSON for metadata-only updates
         headers["Content-Type"] = "application/json";
         console.log("[API POST] Update Profile (JSON):", fields);
         response = await fetch(url, {
@@ -424,7 +419,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (response.status === 200) {
-        // Success - password has been reset
         return;
       } else {
         let errorMsg =
@@ -480,13 +474,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
         console.log("[AUTH] User data refreshed successfully. Locked:", isActuallyLocked);
 
-        // As requested: if resetKey is 'yes', log user out and take them to change password.
-        // NOTE: logout() clears the token/user. If we want them on change-password, 
-        // the screen usually needs auth. But I'll follow the literal request here:
         if (isActuallyLocked) {
           console.warn("[AUTH] resetKey detected as yes. User will be restricted.");
-          // We don't call logout() here if we want them to use change-password protected screen.
-          // But I already have global redirect in app/_layout.tsx.
         }
       }
     } catch (error) {
@@ -494,7 +483,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  // Pull fresh user info on app start and background->foreground
   useEffect(() => {
     if (isAuthenticated) {
       //refreshUser();

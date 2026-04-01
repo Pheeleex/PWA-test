@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import API_CONFIG from "../constants/Api";
 
-// Common structures for API data
 export interface Incident {
   incident_id?: string | number;
   id?: string;
@@ -45,8 +44,8 @@ interface CreateIncidentPayload {
   incident_name: string;
   description?: string;
   photo?: string | null;
-  user_id?: string | number; // Required if user is not logged in
-  promoter_id?: string; // Required if user is not logged in
+  user_id?: string | number;
+  promoter_id?: string;
 }
 
 interface GetIncidentsFilters {
@@ -62,42 +61,34 @@ interface GetActiveLocationsFilters {
 }
 
 interface ApiContextType {
-  // Global loading states
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
 
-  // General app state tracking (incidents, reports, locations)
   incidents: Incident[];
   setIncidents: (incidents: Incident[]) => void;
   locations: Location[];
   setLocations: (locations: Location[]) => void;
 
-  // Incident management
   createIncident: (
     reportContent: CreateIncidentPayload,
   ) => Promise<Incident | null>;
   getIncidents: (filters?: GetIncidentsFilters) => Promise<Incident[] | null>;
 
-  // Location management
   getActiveLocations: (
     filters?: GetActiveLocationsFilters,
   ) => Promise<Location[] | null>;
 
-  // Report submission (legacy)
   submitReport: (reportContent: {
     title: string;
     description: string;
     image?: string | null;
   }) => Promise<void>;
 
-  // Error handling
   apiError: string | null;
   setError: (error: string | null) => void;
 
-  // Push notifications
   savePushToken: (token: string) => Promise<boolean>;
 
-  // Generic data fetching utility (placeholder)
   fetchData: <T>(endpoint: string, options?: any) => Promise<T | null>;
 }
 
@@ -113,8 +104,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
 
   const { token, apiKey, logout, user, fetchApiKey } = useAuth();
 
-  // Helper for actual fetch calls.
-  // This can be used as a shared utility throughout the app.
   const fetchData = async <T,>(
     endpoint: string,
     options: RequestInit = {},
@@ -185,11 +174,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  /**
-   * Create a new incident report
-   * POST /api/create_incident
-   * user_id and promoter_id come from logged-in user OR provided manually via form
-   */
   const createIncident = async ({
     incident_name,
     description,
@@ -212,7 +196,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
         throw new Error("Unable to authorize request. Please check your internet connection.");
       }
 
-      // Determine user_id and promoter_id (logged-in user takes precedence)
       const finalUserId = user?.user_id || payloadUserId;
       const finalPromoterId = user?.promoter_id || payloadPromoterId;
 
@@ -276,12 +259,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  /**
-   * Get incident reports with optional filters
-   * GET/POST /api/get_incidents
-   * REQUIRED: token, user_id
-   * OPTIONAL: incident_id, status, 
-   */
   const getIncidents = async (
     filters?: GetIncidentsFilters,
   ): Promise<Incident[] | null> => {
@@ -327,13 +304,6 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  /**
-   * Get active locations
-   * GET/POST /api/activate_location
-   * Retrieves all ACTIVE locations (is_active = 1)
-   * REQUIRED: token
-   * OPTIONAL: id, category, city, search
-   */
   const getActiveLocations = async (
     filters?: GetActiveLocationsFilters,
   ): Promise<Location[] | null> => {
