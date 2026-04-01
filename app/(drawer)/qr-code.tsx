@@ -53,6 +53,13 @@ export default function QRCodeScreen() {
                 <Text style={[styles.availabilityText, { color: theme.icon }]}>
                     This QR code stays available while you are inside an activation zone.
                 </Text>
+
+                <View style={[styles.disclaimerContainer, { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}>
+                    <Ionicons name="information-circle-outline" size={20} color="#64748B" style={{ marginRight: 10 }} />
+                    <Text style={[styles.disclaimerText, { color: '#64748B' }]}>
+                        “Nur für erwachsene Raucher/innen – wenn Du jünger als 25 Jahre aussiehst, ist die Vorlage eines Ausweises erforderlich.”
+                    </Text>
+                </View>
             </View>
         </View>
     );
@@ -87,6 +94,23 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
         maxWidth: 280,
+        marginBottom: 32,
+    },
+    disclaimerContainer: {
+        flexDirection: 'row',
+        padding: 16,
+        borderRadius: 16,
+        alignItems: 'center',
+        marginHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    disclaimerText: {
+        flex: 1,
+        fontSize: 13,
+        lineHeight: 18,
+        fontWeight: '500',
+        textAlign: 'left',
     },
     errorContainer: {
         alignItems: 'center',

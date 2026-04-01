@@ -12,6 +12,7 @@ import {
   useColorScheme,
   RefreshControl,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,7 +23,7 @@ import { useApi } from "@/context";
 
 export default function IncidentsScreen() {
   const router = useRouter();
-  const { incidents, getIncidents } = useApi();
+  const { incidents, getIncidents, isLoading } = useApi();
   const params = useLocalSearchParams();
   const showBack = !!params.ref;
   const colorScheme = useColorScheme() ?? "light";
@@ -222,9 +223,11 @@ export default function IncidentsScreen() {
           />
         }
         ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: theme.icon }]}>
-            No incidents found.
-          </Text>
+          !isLoading ? (
+            <Text style={[styles.emptyText, { color: theme.icon }]}>
+              No incidents found.
+            </Text>
+          ) : null
         }
       />
 
@@ -256,7 +259,7 @@ export default function IncidentsScreen() {
               </View>
 
               {selectedIncident && (
-                <View style={styles.modalContent}>
+                <ScrollView contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
                   <Text
                     style={[styles.modalIncidentTitle, { color: theme.text }]}
                   >
@@ -321,7 +324,7 @@ export default function IncidentsScreen() {
                       </Text>
                     </View>
                   )}
-                </View>
+                </ScrollView>
               )}
             </View>
           </TouchableWithoutFeedback>
@@ -478,4 +481,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   noImageText: {},
+  modalScrollContent: {
+    paddingBottom: 20,
+  },
 });

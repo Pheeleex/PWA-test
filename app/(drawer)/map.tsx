@@ -35,6 +35,7 @@ type ActivationZone = {
   name: string;
   center: LatLng;
   radius: number;
+  type: string;
 };
 
 type ActivationZoneWithDistance = ActivationZone & {
@@ -187,6 +188,7 @@ export default function MapScreen() {
         longitude: Number(loc.longitude) || 0,
       },
       radius: Number(loc.radius) || 50,
+      type: loc.type || "green", // default to green
     }));
   }, [locations]);
 
@@ -312,7 +314,7 @@ export default function MapScreen() {
         }
 
         const regions = locations.map(zone => ({
-          identifier: `${zone.id || zone.location_id}|${zone.name || zone.location_name || "Promotion Zone"}`,
+          identifier: `${zone.id || zone.location_id}|${zone.name || zone.location_name || "Promotion Zone"}|${zone.type || "green"}`,
           latitude: parseFloat(String(zone.latitude)),
           longitude: parseFloat(String(zone.longitude)),
           radius: zone.radius || 100, // meters
@@ -329,7 +331,7 @@ export default function MapScreen() {
     };
 
     setupGeofencing();
-  }, [user, pushEnabled, locations]);
+  }, [user?.user_id, pushEnabled, JSON.stringify(locations.map(l => l.id || l.location_id))]);
 
   const activationZonesWithDistance = useMemo<
     ActivationZoneWithDistance[]
@@ -608,6 +610,7 @@ export default function MapScreen() {
               >
                 {activationZonesWithDistance.map((zone) => {
                   const isActive = activeZone?.id === zone.id;
+                  const isRedZone = zone.type === 'red';
 
                   return (
                     <Circle
@@ -615,16 +618,20 @@ export default function MapScreen() {
                       center={zone.center}
                       radius={zone.radius}
                       strokeWidth={isActive ? 3 : 2}
-                      lineDashPattern={[8, 5]}
+                      lineDashPattern={isRedZone ? undefined : [8, 5]}
                       strokeColor={
-                        isActive
-                          ? "rgba(22,163,74,0.95)"
-                          : "rgba(22,163,74,0.6)"
+                        isRedZone
+                          ? "rgba(239,68,68,0.95)"
+                          : isActive
+                            ? "rgba(22,163,74,0.95)"
+                            : "rgba(22,163,74,0.6)"
                       }
                       fillColor={
-                        isActive
-                          ? "rgba(22,163,74,0.14)"
-                          : "rgba(22,163,74,0.07)"
+                        isRedZone
+                          ? "rgba(239,68,68,0.14)"
+                          : isActive
+                            ? "rgba(22,163,74,0.14)"
+                            : "rgba(22,163,74,0.07)"
                       }
                     />
                   );
@@ -632,6 +639,7 @@ export default function MapScreen() {
 
                 {activationZonesWithDistance.map((zone) => {
                   const isActive = activeZone?.id === zone.id;
+                  const isRedZone = zone.type === 'red';
 
                   return (
                     <Circle
@@ -640,9 +648,11 @@ export default function MapScreen() {
                       radius={7}
                       strokeWidth={0}
                       fillColor={
-                        isActive
-                          ? "rgba(22,163,74,0.28)"
-                          : "rgba(22,163,74,0.18)"
+                        isRedZone
+                          ? "rgba(239,68,68,0.28)"
+                          : isActive
+                            ? "rgba(22,163,74,0.28)"
+                            : "rgba(22,163,74,0.18)"
                       }
                     />
                   );
@@ -650,6 +660,7 @@ export default function MapScreen() {
 
                 {activationZonesWithDistance.map((zone) => {
                   const isActive = activeZone?.id === zone.id;
+                  const isRedZone = zone.type === 'red';
 
                   return (
                     <Circle
@@ -658,7 +669,11 @@ export default function MapScreen() {
                       radius={3}
                       strokeWidth={2}
                       strokeColor="#FFFFFF"
-                      fillColor={isActive ? "#15803D" : "#16A34A"}
+                      fillColor={
+                        isRedZone 
+                          ? "#EF4444" 
+                          : (isActive ? "#15803D" : "#16A34A")
+                      }
                     />
                   );
                 })}
@@ -673,6 +688,7 @@ export default function MapScreen() {
                   }
 
                   const isActive = activeZone?.id === zone.id;
+                  const isRedZone = zone.type === 'red';
 
                   return (
                     <View
@@ -689,10 +705,11 @@ export default function MapScreen() {
                         style={[
                           styles.zoneDistancePill,
                           isActive && styles.zoneDistancePillActive,
+                          isRedZone && styles.zoneDistancePillSchool,
                         ]}
                       >
                         <Text style={styles.zoneDistancePillText}>
-                          {getZoneDistanceLabel(zone)}
+                          {isRedZone ? zone.name : getZoneDistanceLabel(zone)}
                         </Text>
                       </View>
                     </View>
@@ -837,6 +854,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   zoneDistancePillActive: { backgroundColor: "#15803D" },
+  zoneDistancePillSchool: { backgroundColor: "#EF4444" },
   zoneDistancePillText: {
     fontSize: 12,
     fontWeight: "800",

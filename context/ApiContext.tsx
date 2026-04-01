@@ -39,6 +39,7 @@ export interface Location {
   address?: string;
   created_at?: string;
   updated_at?: string;
+  type?: 'green' | 'red' | string;
 }
 
 interface CreateIncidentPayload {

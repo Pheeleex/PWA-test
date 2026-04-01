@@ -11,19 +11,33 @@ TaskManager.defineTask(GEOFENCING_TASK_NAME, async ({ data: { eventType, region 
   }
 
   const identifier = region.identifier;
-  const [regionId, regionName] = identifier.includes('|') ? identifier.split('|') : [identifier, "Promotion Zone"];
+  const parts = identifier.includes('|') ? identifier.split('|') : [identifier, "Promotion Zone", "green"];
+  const [regionId, regionName, regionType] = parts.length >= 3 ? parts : [...parts, "green"];
 
   if (eventType === Location.GeofencingEventType.Enter) {
-    console.log(`[Geofencing] Entered region: ${regionId}`);
+    console.log(`[Geofencing] Entered ${regionType} region: ${regionId}`);
 
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: "You've entered an Activation Zone!",
-        body: `Welcome to ${regionName}. Scan the QR code to track your compliance.`,
-        data: { locationId: regionId, type: 'geofence_enter' },
-      },
-      trigger: null,
-    });
+    if (regionType === 'red') {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "⚠️ RED ZONE: Leave Immediately!",
+          body: `You have entered ${regionName}. This is an unauthorized area. Please exit now.`,
+          data: { locationId: regionId, type: 'red_zone_enter' },
+          sound: true,
+          priority: 'max',
+        },
+        trigger: null,
+      });
+    } else {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "You've entered an Activation Zone!",
+          body: `Welcome to ${regionName}. Scan the QR code to track your compliance.`,
+          data: { locationId: regionId, type: 'geofence_enter' },
+        },
+        trigger: null,
+      });
+    }
   }
   // else if (eventType === Location.GeofencingEventType.Exit) {
   //   console.log(`[Geofencing] Exited region: ${regionId}`);
