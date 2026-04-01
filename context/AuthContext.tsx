@@ -40,7 +40,7 @@ interface AuthContextType {
     promoter_id: string;
     password: string;
   }) => Promise<{ resetKey?: string }>;
-  logout: () => Promise<void>;
+  logout: (reason?: string) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   updatePassword: (passwords: {
@@ -230,18 +230,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const logout = async () => {
-    console.log("[AUTH] Logging out - clearing user, token, and apiKey");
+  const logout = async (reason: string = "User Manual Logout") => {
+    console.log(`[AUTH] 🔴 LOGOUT TRIGGERED. Source: ${reason}`);
     setUser(null);
     setToken(null);
     setApiKey(null);
-    console.log("[AUTH] State cleared");
     await Promise.all([
       AsyncStorage.removeItem("jwt_token"),
       AsyncStorage.removeItem("user_data"),
       AsyncStorage.removeItem("api_key"),
     ]);
-    console.log("[AUTH] AsyncStorage cleared");
+    console.log("[AUTH] Session cleared from memory and storage.");
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -485,7 +484,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (response.status === 401) {
         console.warn("[AUTH] Session expired during background refresh.");
-        await logout();
+        await logout("Background Refresh 401");
         return;
       }
 

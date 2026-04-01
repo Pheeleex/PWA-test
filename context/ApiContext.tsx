@@ -182,7 +182,8 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (response.status === 401) {
-        await logout();
+        console.warn(`[API] 401 Session Failure for URL: ${url}`);
+        await logout(`API Call 401: ${url}`);
         throw new Error("Your session has expired. Please log in again.");
       }
 
