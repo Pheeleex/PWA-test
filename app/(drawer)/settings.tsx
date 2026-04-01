@@ -1,14 +1,52 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image, Switch } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image, Switch, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
 import ScreenHeader from '@/components/ScreenHeader';
 import { Colors } from '@/constants/theme';
-import { useAuth } from '@/context';
+import { useAuth, useApi } from '@/context';
+
+async function registerForPushNotificationsAsync() {
+    if (!Device.isDevice) {
+        console.log("Must use physical device for Push Notifications");
+        return null;
+    }
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+    }
+    if (finalStatus !== "granted") {
+        console.log("Failed to get push token for push notification!");
+        return null;
+    }
+    try {
+        const projectId =
+            Constants?.expoConfig?.extra?.eas?.projectId ??
+            Constants?.easConfig?.projectId;
+        if (!projectId) {
+            console.warn("Project ID not found in expo config");
+        }
+        const token = (
+            await Notifications.getExpoPushTokenAsync({
+                projectId,
+            })
+        ).data;
+        return token;
+    } catch (e) {
+        console.error("Error getting push token:", e);
+        return null;
+    }
+}
 
 export default function SettingsScreen() {
     const router = useRouter();
     const { pushEnabled, toggleNotifications } = useAuth();
+    const { savePushToken } = useApi();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -35,7 +73,7 @@ export default function SettingsScreen() {
 
     useEffect(() => {
         const onBackPress = () => {
-            router.back();
+            router.navigate('/(drawer)/map');
             return true;
         };
 
@@ -48,9 +86,20 @@ export default function SettingsScreen() {
         router.push(item.route);
     };
 
+    const handleToggle = async (enabled: boolean) => {
+        await toggleNotifications(enabled);
+        Linking.openSettings();
+        if (enabled) {
+            const token = await registerForPushNotificationsAsync();
+            if (token) {
+                await savePushToken(token);
+            }
+        }
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <ScreenHeader title="Settings" withSafeArea={false} showBackButton={true} />
+            <ScreenHeader title="Settings" withSafeArea={false} showBackButton={true} onBack={() => router.navigate('/(drawer)/map')} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.listContainer}>
                     {menuItems.map((item) => (
@@ -77,7 +126,7 @@ export default function SettingsScreen() {
                         </View>
                         <Switch
                             value={pushEnabled}
-                            onValueChange={toggleNotifications}
+                            onValueChange={handleToggle}
                             trackColor={{ false: "#767577", true: "#81b0ff" }}
                             thumbColor={pushEnabled ? "#0E2B63" : "#f4f3f4"}
                         />
