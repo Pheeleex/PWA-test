@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { useNetwork } from "./NetworkContext";
 import API_CONFIG from "../constants/Api";
@@ -102,9 +102,33 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [apiError, setError] = useState<string | null>(null);
+  const [wasOffline, setWasOffline] = useState(false);
 
   const { token, apiKey, logout, user, fetchApiKey } = useAuth();
   const { isConnected, isInternetReachable } = useNetwork();
+
+  // Handle Automatic Background Refresh on Reconnection
+  useEffect(() => {
+    const isNowOnline = isConnected !== false && isInternetReachable !== false;
+    
+    // If the device was offline and is now back online
+    if (wasOffline && isNowOnline) {
+      console.log("[API] Connection restored. Triggering background sync...");
+      
+      // Refresh key app data in the background
+      if (apiKey) {
+        getActiveLocations();
+        if (user?.user_id) {
+          getIncidents();
+        }
+      }
+      
+      setWasOffline(false);
+    } else if (!isNowOnline && !wasOffline) {
+      // Record that we have gone offline
+      setWasOffline(true);
+    }
+  }, [isConnected, isInternetReachable, wasOffline, apiKey, user?.user_id]);
 
   const fetchData = async <T,>(
     endpoint: string,
