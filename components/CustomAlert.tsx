@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, useColorScheme } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, useColorScheme, Vibration, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import * as Haptics from 'expo-haptics';
 
 interface CustomAlertProps {
     visible: boolean;
@@ -35,6 +36,7 @@ export default function CustomAlert({
 
     useEffect(() => {
         if (visible) {
+            // ── Animate in ──────────────────────────────────────────────────
             Animated.parallel([
                 Animated.spring(scaleValue, {
                     toValue: 1,
@@ -48,6 +50,34 @@ export default function CustomAlert({
                     useNativeDriver: true,
                 }),
             ]).start();
+
+            // ── Haptic + sound feedback ──────────────────────────────────────
+            // On iOS  : notificationAsync fires both the haptic ENGINE pattern
+            //           AND the associated system audio cue (no audio files needed).
+            // On Android: haptics are vibration-only, so we layer a custom
+            //             Vibration pattern to make each alert type feel distinct.
+            if (type === 'success') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                if (Platform.OS === 'android') {
+                    // Short double-pulse — "all good" feel
+                    Vibration.vibrate([0, 60, 60, 60]);
+                }
+            } else if (type === 'error') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                if (Platform.OS === 'android') {
+                    // Longer single buzz then a sharp tail — "attention" feel
+                    Vibration.vibrate([0, 30, 80, 180]);
+                }
+            } else if (type === 'warning') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                if (Platform.OS === 'android') {
+                    // Medium double-pulse — "caution" feel
+                    Vibration.vibrate([0, 80, 60, 80]);
+                }
+            } else {
+                // info — light single tap, no custom Android pattern needed
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
         } else {
             Animated.timing(opacityValue, {
                 toValue: 0,
@@ -57,6 +87,7 @@ export default function CustomAlert({
             scaleValue.setValue(0);
         }
     }, [visible]);
+
 
     if (!visible) return null;
 

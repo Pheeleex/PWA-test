@@ -57,7 +57,7 @@ export default function QRCodeScreen() {
                 <View style={[styles.disclaimerContainer, { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}>
                     <Ionicons name="information-circle-outline" size={20} color="#64748B" style={{ marginRight: 10 }} />
                     <Text style={[styles.disclaimerText, { color: '#64748B' }]}>
-                        “Nur für erwachsene Raucher/innen – wenn Du jünger als 25 Jahre aussiehst, ist die Vorlage eines Ausweises erforderlich.”
+                        Nur für erwachsene Raucher/innen – wenn Du jünger als 25 Jahre aussiehst, ist die Vorlage eines Ausweises erforderlich.
                     </Text>
                 </View>
             </View>

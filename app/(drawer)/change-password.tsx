@@ -290,12 +290,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#00B1EB", // Updated border color
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
   },
   passwordInput: {
     flex: 1,
-    fontSize: 16,
-    height: "80%",
+    fontSize: 14,
+    height: "100%",
   },
 
   updateButton: {
