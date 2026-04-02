@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   StyleSheet,
@@ -17,6 +17,8 @@ import { StatusBar } from "expo-status-bar";
 import CustomAlert from "@/components/CustomAlert";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from "expo-secure-store";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,6 +43,46 @@ export default function LoginScreen() {
   const [loginResult, setLoginResult] = useState<{ resetKey?: string } | null>(
     null,
   );
+  const [hasBiometrics, setHasBiometrics] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (compatible && enrolled) {
+        const savedUserId = await SecureStore.getItemAsync("saved_user_id");
+        const savedPassword = await SecureStore.getItemAsync("saved_password");
+        if (savedUserId && savedPassword) {
+          setHasBiometrics(true);
+          setUserId(savedUserId);
+        }
+      }
+    })();
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    try {
+      const authResult = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Unlock Promolocation",
+        fallbackLabel: "Use Password",
+      });
+
+      if (authResult.success) {
+        const savedUserId = await SecureStore.getItemAsync("saved_user_id");
+        const savedPassword = await SecureStore.getItemAsync("saved_password");
+
+        if (savedUserId && savedPassword) {
+          setIsLoading(true);
+          const result = await login({ promoter_id: savedUserId, password: savedPassword });
+          setLoginResult(result);
+          showAlert("Success", "Login successful!", "success");
+        }
+      }
+    } catch (error: any) {
+      console.error("Biometric auth failed", error);
+      setIsLoading(false);
+    }
+  };
 
   const showAlert = (
     title: string,
@@ -75,6 +117,11 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       const result = await login({ promoter_id: userId, password });
+
+      // Save credentials for future biometric unlocks
+      await SecureStore.setItemAsync("saved_user_id", userId);
+      await SecureStore.setItemAsync("saved_password", password);
+
       setLoginResult(result);
       showAlert("Success", "Login successful!", "success");
     } catch (error: any) {
@@ -183,6 +230,22 @@ export default function LoginScreen() {
           >
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
+
+          {hasBiometrics && (
+            <TouchableOpacity
+              onPress={handleBiometricLogin}
+              style={[styles.biometricButton, isLoading && { opacity: 0.8 }]}
+              disabled={isLoading}
+            >
+              <Ionicons
+                name={Platform.OS === 'ios' ? "scan-outline" : "finger-print-outline"}
+                size={22}
+                color="#0E2B63"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.biometricButtonText}>Login with Biometrics</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.footer}>
@@ -295,6 +358,22 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  biometricButton: {
+    backgroundColor: "#F1F5F9",
+    paddingVertical: 15,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  biometricButtonText: {
+    color: "#0E2B63",
     fontSize: 16,
     fontWeight: "bold",
   },
