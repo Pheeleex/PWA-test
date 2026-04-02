@@ -604,9 +604,6 @@ export default function MapScreen() {
                 onRegionChangeComplete={() => {
                   void updateZoneLabelPositions();
                 }}
-                onLongPress={(event) => {
-                  console.log("Long press:", event.nativeEvent.coordinate);
-                }}
               >
                 {activationZonesWithDistance.map((zone) => {
                   const isActive = activeZone?.id === zone.id;

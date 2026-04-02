@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
 import Constants from "expo-constants";
 import ScreenHeader from '@/components/ScreenHeader';
 import { Colors } from '@/constants/theme';

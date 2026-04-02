@@ -11,7 +11,6 @@ import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetwork } from "./NetworkContext";
 import API_CONFIG from "../constants/Api";
-
 interface User {
   user_id: number;
   promoter_id: string;

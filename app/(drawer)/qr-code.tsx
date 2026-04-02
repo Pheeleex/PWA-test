@@ -12,7 +12,7 @@ export default function QRCodeScreen() {
     const url = params.url as string;
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
-    console.log(url)
+
     useEffect(() => {
         const onBackPress = () => {
             router.back();

@@ -24,7 +24,6 @@ export default function ReportScreen() {
   const router = useRouter();
   const { createIncident } = useApi();
   const { user } = useAuth();
-  console.log("User context in ReportScreen:", user);
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const params = useLocalSearchParams();
   const showBack = !!params.ref;

@@ -106,25 +106,6 @@ export default function ProfileScreen() {
         );
     };
 
-    const deleteImage = () => {
-        Alert.alert(
-            'Delete Profile Picture',
-            'Are you sure you want to remove your profile picture?',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        setPendingImage('delete'); // Special flag for removal
-                    },
-                },
-            ]
-        );
-    };
 
     const currentDisplayImage = pendingImage && pendingImage !== 'delete' ? pendingImage : (pendingImage === 'delete' ? null : image);
 
@@ -235,12 +216,6 @@ export default function ProfileScreen() {
     );
 }
 
-const DetailItem = ({ label, value, statusColor, theme }: { label: string, value: string, statusColor?: string, theme: any }) => (
-    <View style={[styles.detailItem, { borderBottomColor: theme.background === '#151718' ? '#333' : '#EEE' }]}>
-        <Text style={[styles.label, { color: theme.icon }]}>{label}</Text>
-        <Text style={[styles.value, { color: statusColor || theme.text }, statusColor ? { fontWeight: 'bold' } : null]}>{value}</Text>
-    </View>
-);
 
 const styles = StyleSheet.create({
     container: {
@@ -289,17 +264,9 @@ const styles = StyleSheet.create({
     editButton: {
         backgroundColor: '#00B1EB',
     },
-    deleteButton: {
-        backgroundColor: '#FF3B30',
-    },
     userIdText: {
         fontSize: 24,
         fontWeight: 'bold',
-    },
-    roleText: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginTop: 4,
     },
     detailsContainer: {
         borderRadius: 12,

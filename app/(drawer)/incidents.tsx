@@ -73,7 +73,7 @@ export default function IncidentsScreen() {
       setRefreshing(false);
     }
   };
-  console.log(incidents)
+
   const filteredIncidents = incidents.filter((incident) => {
     const title = incident?.incident_name || incident?.title || "";
     return title.toLowerCase().includes(searchQuery.toLowerCase());
