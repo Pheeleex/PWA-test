@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image, Switch, Linking } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, BackHandler, useColorScheme, Image, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
@@ -9,39 +9,6 @@ import ScreenHeader from '@/components/ScreenHeader';
 import { Colors } from '@/constants/theme';
 import { useAuth, useApi } from '@/context';
 
-async function registerForPushNotificationsAsync() {
-    if (!Device.isDevice) {
-        console.log("Must use physical device for Push Notifications");
-        return null;
-    }
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-        console.log("Failed to get push token for push notification!");
-        return null;
-    }
-    try {
-        const projectId =
-            Constants?.expoConfig?.extra?.eas?.projectId ??
-            Constants?.easConfig?.projectId;
-        if (!projectId) {
-            console.warn("Project ID not found in expo config");
-        }
-        const token = (
-            await Notifications.getExpoPushTokenAsync({
-                projectId,
-            })
-        ).data;
-        return token;
-    } catch (e) {
-        console.error("Error getting push token:", e);
-        return null;
-    }
-}
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -87,12 +54,24 @@ export default function SettingsScreen() {
     };
 
     const handleToggle = async (enabled: boolean) => {
+        // toggleNotifications now owns the OS permission request:
+        //   - turning ON  → requests OS permission; opens Settings if denied, bails out
+        //   - turning OFF → saves preference, no redirect
         await toggleNotifications(enabled);
-        Linking.openSettings();
+
+        // After the context updates pushEnabled, register and send the push
+        // token to the server only if notifications ended up enabled.
         if (enabled) {
-            const token = await registerForPushNotificationsAsync();
-            if (token) {
-                await savePushToken(token);
+            try {
+                const projectId =
+                    Constants?.expoConfig?.extra?.eas?.projectId ??
+                    Constants?.easConfig?.projectId;
+                const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({ projectId });
+                if (expoPushToken) {
+                    await savePushToken(expoPushToken);
+                }
+            } catch (e) {
+                console.warn("[Settings] Could not register push token:", e);
             }
         }
     };

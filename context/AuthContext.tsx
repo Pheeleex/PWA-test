@@ -6,7 +6,8 @@ import React, {
   useRef,
   ReactNode,
 } from "react";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Linking } from "react-native";
+import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetwork } from "./NetworkContext";
 import API_CONFIG from "../constants/Api";
@@ -95,7 +96,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (storedApiKey) setApiKey(storedApiKey);
         if (onboardingStatus === "true") setIsOnboardingComplete(true);
         if (storedUser) setUser(JSON.parse(storedUser));
-        if (pushStatus !== null) setPushEnabled(pushStatus === "true");
+
+        // Derive pushEnabled from BOTH the OS permission AND the stored preference.
+        // If the OS has notifications disabled, the toggle must show as off
+        // regardless of what we have saved in AsyncStorage.
+        const { status: osStatus } = await Notifications.getPermissionsAsync();
+        const osGranted = osStatus === "granted";
+        const userWantsEnabled = pushStatus !== "false"; // default true when never set
+        setPushEnabled(osGranted && userWantsEnabled);
       } catch (error) {
         console.error("Initialization Error:", error);
       } finally {
@@ -551,6 +559,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  /** Sync pushEnabled with the real OS permission status.
+   * Called on every app-resume so the toggle automatically reflects
+   * changes the user makes in device Settings without touching the app. */
+  const syncPushPermission = async () => {
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      const osGranted = status === "granted";
+      if (!osGranted) {
+        // OS permission was revoked — turn the toggle off
+        setPushEnabled(false);
+      } else {
+        // OS is still granted — restore the user's stored in-app preference
+        const stored = await AsyncStorage.getItem("push_notifications_enabled");
+        setPushEnabled(stored !== "false"); // true when null (default) or explicitly "true"
+      }
+    } catch { /* non-critical — ignore */ }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       // Refresh immediately on login/init
@@ -561,13 +587,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const subscription = AppState.addEventListener(
       "change",
       (nextAppState: AppStateStatus) => {
-        if (nextAppState === "active" && isAuthenticated) {
-          const now = Date.now();
-          // Throttle: only refresh if at least 5 minutes have passed
-          // This prevents a logout on every phone unlock / app-switch
-          if (now - lastRefreshedAt.current >= MIN_REFRESH_INTERVAL_MS) {
-            lastRefreshedAt.current = now;
-            refreshUser();
+        if (nextAppState === "active") {
+          // Always re-check OS notification permission on resume — the user
+          // may have changed it in device Settings while away from the app.
+          syncPushPermission();
+
+          if (isAuthenticated) {
+            const now = Date.now();
+            // Throttle: only refresh user data if at least 5 minutes have passed
+            if (now - lastRefreshedAt.current >= MIN_REFRESH_INTERVAL_MS) {
+              lastRefreshedAt.current = now;
+              refreshUser();
+            }
           }
         }
       },
@@ -578,9 +609,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [isAuthenticated]);
 
-  const toggleNotifications = async (enabled: boolean) => {
+  const toggleNotifications = async (enabled: boolean): Promise<void> => {
+    if (enabled) {
+      // Ask for OS permission (no-op if already granted)
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        // Permission denied — send user to Settings and leave the toggle as-is
+        Linking.openSettings();
+        return;
+      }
+    }
+    // Either: (a) turning off, or (b) turning on with permission granted
     setPushEnabled(enabled);
-    await AsyncStorage.setItem("push_notifications_enabled", enabled ? "true" : "false");
+    await AsyncStorage.setItem(
+      "push_notifications_enabled",
+      enabled ? "true" : "false",
+    );
   };
 
   return (
