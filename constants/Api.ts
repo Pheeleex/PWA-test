@@ -9,7 +9,7 @@ export const API_CONFIG = {
     CREATE_INCIDENT: "create_incident",
     GET_INCIDENTS: "get_incidents",
     GET_ACTIVE_LOCATIONS: "activate_location",
-    GET_USER_DATA: "get_user_profile",
+    GET_USER_DATA: "check_reset_password",
     RESET_PASSWORD: "user_reset_password",
     SAVE_PUSH_TOKEN: "user_tokens",
   },

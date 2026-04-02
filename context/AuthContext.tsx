@@ -417,7 +417,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         promoter_id,
       };
 
-      console.log("[API POST] Reset Password Request:", {
+      console.log("[API POST] Reset Password Request:", payload, {
         url: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RESET_PASSWORD}`,
         promoter_id,
       });
@@ -481,7 +481,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           },
         },
       );
-
+      console.log(response, "response")
       if (response.status === 401) {
         console.warn("[AUTH] Session expired during background refresh.");
         await logout("Background Refresh 401");
@@ -513,14 +513,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (isAuthenticated) {
-      //refreshUser();
+      refreshUser();
     }
 
     const subscription = AppState.addEventListener(
       "change",
       (nextAppState: AppStateStatus) => {
         if (nextAppState === "active" && isAuthenticated) {
-          //refreshUser();
+          refreshUser();
         }
       },
     );
