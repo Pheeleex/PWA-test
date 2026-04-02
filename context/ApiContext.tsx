@@ -182,7 +182,45 @@ export const ApiProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (response.status === 401) {
-        console.warn(`[API] 401 Session Failure for URL: ${url}`);
+        console.warn(`[API] 401 on ${url} — trying API key refresh before logout...`);
+
+        // Attempt to refresh the API key (unauthenticated call) and retry once.
+        // This handles the common case where the shared API key has rotated on
+        // the server, which should NOT end the user's session outright.
+        const newApiKey = await fetchApiKey();
+        if (newApiKey) {
+          // Rebuild body with the new API key if it is JSON
+          let retryOptions = { ...options, headers };
+          if (!isFormData && options.body) {
+            try {
+              const parsed = JSON.parse(options.body as string);
+              if (parsed && typeof parsed === "object") {
+                parsed.token = newApiKey;
+                retryOptions = {
+                  ...retryOptions,
+                  body: JSON.stringify(parsed),
+                };
+              }
+            } catch { /* leave body as-is if it isn't parseable */ }
+          }
+
+          const retryResponse = await fetch(url, retryOptions);
+          if (retryResponse.status !== 401) {
+            // Retry succeeded — process the response normally
+            if (!retryResponse.ok) {
+              const errData = await retryResponse.json().catch(() => ({}));
+              throw new Error(errData.message || `API Error: ${retryResponse.status}`);
+            }
+            const retryData = await retryResponse.json();
+            console.log(`[API Retry Success]:`, retryData);
+            return retryData as T;
+          }
+          // Still 401 after key refresh → JWT is expired → logout
+          console.warn(`[API] Still 401 after key refresh — JWT expired, logging out.`);
+        } else {
+          console.warn(`[API] Could not refresh API key — logging out.`);
+        }
+
         await logout(`API Call 401: ${url}`);
         throw new Error("Your session has expired. Please log in again.");
       }

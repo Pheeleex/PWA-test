@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { AppState, AppStateStatus } from "react-native";
@@ -72,6 +73,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [pushEnabled, setPushEnabled] = useState<boolean>(true);
   const { isConnected, isInternetReachable } = useNetwork();
+
+  // Throttle background refreshes — minimum 5 minutes between calls
+  const lastRefreshedAt = useRef<number>(0);
+  const MIN_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
   // Initial load from storage
   useEffect(() => {
@@ -459,6 +464,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const isAuthenticated = !!token;
 
+  /** Apply user data from a successful refresh response */
+  const applyRefreshedUser = async (data: any) => {
+    if (!data?.user) return;
+    const isActuallyLocked =
+      data.user.resetKey?.toLowerCase() === 'yes' ||
+      data.user.reset_key?.toLowerCase() === 'yes';
+    const updatedUser: User = {
+      ...user,
+      ...data.user,
+      resetKey: isActuallyLocked
+        ? "Yes"
+        : (data.user.resetKey || data.user.reset_key || "No"),
+    } as User;
+    setUser(updatedUser);
+    await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+    console.log("[AUTH] User data refreshed. Locked:", isActuallyLocked);
+    if (isActuallyLocked) {
+      console.warn("[AUTH] resetKey is Yes — user will be restricted.");
+    }
+  };
+
   const refreshUser = async (
     explicitToken?: string,
     explicitApiKey?: string,
@@ -466,7 +492,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   ) => {
     if (isConnected === false || isInternetReachable === false) return;
     const currentToken = explicitToken || token;
-    const currentApiKey = explicitApiKey || apiKey;
+    let currentApiKey = explicitApiKey || apiKey;
     const currentUserId = explicitUserId || user?.user_id;
 
     if (!currentToken || !currentApiKey || !currentUserId) return;
@@ -476,35 +502,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}?token=${currentApiKey}&user_id=${currentUserId}`,
         {
-          headers: {
-            Authorization: `Bearer ${currentToken}`,
-          },
+          headers: { Authorization: `Bearer ${currentToken}` },
         },
       );
-      console.log(response, "response")
+
       if (response.status === 401) {
-        console.warn("[AUTH] Session expired during background refresh.");
-        await logout("Background Refresh 401");
+        // --- RETRY WITH A FRESH API KEY BEFORE LOGGING OUT ---
+        // The apiKey (not the JWT) may have rotated on the server.
+        // Re-fetching it costs one cheap unauthenticated request and
+        // avoids destroying a valid session unnecessarily.
+        console.warn("[AUTH] 401 on refresh — attempting API key refresh...");
+        const newApiKey = await fetchApiKey();
+        if (!newApiKey) {
+          console.warn("[AUTH] API key refresh failed — logging out.");
+          await logout("Background Refresh 401 - key refresh failed");
+          return;
+        }
+        currentApiKey = newApiKey;
+
+        // Retry with the fresh API key
+        const retryResponse = await fetch(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}?token=${currentApiKey}&user_id=${currentUserId}`,
+          {
+            headers: { Authorization: `Bearer ${currentToken}` },
+          },
+        );
+
+        if (retryResponse.status === 401) {
+          // JWT itself is expired — now we must logout
+          console.warn("[AUTH] Still 401 after API key refresh — JWT expired, logging out.");
+          await logout("Background Refresh 401 - JWT expired");
+          return;
+        }
+
+        if (retryResponse.ok) {
+          const retryData = await retryResponse.json();
+          await applyRefreshedUser(retryData);
+        }
         return;
       }
 
       const data = await response.json();
-      if (response.status === 200 && data.user) {
-        const isActuallyLocked = data.user.resetKey?.toLowerCase() === 'yes' || data.user.reset_key?.toLowerCase() === 'yes';
-
-        const updatedUser: User = {
-          ...user,
-          ...data.user,
-          resetKey: isActuallyLocked ? "Yes" : (data.user.resetKey || data.user.reset_key || "No"),
-        } as User;
-
-        setUser(updatedUser);
-        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
-        console.log("[AUTH] User data refreshed successfully. Locked:", isActuallyLocked);
-
-        if (isActuallyLocked) {
-          console.warn("[AUTH] resetKey detected as yes. User will be restricted.");
-        }
+      if (response.status === 200) {
+        await applyRefreshedUser(data);
       }
     } catch (error) {
       console.error("[AUTH] Failed to refresh user info:", error);
@@ -513,6 +553,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (isAuthenticated) {
+      // Refresh immediately on login/init
+      lastRefreshedAt.current = Date.now();
       refreshUser();
     }
 
@@ -520,7 +562,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       "change",
       (nextAppState: AppStateStatus) => {
         if (nextAppState === "active" && isAuthenticated) {
-          refreshUser();
+          const now = Date.now();
+          // Throttle: only refresh if at least 5 minutes have passed
+          // This prevents a logout on every phone unlock / app-switch
+          if (now - lastRefreshedAt.current >= MIN_REFRESH_INTERVAL_MS) {
+            lastRefreshedAt.current = now;
+            refreshUser();
+          }
         }
       },
     );
