@@ -171,6 +171,7 @@ export default function MapScreen() {
   const [location, setLocation] = useState<LatLng | null>(null);
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
@@ -515,6 +516,17 @@ export default function MapScreen() {
     );
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await getActiveLocations();
+    } catch (error) {
+      console.error("[Map] Refresh failed:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleOpenQr = () => {
     if (!location) {
       Alert.alert(
@@ -782,6 +794,17 @@ export default function MapScreen() {
             </View>
 
             <View style={styles.actionCol}>
+              <TouchableOpacity 
+                style={[styles.mapBtn, styles.iconBtn]} 
+                onPress={handleRefresh} 
+                disabled={refreshing}
+              >
+                {refreshing ? (
+                  <ActivityIndicator size="small" color="#0E2B63" />
+                ) : (
+                  <Ionicons name="refresh" size={20} color="#0E2B63" />
+                )}
+              </TouchableOpacity>
               <TouchableOpacity style={styles.mapBtn} onPress={centerOnUser}>
                 <Text style={styles.mapBtnText}>Center on me</Text>
               </TouchableOpacity>
@@ -924,6 +947,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
   },
   mapBtnText: {
     fontSize: 13,
