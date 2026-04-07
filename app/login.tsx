@@ -50,10 +50,10 @@ export default function LoginScreen() {
       const compatible = await LocalAuthentication.hasHardwareAsync();
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       if (compatible && enrolled) {
+        setHasBiometrics(true);
         const savedUserId = await SecureStore.getItemAsync("saved_user_id");
         const savedPassword = await SecureStore.getItemAsync("saved_password");
         if (savedUserId && savedPassword) {
-          setHasBiometrics(true);
           setUserId(savedUserId);
         }
       }
@@ -62,21 +62,28 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     try {
+      const savedUserId = await SecureStore.getItemAsync("saved_user_id");
+      const savedPassword = await SecureStore.getItemAsync("saved_password");
+
+      if (!savedUserId || !savedPassword) {
+        showAlert(
+          "Setup Required",
+          "Please login with your Promoter ID and password first to enable biometric login.",
+          "error"
+        );
+        return;
+      }
+
       const authResult = await LocalAuthentication.authenticateAsync({
         promptMessage: "Unlock Promolocation",
         fallbackLabel: "Use Password",
       });
 
       if (authResult.success) {
-        const savedUserId = await SecureStore.getItemAsync("saved_user_id");
-        const savedPassword = await SecureStore.getItemAsync("saved_password");
-
-        if (savedUserId && savedPassword) {
-          setIsLoading(true);
-          const result = await login({ promoter_id: savedUserId, password: savedPassword });
-          setLoginResult(result);
-          showAlert("Success", "Login successful!", "success");
-        }
+        setIsLoading(true);
+        const result = await login({ promoter_id: savedUserId, password: savedPassword });
+        setLoginResult(result);
+        showAlert("Success", "Login successful!", "success");
       }
     } catch (error: any) {
       console.error("Biometric auth failed", error);
