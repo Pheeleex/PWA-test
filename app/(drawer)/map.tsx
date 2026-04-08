@@ -365,7 +365,7 @@ export default function MapScreen() {
   }, [activationZonesWithDistance]);
 
   const nearestZoneInfo = useMemo(() => {
-    if (!location) return null;
+    if (!location || activationZonesWithDistance.length === 0) return null;
 
     return activationZonesWithDistance.reduce((nearest, zone) => {
       const distance = zone.distanceToZone ?? Infinity;
