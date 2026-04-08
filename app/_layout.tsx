@@ -12,6 +12,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlobalProvider, useAuth, useApi } from '@/context';
 import LoadingOverlay from '@/components/LoadingOverlay';
 
+import * as ScreenCapture from 'expo-screen-capture';
+
 // Configure notification handling behaviour
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -38,10 +40,15 @@ function RootLayoutNav() {
   const isGlobalLoading = authLoading || apiLoading;
 
   useEffect(() => {
+    // Prevent screenshots globally
+    ScreenCapture.preventScreenCaptureAsync();
+  }, []);
+
+  useEffect(() => {
     if (!isInitialized) return;
 
     const rootSegment = segments[0] as string;
-    const isReportPath = rootSegment === "(drawer)" && segments[1] === "report";
+    const isReportPath = rootSegment === "(drawer)" && (segments[1] as string) === "report";
     const publicScreens = ["onboarding", "login", "forgot-password", "activation"];
     const isPublic = publicScreens.includes(rootSegment) || isReportPath;
 
@@ -87,7 +94,7 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <GlobalProvider>
-       <RootLayoutNav />
+      <RootLayoutNav />
     </GlobalProvider>
   );
 }

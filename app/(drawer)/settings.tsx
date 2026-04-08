@@ -49,7 +49,7 @@ export default function SettingsScreen() {
     }, [router]);
 
     const handlePress = (item: any) => {
-        router.push(item.route);
+        router.push(item.route as any);
     };
 
     const handleToggle = async (enabled: boolean) => {

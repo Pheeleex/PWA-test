@@ -223,7 +223,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push("/(drawer)/report?ref=login")}
+              onPress={() => router.push("/(drawer)/report?ref=login" as any)}
               style={styles.optionButton}
             >
               <Text style={styles.reportButtonText}>Report Incident</Text>
