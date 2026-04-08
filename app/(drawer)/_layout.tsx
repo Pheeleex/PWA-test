@@ -32,8 +32,8 @@ export default function DrawerLayout() {
                     },
                     headerTintColor: '#fff',
                     headerLeft: () => (
-                        <TouchableOpacity 
-                            onPress={isLocked ? undefined : () => navigation.navigate('map')} 
+                        <TouchableOpacity
+                            onPress={isLocked ? undefined : () => navigation.navigate('map')}
                             style={{ marginBottom: 10 }}
                             activeOpacity={isLocked ? 1 : 0.7}
                         >

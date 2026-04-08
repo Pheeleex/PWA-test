@@ -23,18 +23,18 @@ export default function SettingsScreen() {
             image: require('@/assets/images/changepassword.png'),
             route: '/(drawer)/change-password?ref=settings',
         },
-        {
-            id: 'report',
-            title: 'Report Incident',
-            image: require('@/assets/images/reportincident.png'),
-            route: '/(drawer)/report?ref=settings',
-        },
-        {
-            id: 'history',
-            title: 'Incident History',
-            image: require('@/assets/images/incidenthistory.png'),
-            route: '/(drawer)/incidents?ref=settings',
-        },
+        // {
+        //     id: 'report',
+        //     title: 'Report Incident',
+        //     image: require('@/assets/images/reportincident.png'),
+        //     route: '/(drawer)/report?ref=settings',
+        // },
+        // {
+        //     id: 'history',
+        //     title: 'Incident History',
+        //     image: require('@/assets/images/incidenthistory.png'),
+        //     route: '/(drawer)/incidents?ref=settings',
+        // },
     ];
 
     useEffect(() => {
