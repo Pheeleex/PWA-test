@@ -13,7 +13,6 @@
       "backgroundColor": "#0E2B63"
     },
     "ios": {
-      "buildNumber": "10",
       "supportsTablet": true,
       "bundleIdentifier": "com.bat.promolocation",
       "infoPlist": {
@@ -22,10 +21,7 @@
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
         "NSLocationAlwaysUsageDescription": "This app needs access to your location so you can view nearby promotion zones and track your compliance.",
-        "UIBackgroundModes": [
-          "remote-notification",
-          "location"
-        ]
+        "UIBackgroundModes": ["remote-notification", "location"]
       },
       "config": {
         "googleMapsApiKey": "AIzaSyAoR_Q8E99HuBg5xHygksHfjB1_uF9_yM8"

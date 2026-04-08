@@ -15,7 +15,17 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import MapView, { Circle, Region } from "react-native-maps";
+import type MapViewType from "react-native-maps";
+import type { Region as RegionType } from "react-native-maps";
+
+let MapView: any;
+let Circle: any;
+
+if (Platform.OS !== "web") {
+  const maps = require("react-native-maps");
+  MapView = maps.default;
+  Circle = maps.Circle;
+}
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -60,7 +70,6 @@ const GPS_ACCURACY_THRESHOLD = 30;
 const LABEL_WIDTH = 112;
 const LABEL_HEIGHT = 34;
 const LABEL_VERTICAL_OFFSET = 54;
-
 
 function haversineDistanceInMeters(point1: LatLng, point2: LatLng) {
   const toRad = (value: number) => (value * Math.PI) / 180;
@@ -159,680 +168,708 @@ async function registerForPushNotificationsAsync() {
 }
 
 export default function MapScreen() {
-  const router = useRouter();
-  const { getActiveLocations, locations, savePushToken } = useApi();
-  const { apiKey, user, pushEnabled } = useAuth();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Colors[colorScheme];
-  const mapRef = useRef<MapView | null>(null);
-  const hasAnimated = useRef(false);
-  const updatePositionsRequestRef = useRef(0);
+  if (Platform.OS === "web") {
+    return <Text>Map not available on web</Text>;
+  } else {
+    const router = useRouter();
+    const { getActiveLocations, locations, savePushToken } = useApi();
+    const { apiKey, user, pushEnabled } = useAuth();
+    const colorScheme = useColorScheme() ?? "light";
+    const theme = Colors[colorScheme];
+    const mapRef = useRef<MapViewType | null>(null);
+    const hasAnimated = useRef(false);
+    const updatePositionsRequestRef = useRef(0);
 
-  const [location, setLocation] = useState<LatLng | null>(null);
-  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [permissionDenied, setPermissionDenied] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
-  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
-  const [zoneLabelPositions, setZoneLabelPositions] = useState<
-    Record<string, ZoneLabelPosition>
-  >({});
+    const [location, setLocation] = useState<LatLng | null>(null);
+    const [locationAccuracy, setLocationAccuracy] = useState<number | null>(
+      null,
+    );
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [permissionDenied, setPermissionDenied] = useState(false);
+    const [mapReady, setMapReady] = useState(false);
+    const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+    const [zoneLabelPositions, setZoneLabelPositions] = useState<
+      Record<string, ZoneLabelPosition>
+    >({});
 
-  // Map API locations to ActivationZone format
-  const mappedZones = useMemo<ActivationZone[]>(() => {
-    return locations.map((loc) => ({
-      id: String(loc.id || loc.location_id || Math.random()),
-      name: loc.name || loc.location_name || "Unknown Location",
-      center: {
-        latitude: Number(loc.latitude) || 0,
-        longitude: Number(loc.longitude) || 0,
-      },
-      radius: Number(loc.radius) || 50,
-      type: loc.type || "green", // default to green
-    }));
-  }, [locations]);
+    // Map API locations to ActivationZone format
+    const mappedZones = useMemo<ActivationZone[]>(() => {
+      return locations.map((loc) => ({
+        id: String(loc.id || loc.location_id || Math.random()),
+        name: loc.name || loc.location_name || "Unknown Location",
+        center: {
+          latitude: Number(loc.latitude) || 0,
+          longitude: Number(loc.longitude) || 0,
+        },
+        radius: Number(loc.radius) || 50,
+        type: loc.type || "green", // default to green
+      }));
+    }, [locations]);
+    console.log(locations, "locations in map");
+    // Fetch active locations on component mount and when apiKey is available
+    useEffect(() => {
+      const fetchLocations = async () => {
+        if (!apiKey) {
+          console.log("[Map] Waiting for API key to be loaded...");
+          return;
+        }
 
-  // Fetch active locations on component mount and when apiKey is available
-  useEffect(() => {
-    const fetchLocations = async () => {
-      if (!apiKey) {
-        console.log("[Map] Waiting for API key to be loaded...");
+        try {
+          console.log("[Map] Fetching active locations with API key present");
+          await getActiveLocations();
+        } catch (error) {
+          console.error("[Map] Error fetching active locations:", error);
+        }
+      };
+
+      fetchLocations();
+    }, [apiKey]);
+
+    useEffect(() => {
+      let subscription: Location.LocationSubscription | null = null;
+
+      const getUserLocation = async () => {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+
+          if (status !== "granted") {
+            setPermissionDenied(true);
+            setLoading(false);
+            return;
+          }
+
+          const currentPosition = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+
+          const currentCoords = {
+            latitude: currentPosition.coords.latitude,
+            longitude: currentPosition.coords.longitude,
+          };
+
+          setLocation(currentCoords);
+          setLocationAccuracy(currentPosition.coords.accuracy ?? null);
+
+          subscription = await Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.High,
+              timeInterval: LOCATION_UPDATE_INTERVAL_MS,
+              distanceInterval: LOCATION_UPDATE_DISTANCE_METERS,
+            },
+            (updatedPosition) => {
+              const updatedCoords = {
+                latitude: updatedPosition.coords.latitude,
+                longitude: updatedPosition.coords.longitude,
+              };
+
+              setLocation(updatedCoords);
+              setLocationAccuracy(updatedPosition.coords.accuracy ?? null);
+
+              if (!hasAnimated.current && mapRef.current) {
+                hasAnimated.current = true;
+                mapRef.current.animateToRegion(
+                  {
+                    latitude: updatedCoords.latitude,
+                    longitude: updatedCoords.longitude,
+                    latitudeDelta: 0.003,
+                    longitudeDelta: 0.003,
+                  },
+                  1000,
+                );
+              }
+            },
+          );
+        } catch (error) {
+          console.error("Error getting location:", error);
+          Alert.alert("Location Error", "Could not get your current location.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getUserLocation();
+      return () => {
+        subscription?.remove();
+      };
+    }, []);
+
+    // Handle push notifications setup
+    useEffect(() => {
+      if (!user || !pushEnabled) return; // Only for logged in users with push enabled
+
+      const setupNotifications = async () => {
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          console.log("[Push] Sending token to server:", token);
+          await savePushToken(token);
+        }
+      };
+
+      setupNotifications();
+    }, [user]);
+
+    // Handle Geofencing setup
+    useEffect(() => {
+      if (!user || !pushEnabled || locations.length === 0) return;
+
+      const setupGeofencing = async () => {
+        try {
+          const { status: foregroundStatus } =
+            await Location.requestForegroundPermissionsAsync();
+          if (foregroundStatus !== "granted") {
+            console.warn("[Geofencing] Foreground location permission denied");
+            return;
+          }
+
+          // On iOS we need background permission for geofencing specifically
+          const { status: backgroundStatus } =
+            await Location.requestBackgroundPermissionsAsync();
+          if (backgroundStatus !== "granted") {
+            console.warn("[Geofencing] Background location permission denied");
+            return;
+          }
+
+          const regions = locations.map((zone) => ({
+            identifier: `${zone.id || zone.location_id}|${zone.name || zone.location_name || "Promotion Zone"}|${zone.type || "green"}`,
+            latitude: parseFloat(String(zone.latitude)),
+            longitude: parseFloat(String(zone.longitude)),
+            radius: zone.radius || 100, // meters
+            notifyOnEnter: true,
+            notifyOnExit: true,
+          }));
+
+          await Location.startGeofencingAsync(
+            GEOFENCING_TASK_NAME,
+            regions as any,
+          );
+          console.log(
+            `[Geofencing] Monitoring ${regions.length} activation zones.`,
+          );
+        } catch (error) {
+          console.error("[Geofencing] Setup error:", error);
+        }
+      };
+
+      setupGeofencing();
+    }, [
+      user?.user_id,
+      pushEnabled,
+      JSON.stringify(locations.map((l) => l.id || l.location_id)),
+    ]);
+
+    const activationZonesWithDistance = useMemo<
+      ActivationZoneWithDistance[]
+    >(() => {
+      return mappedZones.map((zone) => {
+        const centerDistance = location
+          ? haversineDistanceInMeters(location, zone.center)
+          : null;
+        const isInside =
+          centerDistance !== null && centerDistance <= zone.radius;
+        return {
+          ...zone,
+          centerDistance,
+          distanceToZone:
+            centerDistance === null
+              ? null
+              : Math.max(0, centerDistance - zone.radius),
+          isInside,
+        };
+      });
+    }, [location]);
+
+    const activeZone = useMemo(() => {
+      const inside = activationZonesWithDistance.filter(
+        (zone) => zone.isInside,
+      );
+      if (inside.length === 0) return null;
+      return inside.reduce((best, zone) =>
+        (zone.centerDistance ?? Infinity) < (best.centerDistance ?? Infinity)
+          ? zone
+          : best,
+      );
+    }, [activationZonesWithDistance]);
+
+    const nearestZoneInfo = useMemo(() => {
+      if (!location || activationZonesWithDistance.length === 0) return null;
+
+      return activationZonesWithDistance.reduce((nearest, zone) => {
+        const distance = zone.distanceToZone ?? Infinity;
+        const nearestDistance = nearest.distanceToZone ?? Infinity;
+
+        if (distance < nearestDistance) {
+          return zone;
+        }
+
+        if (
+          distance === nearestDistance &&
+          (zone.centerDistance ?? Infinity) <
+            (nearest.centerDistance ?? Infinity)
+        ) {
+          return zone;
+        }
+
+        return nearest;
+      });
+    }, [activationZonesWithDistance, location]);
+
+    const nearestZoneHeading = useMemo(() => {
+      if (!location || !nearestZoneInfo) return null;
+      return getHeadingDirection(location, nearestZoneInfo.center);
+    }, [location, nearestZoneInfo]);
+
+    const isGpsReliable =
+      locationAccuracy !== null && locationAccuracy <= GPS_ACCURACY_THRESHOLD;
+    const isInsideZone = !!activeZone && isGpsReliable;
+
+    const statusDotColor = isInsideZone
+      ? "#16A34A"
+      : activeZone && !isGpsReliable
+        ? "#F59E0B"
+        : "#EF4444";
+
+    const statusTitle = isInsideZone
+      ? "Inside activation zone"
+      : activeZone && !isGpsReliable
+        ? "GPS signal too weak"
+        : "Outside activation zone";
+
+    const initialRegion: RegionType = {
+      latitude: 52.50392444690182,
+      longitude: 11.517085984442945,
+      latitudeDelta: 0.11,
+      longitudeDelta: 4.7,
+    };
+
+    const updateZoneLabelPositions = useCallback(async () => {
+      if (
+        !mapReady ||
+        !mapRef.current ||
+        mapSize.width === 0 ||
+        mapSize.height === 0
+      ) {
         return;
       }
 
+      const requestId = updatePositionsRequestRef.current + 1;
+      updatePositionsRequestRef.current = requestId;
+
       try {
-        console.log("[Map] Fetching active locations with API key present");
+        const points = await Promise.all(
+          mappedZones.map(async (zone) => ({
+            id: zone.id,
+            point: (await mapRef.current?.pointForCoordinate(zone.center)) as
+              | ScreenPoint
+              | undefined,
+          })),
+        );
+
+        if (updatePositionsRequestRef.current !== requestId) {
+          return;
+        }
+
+        const nextPositions: Record<string, ZoneLabelPosition> = {};
+
+        for (const entry of points) {
+          if (!entry.point) {
+            continue;
+          }
+
+          const left = clamp(
+            entry.point.x - LABEL_WIDTH / 2,
+            8,
+            Math.max(8, mapSize.width - LABEL_WIDTH - 8),
+          );
+
+          const top = clamp(
+            entry.point.y - LABEL_VERTICAL_OFFSET,
+            8,
+            Math.max(8, mapSize.height - LABEL_HEIGHT - 8),
+          );
+
+          nextPositions[entry.id] = { left, top };
+        }
+
+        setZoneLabelPositions(nextPositions);
+      } catch (error) {
+        console.error("Error updating zone label positions:", error);
+      }
+    }, [mapReady, mapSize.height, mapSize.width]);
+
+    useEffect(() => {
+      if (!mapReady || mapSize.width === 0 || mapSize.height === 0) {
+        return;
+      }
+
+      void updateZoneLabelPositions();
+    }, [
+      activationZonesWithDistance.length,
+      mapReady,
+      mapSize,
+      updateZoneLabelPositions,
+    ]);
+
+    const handleMapLayout = (event: LayoutChangeEvent) => {
+      const { width, height } = event.nativeEvent.layout;
+      setMapSize({ width, height });
+    };
+
+    const handleMapReady = () => {
+      setMapReady(true);
+      void updateZoneLabelPositions();
+    };
+
+    const centerOnUser = () => {
+      if (!location || !mapRef.current) return;
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.003,
+          longitudeDelta: 0.003,
+        },
+        1000,
+      );
+    };
+
+    const showAllZones = () => {
+      if (!mapRef.current) return;
+      mapRef.current.fitToCoordinates(
+        mappedZones.map((zone) => zone.center),
+        {
+          edgePadding: { top: 160, right: 60, bottom: 160, left: 60 },
+          animated: true,
+        },
+      );
+    };
+
+    const handleRefresh = async () => {
+      setRefreshing(true);
+      try {
         await getActiveLocations();
       } catch (error) {
-        console.error("[Map] Error fetching active locations:", error);
-      }
-    };
-
-    fetchLocations();
-  }, [apiKey]);
-
-  useEffect(() => {
-    let subscription: Location.LocationSubscription | null = null;
-
-    const getUserLocation = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-
-        if (status !== "granted") {
-          setPermissionDenied(true);
-          setLoading(false);
-          return;
-        }
-
-        const currentPosition = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-
-        const currentCoords = {
-          latitude: currentPosition.coords.latitude,
-          longitude: currentPosition.coords.longitude,
-        };
-
-        setLocation(currentCoords);
-        setLocationAccuracy(currentPosition.coords.accuracy ?? null);
-
-        subscription = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: LOCATION_UPDATE_INTERVAL_MS,
-            distanceInterval: LOCATION_UPDATE_DISTANCE_METERS,
-          },
-          (updatedPosition) => {
-            const updatedCoords = {
-              latitude: updatedPosition.coords.latitude,
-              longitude: updatedPosition.coords.longitude,
-            };
-
-            setLocation(updatedCoords);
-            setLocationAccuracy(updatedPosition.coords.accuracy ?? null);
-
-            if (!hasAnimated.current && mapRef.current) {
-              hasAnimated.current = true;
-              mapRef.current.animateToRegion(
-                {
-                  latitude: updatedCoords.latitude,
-                  longitude: updatedCoords.longitude,
-                  latitudeDelta: 0.003,
-                  longitudeDelta: 0.003,
-                },
-                1000,
-              );
-            }
-          },
-        );
-      } catch (error) {
-        console.error("Error getting location:", error);
-        Alert.alert("Location Error", "Could not get your current location.");
+        console.error("[Map] Refresh failed:", error);
       } finally {
-        setLoading(false);
+        setRefreshing(false);
       }
     };
 
-    getUserLocation();
-    return () => {
-      subscription?.remove();
-    };
-  }, []);
-
-  // Handle push notifications setup
-  useEffect(() => {
-    if (!user || !pushEnabled) return; // Only for logged in users with push enabled
-
-    const setupNotifications = async () => {
-      const token = await registerForPushNotificationsAsync();
-      if (token) {
-        console.log("[Push] Sending token to server:", token);
-        await savePushToken(token);
-      }
-    };
-
-    setupNotifications();
-  }, [user]);
-
-  // Handle Geofencing setup
-  useEffect(() => {
-    if (!user || !pushEnabled || locations.length === 0) return;
-
-    const setupGeofencing = async () => {
-      try {
-        const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-        if (foregroundStatus !== 'granted') {
-          console.warn("[Geofencing] Foreground location permission denied");
-          return;
-        }
-
-        // On iOS we need background permission for geofencing specifically
-        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-        if (backgroundStatus !== 'granted') {
-          console.warn("[Geofencing] Background location permission denied");
-          return;
-        }
-
-        const regions = locations.map(zone => ({
-          identifier: `${zone.id || zone.location_id}|${zone.name || zone.location_name || "Promotion Zone"}|${zone.type || "green"}`,
-          latitude: parseFloat(String(zone.latitude)),
-          longitude: parseFloat(String(zone.longitude)),
-          radius: zone.radius || 100, // meters
-          notifyOnEnter: true,
-          notifyOnExit: true,
-        }));
-
-
-        await Location.startGeofencingAsync(GEOFENCING_TASK_NAME, regions as any);
-        console.log(`[Geofencing] Monitoring ${regions.length} activation zones.`);
-      } catch (error) {
-        console.error("[Geofencing] Setup error:", error);
-      }
-    };
-
-    setupGeofencing();
-  }, [user?.user_id, pushEnabled, JSON.stringify(locations.map(l => l.id || l.location_id))]);
-
-  const activationZonesWithDistance = useMemo<
-    ActivationZoneWithDistance[]
-  >(() => {
-    return mappedZones.map((zone) => {
-      const centerDistance = location
-        ? haversineDistanceInMeters(location, zone.center)
-        : null;
-      const isInside = centerDistance !== null && centerDistance <= zone.radius;
-      return {
-        ...zone,
-        centerDistance,
-        distanceToZone:
-          centerDistance === null
-            ? null
-            : Math.max(0, centerDistance - zone.radius),
-        isInside,
-      };
-    });
-  }, [location]);
-
-  const activeZone = useMemo(() => {
-    const inside = activationZonesWithDistance.filter((zone) => zone.isInside);
-    if (inside.length === 0) return null;
-    return inside.reduce((best, zone) =>
-      (zone.centerDistance ?? Infinity) < (best.centerDistance ?? Infinity)
-        ? zone
-        : best,
-    );
-  }, [activationZonesWithDistance]);
-
-  const nearestZoneInfo = useMemo(() => {
-    if (!location || activationZonesWithDistance.length === 0) return null;
-
-    return activationZonesWithDistance.reduce((nearest, zone) => {
-      const distance = zone.distanceToZone ?? Infinity;
-      const nearestDistance = nearest.distanceToZone ?? Infinity;
-
-      if (distance < nearestDistance) {
-        return zone;
-      }
-
-      if (
-        distance === nearestDistance &&
-        (zone.centerDistance ?? Infinity) < (nearest.centerDistance ?? Infinity)
-      ) {
-        return zone;
-      }
-
-      return nearest;
-    });
-  }, [activationZonesWithDistance, location]);
-
-  const nearestZoneHeading = useMemo(() => {
-    if (!location || !nearestZoneInfo) return null;
-    return getHeadingDirection(location, nearestZoneInfo.center);
-  }, [location, nearestZoneInfo]);
-
-  const isGpsReliable =
-    locationAccuracy !== null && locationAccuracy <= GPS_ACCURACY_THRESHOLD;
-  const isInsideZone = !!activeZone && isGpsReliable;
-
-  const statusDotColor = isInsideZone
-    ? "#16A34A"
-    : activeZone && !isGpsReliable
-      ? "#F59E0B"
-      : "#EF4444";
-
-  const statusTitle = isInsideZone
-    ? "Inside activation zone"
-    : activeZone && !isGpsReliable
-      ? "GPS signal too weak"
-      : "Outside activation zone";
-
-  const initialRegion: Region = {
-    latitude: 52.50392444690182,
-    longitude: 11.517085984442945,
-    latitudeDelta: 0.11,
-    longitudeDelta: 4.7,
-  };
-
-  const updateZoneLabelPositions = useCallback(async () => {
-    if (
-      !mapReady ||
-      !mapRef.current ||
-      mapSize.width === 0 ||
-      mapSize.height === 0
-    ) {
-      return;
-    }
-
-    const requestId = updatePositionsRequestRef.current + 1;
-    updatePositionsRequestRef.current = requestId;
-
-    try {
-      const points = await Promise.all(
-        mappedZones.map(async (zone) => ({
-          id: zone.id,
-          point: (await mapRef.current?.pointForCoordinate(zone.center)) as
-            | ScreenPoint
-            | undefined,
-        })),
-      );
-
-      if (updatePositionsRequestRef.current !== requestId) {
+    const handleOpenQr = () => {
+      if (!location) {
+        Alert.alert(
+          "Location not ready",
+          "Please wait for your location to load.",
+        );
         return;
       }
 
-      const nextPositions: Record<string, ZoneLabelPosition> = {};
-
-      for (const entry of points) {
-        if (!entry.point) {
-          continue;
-        }
-
-        const left = clamp(
-          entry.point.x - LABEL_WIDTH / 2,
-          8,
-          Math.max(8, mapSize.width - LABEL_WIDTH - 8),
+      if (!activeZone) {
+        Alert.alert(
+          "QR Locked",
+          "You must be inside an activation zone before the QR code can be shown.",
         );
-
-        const top = clamp(
-          entry.point.y - LABEL_VERTICAL_OFFSET,
-          8,
-          Math.max(8, mapSize.height - LABEL_HEIGHT - 8),
-        );
-
-        nextPositions[entry.id] = { left, top };
+        return;
       }
 
-      setZoneLabelPositions(nextPositions);
-    } catch (error) {
-      console.error("Error updating zone label positions:", error);
-    }
-  }, [mapReady, mapSize.height, mapSize.width]);
+      if (!isGpsReliable) {
+        Alert.alert(
+          "GPS Signal Weak",
+          `Your GPS accuracy is currently ±${Math.round(locationAccuracy ?? 0)}m. Move to an open area to improve signal.`,
+        );
+        return;
+      }
 
-  useEffect(() => {
-    if (!mapReady || mapSize.width === 0 || mapSize.height === 0) {
-      return;
-    }
-
-    void updateZoneLabelPositions();
-  }, [
-    activationZonesWithDistance.length,
-    mapReady,
-    mapSize,
-    updateZoneLabelPositions,
-  ]);
-
-  const handleMapLayout = (event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    setMapSize({ width, height });
-  };
-
-  const handleMapReady = () => {
-    setMapReady(true);
-    void updateZoneLabelPositions();
-  };
-
-  const centerOnUser = () => {
-    if (!location || !mapRef.current) return;
-    mapRef.current.animateToRegion(
-      {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.003,
-        longitudeDelta: 0.003,
-      },
-      1000,
-    );
-  };
-
-  const showAllZones = () => {
-    if (!mapRef.current) return;
-    mapRef.current.fitToCoordinates(
-      mappedZones.map((zone) => zone.center),
-      {
-        edgePadding: { top: 160, right: 60, bottom: 160, left: 60 },
-        animated: true,
-      },
-    );
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await getActiveLocations();
-    } catch (error) {
-      console.error("[Map] Refresh failed:", error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleOpenQr = () => {
-    if (!location) {
-      Alert.alert(
-        "Location not ready",
-        "Please wait for your location to load.",
+      // Find original location to get image_url
+      const originalLocation = locations.find(
+        (loc) => String(loc.id || loc.location_id) === activeZone.id,
       );
-      return;
-    }
 
-    if (!activeZone) {
-      Alert.alert(
-        "QR Locked",
-        "You must be inside an activation zone before the QR code can be shown.",
-      );
-      return;
-    }
+      const qrUrl = (originalLocation as any)?.image_url || "";
 
-    if (!isGpsReliable) {
-      Alert.alert(
-        "GPS Signal Weak",
-        `Your GPS accuracy is currently ±${Math.round(locationAccuracy ?? 0)}m. Move to an open area to improve signal.`,
-      );
-      return;
-    }
+      router.push({
+        pathname: "/(drawer)/qr-code",
+        params: { url: qrUrl },
+      });
+    };
 
-    // Find original location to get image_url
-    const originalLocation = locations.find(
-      (loc) => String(loc.id || loc.location_id) === activeZone.id,
-    );
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ScreenHeader title="Activation map" withSafeArea={false} />
 
-    const qrUrl = (originalLocation as any)?.image_url || "";
-
-    router.push({
-      pathname: "/(drawer)/qr-code",
-      params: { url: qrUrl },
-    });
-  };
-
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScreenHeader title="Activation map" withSafeArea={false} />
-
-      <View style={styles.content}>
-        {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#0E2B63" />
-            <Text style={[styles.infoText, { color: theme.text }]}>
-              Loading your location...
-            </Text>
-          </View>
-        ) : permissionDenied ? (
-          <View style={{
-            justifyContent: "center",
-            alignItems: "center",
-            paddingHorizontal: 24,
-          }}>
-            <View style={styles.permissionCard}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="location-outline" size={42} color="#0E2B63" />
-              </View>
-              <Text style={[styles.permissionTitle, { color: theme.text }]}>
-                Location Required
+        <View style={styles.content}>
+          {loading ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color="#0E2B63" />
+              <Text style={[styles.infoText, { color: theme.text }]}>
+                Loading your location...
               </Text>
-              <Text style={[styles.permissionDescription, { color: "#64748B" }]}>
-                Enable location permissions to discover activation zones and
-                view your position on the map.
-              </Text>
-              <TouchableOpacity
-                style={styles.settingsButton}
-                activeOpacity={0.8}
-                onPress={() => Linking.openSettings()}
-              >
-                <Text style={styles.settingsButtonText}>Enable in Settings</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        ) : (
-          <>
-            <View style={styles.mapWrap} onLayout={handleMapLayout}>
-              <MapView
-                ref={mapRef}
-                style={styles.map}
-                initialRegion={initialRegion}
-                showsUserLocation={true}
-                showsMyLocationButton={false}
-                onMapReady={handleMapReady}
-                onRegionChangeComplete={() => {
-                  void updateZoneLabelPositions();
-                }}
-              >
-                {activationZonesWithDistance.map((zone) => {
-                  const isActive = activeZone?.id === zone.id;
-                  const isRedZone = zone.type === 'red';
+          ) : permissionDenied ? (
+            <View
+              style={{
+                justifyContent: "center",
+                alignItems: "center",
+                paddingHorizontal: 24,
+              }}
+            >
+              <View style={styles.permissionCard}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="location-outline" size={42} color="#0E2B63" />
+                </View>
+                <Text style={[styles.permissionTitle, { color: theme.text }]}>
+                  Location Required
+                </Text>
+                <Text
+                  style={[styles.permissionDescription, { color: "#64748B" }]}
+                >
+                  Enable location permissions to discover activation zones and
+                  view your position on the map.
+                </Text>
+                <TouchableOpacity
+                  style={styles.settingsButton}
+                  activeOpacity={0.8}
+                  onPress={() => Linking.openSettings()}
+                >
+                  <Text style={styles.settingsButtonText}>
+                    Enable in Settings
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={styles.mapWrap} onLayout={handleMapLayout}>
+                <MapView
+                  ref={mapRef}
+                  style={styles.map}
+                  initialRegion={initialRegion}
+                  showsUserLocation={true}
+                  showsMyLocationButton={false}
+                  onMapReady={handleMapReady}
+                  onRegionChangeComplete={() => {
+                    void updateZoneLabelPositions();
+                  }}
+                >
+                  {activationZonesWithDistance.map((zone) => {
+                    const isActive = activeZone?.id === zone.id;
+                    const isRedZone = zone.type === "red";
 
-                  return (
-                    <Circle
-                      key={zone.id}
-                      center={zone.center}
-                      radius={zone.radius}
-                      strokeWidth={isActive ? 3 : 2}
-                      lineDashPattern={isRedZone ? undefined : [8, 5]}
-                      strokeColor={
-                        isRedZone
-                          ? "rgba(239,68,68,0.95)"
-                          : isActive
-                            ? "rgba(22,163,74,0.95)"
-                            : "rgba(22,163,74,0.6)"
-                      }
-                      fillColor={
-                        isRedZone
-                          ? "rgba(239,68,68,0.14)"
-                          : isActive
-                            ? "rgba(22,163,74,0.14)"
-                            : "rgba(22,163,74,0.07)"
-                      }
-                    />
-                  );
-                })}
+                    return (
+                      <Circle
+                        key={zone.id}
+                        center={zone.center}
+                        radius={zone.radius}
+                        strokeWidth={isActive ? 3 : 2}
+                        lineDashPattern={isRedZone ? undefined : [8, 5]}
+                        strokeColor={
+                          isRedZone
+                            ? "rgba(239,68,68,0.95)"
+                            : isActive
+                              ? "rgba(22,163,74,0.95)"
+                              : "rgba(22,163,74,0.6)"
+                        }
+                        fillColor={
+                          isRedZone
+                            ? "rgba(239,68,68,0.14)"
+                            : isActive
+                              ? "rgba(22,163,74,0.14)"
+                              : "rgba(22,163,74,0.07)"
+                        }
+                      />
+                    );
+                  })}
 
-                {activationZonesWithDistance.map((zone) => {
-                  const isActive = activeZone?.id === zone.id;
-                  const isRedZone = zone.type === 'red';
+                  {activationZonesWithDistance.map((zone) => {
+                    const isActive = activeZone?.id === zone.id;
+                    const isRedZone = zone.type === "red";
 
-                  return (
-                    <Circle
-                      key={`${zone.id}-halo`}
-                      center={zone.center}
-                      radius={7}
-                      strokeWidth={0}
-                      fillColor={
-                        isRedZone
-                          ? "rgba(239,68,68,0.28)"
-                          : isActive
-                            ? "rgba(22,163,74,0.28)"
-                            : "rgba(22,163,74,0.18)"
-                      }
-                    />
-                  );
-                })}
+                    return (
+                      <Circle
+                        key={`${zone.id}-halo`}
+                        center={zone.center}
+                        radius={7}
+                        strokeWidth={0}
+                        fillColor={
+                          isRedZone
+                            ? "rgba(239,68,68,0.28)"
+                            : isActive
+                              ? "rgba(22,163,74,0.28)"
+                              : "rgba(22,163,74,0.18)"
+                        }
+                      />
+                    );
+                  })}
 
-                {activationZonesWithDistance.map((zone) => {
-                  const isActive = activeZone?.id === zone.id;
-                  const isRedZone = zone.type === 'red';
+                  {activationZonesWithDistance.map((zone) => {
+                    const isActive = activeZone?.id === zone.id;
+                    const isRedZone = zone.type === "red";
 
-                  return (
-                    <Circle
-                      key={`${zone.id}-dot`}
-                      center={zone.center}
-                      radius={3}
-                      strokeWidth={2}
-                      strokeColor="#FFFFFF"
-                      fillColor={
-                        isRedZone 
-                          ? "#EF4444" 
-                          : (isActive ? "#15803D" : "#16A34A")
-                      }
-                    />
-                  );
-                })}
-              </MapView>
+                    return (
+                      <Circle
+                        key={`${zone.id}-dot`}
+                        center={zone.center}
+                        radius={3}
+                        strokeWidth={2}
+                        strokeColor="#FFFFFF"
+                        fillColor={
+                          isRedZone
+                            ? "#EF4444"
+                            : isActive
+                              ? "#15803D"
+                              : "#16A34A"
+                        }
+                      />
+                    );
+                  })}
+                </MapView>
 
-              <View pointerEvents="none" style={styles.zoneLabelOverlay}>
-                {activationZonesWithDistance.map((zone) => {
-                  const position = zoneLabelPositions[zone.id];
+                <View pointerEvents="none" style={styles.zoneLabelOverlay}>
+                  {activationZonesWithDistance.map((zone) => {
+                    const position = zoneLabelPositions[zone.id];
 
-                  if (!position) {
-                    return null;
-                  }
+                    if (!position) {
+                      return null;
+                    }
 
-                  const isActive = activeZone?.id === zone.id;
-                  const isRedZone = zone.type === 'red';
+                    const isActive = activeZone?.id === zone.id;
+                    const isRedZone = zone.type === "red";
 
-                  return (
-                    <View
-                      key={`${zone.id}-label`}
-                      style={[
-                        styles.zoneLabelWrap,
-                        {
-                          left: position.left,
-                          top: position.top,
-                        },
-                      ]}
-                    >
+                    return (
                       <View
+                        key={`${zone.id}-label`}
                         style={[
-                          styles.zoneDistancePill,
-                          isActive && styles.zoneDistancePillActive,
-                          isRedZone && styles.zoneDistancePillSchool,
+                          styles.zoneLabelWrap,
+                          {
+                            left: position.left,
+                            top: position.top,
+                          },
                         ]}
                       >
-                        <Text style={styles.zoneDistancePillText}>
-                          {isRedZone ? zone.name : getZoneDistanceLabel(zone)}
-                        </Text>
+                        <View
+                          style={[
+                            styles.zoneDistancePill,
+                            isActive && styles.zoneDistancePillActive,
+                            isRedZone && styles.zoneDistancePillSchool,
+                          ]}
+                        >
+                          <Text style={styles.zoneDistancePillText}>
+                            {isRedZone ? zone.name : getZoneDistanceLabel(zone)}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.topOverlay}>
-              <View style={styles.statusRow}>
-                <View style={styles.statusTitleGroup}>
-                  <View
-                    style={[
-                      styles.statusDot,
-                      { backgroundColor: statusDotColor },
-                    ]}
-                  />
-                  <Text style={styles.statusTitle}>{statusTitle}</Text>
+                    );
+                  })}
                 </View>
-                {locationAccuracy !== null && (
-                  <View
-                    style={[
-                      styles.gpsChip,
-                      !isGpsReliable && styles.gpsChipWeak,
-                    ]}
-                  >
-                    <Text
+              </View>
+
+              <View style={styles.topOverlay}>
+                <View style={styles.statusRow}>
+                  <View style={styles.statusTitleGroup}>
+                    <View
                       style={[
-                        styles.gpsChipText,
-                        !isGpsReliable && styles.gpsChipTextWeak,
+                        styles.statusDot,
+                        { backgroundColor: statusDotColor },
+                      ]}
+                    />
+                    <Text style={styles.statusTitle}>{statusTitle}</Text>
+                  </View>
+                  {locationAccuracy !== null && (
+                    <View
+                      style={[
+                        styles.gpsChip,
+                        !isGpsReliable && styles.gpsChipWeak,
                       ]}
                     >
-                      GPS ±{Math.round(locationAccuracy)}m
+                      <Text
+                        style={[
+                          styles.gpsChipText,
+                          !isGpsReliable && styles.gpsChipTextWeak,
+                        ]}
+                      >
+                        GPS ±{Math.round(locationAccuracy)}m
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {isInsideZone && activeZone ? (
+                  <Text style={styles.statusMessage}>
+                    {"You are in "}
+                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
+                    {". "}
+                    <Text style={styles.statusGreen}>QR unlocked.</Text>
+                  </Text>
+                ) : activeZone && !isGpsReliable ? (
+                  <Text style={styles.statusMessage}>
+                    {"Inside "}
+                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
+                    {" but "}
+                    <Text style={styles.statusAmber}>
+                      GPS needs a cleaner fix.
                     </Text>
-                  </View>
+                    {" Move to open space."}
+                  </Text>
+                ) : nearestZoneInfo ? (
+                  <Text style={styles.statusMessage}>
+                    {"Nearest: "}
+                    <Text style={styles.statusStrong}>
+                      {nearestZoneInfo.name}
+                    </Text>
+                    {" — "}
+                    <Text style={styles.statusGreen}>
+                      {getZoneDistanceLabel(nearestZoneInfo)}
+                    </Text>
+                    {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : "."}
+                  </Text>
+                ) : (
+                  <Text style={styles.statusMessage}>
+                    Finding nearby activation zones...
+                  </Text>
                 )}
               </View>
 
-              {isInsideZone && activeZone ? (
-                <Text style={styles.statusMessage}>
-                  {"You are in "}
-                  <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                  {". "}
-                  <Text style={styles.statusGreen}>QR unlocked.</Text>
-                </Text>
-              ) : activeZone && !isGpsReliable ? (
-                <Text style={styles.statusMessage}>
-                  {"Inside "}
-                  <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                  {" but "}
-                  <Text style={styles.statusAmber}>
-                    GPS needs a cleaner fix.
-                  </Text>
-                  {" Move to open space."}
-                </Text>
-              ) : nearestZoneInfo ? (
-                <Text style={styles.statusMessage}>
-                  {"Nearest: "}
-                  <Text style={styles.statusStrong}>
-                    {nearestZoneInfo.name}
-                  </Text>
-                  {" — "}
-                  <Text style={styles.statusGreen}>
-                    {getZoneDistanceLabel(nearestZoneInfo)}
-                  </Text>
-                  {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : "."}
-                </Text>
-              ) : (
-                <Text style={styles.statusMessage}>
-                  Finding nearby activation zones...
-                </Text>
-              )}
-            </View>
+              <View style={styles.actionCol}>
+                <TouchableOpacity
+                  style={[styles.mapBtn, styles.iconBtn]}
+                  onPress={handleRefresh}
+                  disabled={refreshing}
+                >
+                  {refreshing ? (
+                    <ActivityIndicator size="small" color="#0E2B63" />
+                  ) : (
+                    <Ionicons name="refresh" size={20} color="#0E2B63" />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mapBtn} onPress={centerOnUser}>
+                  <Text style={styles.mapBtnText}>Center on me</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mapBtn} onPress={showAllZones}>
+                  <Text style={styles.mapBtnText}>All zones</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.actionCol}>
-              <TouchableOpacity 
-                style={[styles.mapBtn, styles.iconBtn]} 
-                onPress={handleRefresh} 
-                disabled={refreshing}
+              <TouchableOpacity
+                style={[
+                  styles.qrButton,
+                  !isInsideZone && styles.qrButtonDisabled,
+                ]}
+                onPress={handleOpenQr}
+                disabled={!isInsideZone}
+                activeOpacity={0.85}
               >
-                {refreshing ? (
-                  <ActivityIndicator size="small" color="#0E2B63" />
-                ) : (
-                  <Ionicons name="refresh" size={20} color="#0E2B63" />
-                )}
+                <Text style={styles.qrButtonText}>
+                  {isInsideZone
+                    ? "Activation QR code"
+                    : "QR locked — enter a zone"}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.mapBtn} onPress={centerOnUser}>
-                <Text style={styles.mapBtnText}>Center on me</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mapBtn} onPress={showAllZones}>
-                <Text style={styles.mapBtnText}>All zones</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.qrButton,
-                !isInsideZone && styles.qrButtonDisabled,
-              ]}
-              onPress={handleOpenQr}
-              disabled={!isInsideZone}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.qrButtonText}>
-                {isInsideZone
-                  ? "Activation QR code"
-                  : "QR locked — enter a zone"}
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
+            </>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  }
 }
 
 const styles = StyleSheet.create({
