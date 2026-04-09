@@ -4,12 +4,23 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "mobile:start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
+    "mobile:android": "expo run:android",
     "ios": "expo run:ios",
+    "mobile:ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "mobile:web": "expo start --web",
+    "lint": "expo lint",
+    "pwa:dev": "npm run dev --workspace @promolocation/pwa",
+    "pwa:build": "npm run build --workspace @promolocation/pwa",
+    "pwa:preview": "npm run preview --workspace @promolocation/pwa"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",

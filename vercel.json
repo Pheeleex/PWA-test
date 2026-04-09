@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "buildCommand": "npm run pwa:build",
+  "outputDirectory": "apps/pwa/dist",
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://promolocation.nubiaville.com/api/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>Promolocation Maskable Icon</title>
+  <rect width="512" height="512" fill="#082f49" />
+  <rect x="48" y="48" width="416" height="416" rx="112" fill="#f0fdfa" />
+  <path
+    d="M256 412c72-92 108-149 108-194 0-59.6-48.4-108-108-108s-108 48.4-108 108c0 45 36 102 108 194Z"
+    fill="#0f766e"
+  />
+  <circle cx="256" cy="218" r="36" fill="#0ea5e9" />
+</svg>

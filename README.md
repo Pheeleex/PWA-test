@@ -13,7 +13,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-   npx expo start
+    npx expo start
    ```
 
 In the output, you'll find options to open the app in a
@@ -24,6 +24,24 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## App targets
+
+This repo now has two planned targets:
+
+- Mobile app: the current Expo app in the repo root
+- PWA app: a separate web app scaffold in `apps/pwa`
+
+Useful commands:
+
+```bash
+npm run mobile:start
+npm run mobile:android
+npm run mobile:ios
+npm run pwa:dev
+```
+
+The shared extraction plan lives in `docs/pwa-migration-plan.md`.
 
 ## Get a fresh project
 
