@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --shell-nav-height: 88px;
   background:
     radial-gradient(circle at top left, rgba(14, 43, 99, 0.06), transparent 32%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -292,6 +293,128 @@ textarea {
 }
 
 .map-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.authenticated-shell {
+  min-height: 100vh;
+}
+
+.pwa-app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: #0e2b63;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+
+.pwa-app-navbar-inner,
+.map-panels-shell {
+  width: min(1380px, calc(100% - 1.5rem));
+  margin: 0 auto;
+}
+
+.pwa-app-navbar-inner {
+  min-height: var(--shell-nav-height);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 0 0.75rem;
+}
+
+.pwa-app-brand,
+.pwa-app-nav-link,
+.pwa-app-logout {
+  border: 0;
+  cursor: pointer;
+}
+
+.pwa-app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: transparent;
+  color: #ffffff;
+  padding: 0;
+}
+
+.pwa-app-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.pwa-app-brand-text {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.pwa-app-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-left: auto;
+}
+
+.pwa-app-nav-link,
+.pwa-app-logout {
+  min-height: 42px;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.pwa-app-nav-link {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pwa-app-nav-link-active {
+  background: #ffffff;
+  color: #0e2b63;
+}
+
+.pwa-app-logout {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.authenticated-shell-content {
+  width: min(1380px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1rem 0 1.5rem;
+}
+
+.authenticated-shell-content-full {
+  width: 100%;
+  max-width: none;
+  padding: 0 0 1.5rem;
+}
+
+.map-screen-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.map-screen-viewport {
+  width: 100%;
+}
+
+.map-frame-fullscreen,
+.map-frame-fullscreen .map-shell-inner,
+.map-frame-fullscreen .leaflet-map {
+  min-height: calc(100dvh - var(--shell-nav-height));
+}
+
+.map-frame-fullscreen {
+  border-radius: 0;
+  border-inline: 0;
+}
+
+.map-panels-shell {
   display: grid;
   gap: 1rem;
 }
@@ -833,7 +956,7 @@ textarea {
 }
 
 .screen-shell {
-  min-height: 100vh;
+  min-height: 100%;
   padding: 0.75rem;
 }
 
@@ -1653,9 +1776,40 @@ textarea {
 }
 
 @media (max-width: 720px) {
+  :root {
+    --shell-nav-height: 134px;
+  }
+
   .app-shell {
     width: min(100% - 0.85rem, 1380px);
     padding-top: 0.5rem;
+  }
+
+  .pwa-app-navbar-inner {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    width: min(100% - 0.85rem, 1380px);
+  }
+
+  .pwa-app-brand {
+    flex: 1 1 auto;
+  }
+
+  .pwa-app-nav-links {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .pwa-app-nav-link {
+    flex: 0 0 auto;
+  }
+
+  .pwa-app-logout {
+    margin-left: auto;
   }
 
   .onboarding-card {

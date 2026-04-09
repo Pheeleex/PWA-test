@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { AuthenticatedUser, LoginCredentials } from "@promolocation/shared";
 import { loginPromoter } from "@promolocation/shared";
 import ActivationMapScreen from "./components/ActivationMapScreen";
+import AuthenticatedShell from "./components/AuthenticatedShell";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
 import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
 import IncidentsScreen from "./components/IncidentsScreen";
@@ -196,6 +197,13 @@ export default function App() {
     resetNavigation(getDefaultAuthenticatedScreen(session));
   };
 
+  const activeAuthenticatedSection =
+    currentScreen.name === "profile" ||
+    currentScreen.name === "settings" ||
+    currentScreen.name === "map"
+      ? currentScreen.name
+      : undefined;
+
   if (isHydrating) {
     return (
       <main className="app-shell">
@@ -241,26 +249,6 @@ export default function App() {
     );
   }
 
-  if (currentScreen.name === "change-password") {
-    return (
-      <ChangePasswordScreen
-        forcedReset={currentScreen.forcedReset}
-        onBack={goBack}
-        onDone={() => {
-          handleSessionPatch({
-            user: {
-              ...session.user,
-              resetKey: "No",
-            },
-          });
-          resetNavigation({ name: "map" });
-        }}
-        onForgotPassword={() => navigateTo({ name: "forgot-password" })}
-        session={session}
-      />
-    );
-  }
-
   if (currentScreen.name === "forgot-password") {
     return (
       <ForgotPasswordScreen
@@ -272,46 +260,106 @@ export default function App() {
   }
 
   if (currentScreen.name === "incidents") {
-    return <IncidentsScreen onBack={goBack} session={session} />;
+    return (
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
+        onLogout={handleLogout}
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <IncidentsScreen onBack={goBack} session={session} />
+      </AuthenticatedShell>
+    );
   }
 
   if (currentScreen.name === "profile") {
     return (
-      <ProfileScreen
-        onBack={goBack}
-        onSessionPatch={handleSessionPatch}
-        session={session}
-      />
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
+        onLogout={handleLogout}
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <ProfileScreen
+          onBack={goBack}
+          onSessionPatch={handleSessionPatch}
+          session={session}
+        />
+      </AuthenticatedShell>
     );
   }
 
   if (currentScreen.name === "settings") {
     return (
-      <SettingsScreen
-        install={install}
-        onBack={goBack}
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
         onLogout={handleLogout}
-        onOpenChangePassword={() =>
-          navigateTo({ name: "change-password", forcedReset: false })
-        }
-        onOpenIncidents={() => navigateTo({ name: "incidents" })}
-        onOpenProfile={() => navigateTo({ name: "profile" })}
-        session={session}
-      />
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <SettingsScreen
+          install={install}
+          onBack={goBack}
+          onLogout={handleLogout}
+          onOpenChangePassword={() =>
+            navigateTo({ name: "change-password", forcedReset: false })
+          }
+          onOpenIncidents={() => navigateTo({ name: "incidents" })}
+          onOpenProfile={() => navigateTo({ name: "profile" })}
+          session={session}
+        />
+      </AuthenticatedShell>
+    );
+  }
+
+  if (currentScreen.name === "change-password") {
+    return (
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
+        onLogout={handleLogout}
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <ChangePasswordScreen
+          forcedReset={currentScreen.forcedReset}
+          onBack={goBack}
+          onDone={() => {
+            handleSessionPatch({
+              user: {
+                ...session.user,
+                resetKey: "No",
+              },
+            });
+            resetNavigation({ name: "map" });
+          }}
+          onForgotPassword={() => navigateTo({ name: "forgot-password" })}
+          session={session}
+        />
+      </AuthenticatedShell>
     );
   }
 
   return (
-    <ActivationMapScreen
-      onOpenChangePassword={() =>
-        navigateTo({ name: "change-password", forcedReset: false })
-      }
-      onOpenIncidents={() => navigateTo({ name: "incidents" })}
-      onOpenProfile={() => navigateTo({ name: "profile" })}
-      onOpenSettings={() => navigateTo({ name: "settings" })}
+    <AuthenticatedShell
+      activeSection={activeAuthenticatedSection}
+      fullBleed
       onLogout={handleLogout}
-      onSessionPatch={handleSessionPatch}
-      session={session}
-    />
+      onOpenMap={() => resetNavigation({ name: "map" })}
+      onOpenProfile={() => resetNavigation({ name: "profile" })}
+      onOpenSettings={() => resetNavigation({ name: "settings" })}
+    >
+      <ActivationMapScreen
+        onOpenChangePassword={() =>
+          navigateTo({ name: "change-password", forcedReset: false })
+        }
+        onOpenIncidents={() => navigateTo({ name: "incidents" })}
+        onSessionPatch={handleSessionPatch}
+        session={session}
+      />
+    </AuthenticatedShell>
   );
 }

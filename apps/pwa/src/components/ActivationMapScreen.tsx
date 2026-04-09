@@ -17,9 +17,6 @@ import useBrowserLocation from "../hooks/useBrowserLocation";
 type ActivationMapScreenProps = {
   onOpenChangePassword: () => void;
   onOpenIncidents: () => void;
-  onOpenProfile: () => void;
-  onOpenSettings: () => void;
-  onLogout: () => void;
   onSessionPatch: (session: {
     accessToken?: string;
     apiKey?: string;
@@ -99,9 +96,6 @@ function writeCachedZones(zones: ApiLocation[]) {
 export default function ActivationMapScreen({
   onOpenChangePassword,
   onOpenIncidents,
-  onOpenProfile,
-  onOpenSettings,
-  onLogout,
   onSessionPatch,
   session,
 }: ActivationMapScreenProps) {
@@ -429,34 +423,9 @@ export default function ActivationMapScreen({
       : "QR locked - enter a green zone";
 
   return (
-    <main className="app-shell map-screen">
-      <header className="mobile-screen-header">
-        <div className="mobile-screen-header-side">
-          <p className="eyebrow">Promolocation PWA</p>
-        </div>
-        <div className="mobile-screen-header-center">
-          <h1>Activation map</h1>
-          <p className="muted">
-            {session.user.fullname || session.user.promoter_id}
-          </p>
-        </div>
-        <div className="mobile-screen-header-side header-side-right">
-          <button className="ghost-outline header-logout" onClick={onLogout} type="button">
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {session.user.resetKey === "Yes" ? (
-        <section className="notice-banner">
-          <strong>Password update recommended.</strong> Your account indicates a
-          reset is still pending. The map remains available while we wire the
-          rest of the PWA account flow.
-        </section>
-      ) : null}
-
-      <section className="map-stage-card">
-        <div className="map-frame map-stage">
+    <main className="map-screen-layout">
+      <section className="map-screen-viewport">
+        <div className="map-frame map-stage map-frame-fullscreen">
           <div className="map-top-overlay">
             <div className="status-row">
               <div className="map-status-title-group">
@@ -514,7 +483,16 @@ export default function ActivationMapScreen({
         </div>
       </section>
 
-      <section className="map-info-grid">
+      <section className="map-panels-shell">
+        {session.user.resetKey === "Yes" ? (
+          <section className="notice-banner">
+            <strong>Password update recommended.</strong> Your account indicates a
+            reset is still pending. The map remains available while we wire the
+            rest of the PWA account flow.
+          </section>
+        ) : null}
+
+        <section className="map-info-grid">
           <article className={`card-panel status-panel tone-${status.tone}`}>
             <div className="card-header">
               <h2>Zone status</h2>
@@ -595,12 +573,6 @@ export default function ActivationMapScreen({
               <span className="stat-tag">Mobile parity</span>
             </div>
             <div className="quick-action-stack">
-              <button className="quick-action-button" onClick={onOpenProfile} type="button">
-                Profile
-              </button>
-              <button className="quick-action-button" onClick={onOpenSettings} type="button">
-                Settings
-              </button>
               <button className="quick-action-button" onClick={onOpenIncidents} type="button">
                 View incidents
               </button>
@@ -634,6 +606,7 @@ export default function ActivationMapScreen({
               </div>
             )}
           </article>
+        </section>
       </section>
 
       {isQrOpen && activeGreenZone && activeQrUrl ? (
