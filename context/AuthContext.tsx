@@ -27,6 +27,8 @@ interface User {
   area?: string;
   resetKey?: string;
   fcm_token?: string;
+  promo_code?: string;
+  promo_URL?: string;
 }
 
 interface AuthContextType {
@@ -207,6 +209,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           email_verified: !!data.email_verified,
           is_approved: !!data.is_approved,
           resetKey: data.resetKey || data.reset_key || "No",
+          promo_code: data.promo_code,
+          promo_URL: data.promo_URL,
         };
 
         // Block login if account is inactive or not approved

@@ -152,6 +152,16 @@ export default function ProfileScreen() {
                         <Text style={[styles.value, { color: theme.icon }]}>{user?.promoter_id || ''}</Text>
                     </View>
 
+                    {user?.promo_code && (
+                        <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
+                            <View style={styles.labelRow}>
+                                <Text style={[styles.label, { color: theme.icon }]}>Promo Code</Text>
+                                <Ionicons name="pricetag" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
+                            </View>
+                            <Text style={[styles.value, { color: theme.icon }]}>{user.promo_code}</Text>
+                        </View>
+                    )}
+
                     <View style={styles.editItem}>
                         <Text style={[styles.label, { color: theme.icon }]}>Full Name</Text>
                         <TextInput

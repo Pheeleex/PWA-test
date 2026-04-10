@@ -1,15 +1,14 @@
-import { StyleSheet, Text, View, BackHandler, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, BackHandler, useColorScheme, Image } from 'react-native';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import QRCode from 'react-native-qrcode-svg';
+import { useAuth } from '@/context';
 
 export default function QRCodeScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams();
-    const url = params.url as string;
+    const { user } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -35,20 +34,21 @@ export default function QRCodeScreen() {
             <View style={styles.content}>
 
                 <View style={[styles.qrContainer, { backgroundColor: '#fff', borderColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
-                    {url ? (
-                        <QRCode
-                            value={url}
-                            size={260}
-                            color="black"
-                            backgroundColor="white"
-                        />
+                    {user?.promo_URL ? (
+                        <Image source={{ uri: user.promo_URL }} style={{ width: 260, height: 260, resizeMode: 'contain' }} />
                     ) : (
                         <View style={styles.errorContainer}>
                             <Ionicons name="alert-circle-outline" size={80} color="#FF3B30" />
-                            <Text style={styles.errorText}>No URL found for this location</Text>
+                            <Text style={styles.errorText}>No promotional image found</Text>
                         </View>
                     )}
                 </View>
+
+                {user?.promo_code && (
+                    <Text style={[styles.promoCodeText, { color: theme.text }]}>
+                        Promo Code: <Text style={{ fontWeight: 'bold' }}>{user.promo_code}</Text>
+                    </Text>
+                )}
 
                 <Text style={[styles.availabilityText, { color: theme.icon }]}>
                     This QR code stays available while you are inside an activation zone.
@@ -95,6 +95,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         maxWidth: 280,
         marginBottom: 32,
+    },
+    promoCodeText: {
+        fontSize: 18,
+        lineHeight: 24,
+        textAlign: 'center',
+        marginBottom: 20,
     },
     disclaimerContainer: {
         flexDirection: 'row',
