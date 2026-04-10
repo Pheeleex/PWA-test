@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View, BackHandler, useColorScheme, Image } from 'react-native';
+import { StyleSheet, Text, View, BackHandler, useColorScheme } from 'react-native';
+import { Image } from 'expo-image';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -22,7 +23,7 @@ export default function QRCodeScreen() {
 
         return () => subscription.remove();
     }, [router]);
-
+    console.log(user?.promo_URL)
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <ScreenHeader
@@ -35,7 +36,12 @@ export default function QRCodeScreen() {
 
                 <View style={[styles.qrContainer, { backgroundColor: '#fff', borderColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
                     {user?.promo_URL ? (
-                        <Image source={{ uri: user.promo_URL }} style={{ width: 260, height: 260, resizeMode: 'contain' }} />
+                        <Image
+                            source={{ uri: user.promo_URL.trim() }}
+                            style={{ width: 260, height: 260 }}
+                            contentFit="contain"
+                            transition={200}
+                        />
                     ) : (
                         <View style={styles.errorContainer}>
                             <Ionicons name="alert-circle-outline" size={80} color="#FF3B30" />
