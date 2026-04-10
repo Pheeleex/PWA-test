@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   decorateZonesWithDistance,
   fetchActiveLocations,
@@ -15,6 +15,7 @@ import LeafletActivationMap from "./LeafletActivationMap";
 import useBrowserLocation from "../hooks/useBrowserLocation";
 
 type ActivationMapScreenProps = {
+  isOnline: boolean;
   onOpenChangePassword: () => void;
   onOpenIncidents: () => void;
   onSessionPatch: (session: {
@@ -94,6 +95,7 @@ function writeCachedZones(zones: ApiLocation[]) {
 }
 
 export default function ActivationMapScreen({
+  isOnline,
   onOpenChangePassword,
   onOpenIncidents,
   onSessionPatch,
@@ -107,6 +109,7 @@ export default function ActivationMapScreen({
   const [recenterSignal, setRecenterSignal] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [zonesNotice, setZonesNotice] = useState<string | null>(null);
+  const previousOnlineRef = useRef(isOnline);
 
   const location = useBrowserLocation();
 
@@ -166,6 +169,14 @@ export default function ActivationMapScreen({
   useEffect(() => {
     void loadZones();
   }, [loadZones]);
+
+  useEffect(() => {
+    if (isOnline && !previousOnlineRef.current) {
+      void loadZones();
+    }
+
+    previousOnlineRef.current = isOnline;
+  }, [isOnline, loadZones]);
 
   const mappedZones = useMemo(
     () => mapLocationsToActivationZones(zones),

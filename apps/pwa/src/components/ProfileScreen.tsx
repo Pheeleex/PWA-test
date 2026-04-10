@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  updatePromoterProfile,
-  type AuthenticatedUser,
-} from "@promolocation/shared";
+import type { AuthenticatedUser } from "@promolocation/shared";
+import type {
+  ProfileSaveRequest,
+  ProfileSaveResult,
+} from "../hooks/useOfflineProfileQueue";
 import AlertDialog from "./AlertDialog";
 import PwaScreenHeader from "./PwaScreenHeader";
 
 type ProfileScreenProps = {
+  isOnline: boolean;
+  isSyncingQueuedUpdates: boolean;
   onBack: () => void;
-  onSessionPatch: (session: {
-    accessToken?: string;
-    apiKey?: string;
-    user?: AuthenticatedUser;
-  }) => void;
+  onSaveProfile: (
+    request: ProfileSaveRequest,
+  ) => Promise<ProfileSaveResult>;
+  onSyncQueuedUpdates: () => Promise<unknown>;
+  pendingProfileUpdates: number;
+  profileSyncError: string | null;
   session: {
     accessToken: string;
     apiKey: string;
@@ -21,8 +25,13 @@ type ProfileScreenProps = {
 };
 
 export default function ProfileScreen({
+  isOnline,
+  isSyncingQueuedUpdates,
   onBack,
-  onSessionPatch,
+  onSaveProfile,
+  onSyncQueuedUpdates,
+  pendingProfileUpdates,
+  profileSyncError,
   session,
 }: ProfileScreenProps) {
   const [fullname, setFullname] = useState(session.user.fullname || "");
@@ -105,30 +114,18 @@ export default function ProfileScreen({
     setIsSaving(true);
 
     try {
-      const updatedUser = await updatePromoterProfile(
-        {
-          accessToken: session.accessToken,
-          apiKey: session.apiKey,
-          userId: session.user.user_id,
-        },
-        {
-          fullname: fullname.trim(),
-          phone: phone.trim(),
-        },
-        pendingAvatarFile,
-      );
-
-      onSessionPatch({
-        user: {
-          ...session.user,
-          ...updatedUser,
-          fullname: String(updatedUser.fullname ?? fullname.trim()),
-          phone: String(updatedUser.phone ?? phone.trim()),
-        },
+      const result = await onSaveProfile({
+        avatarFile: pendingAvatarFile,
+        fullname: fullname.trim(),
+        phone: phone.trim(),
       });
 
       setPendingAvatarFile(null);
-      showAlert("Success", "Profile updated successfully.", "success");
+      showAlert(
+        result.status === "queued" ? "Saved Offline" : "Success",
+        result.message,
+        "success",
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to update profile.";
@@ -185,6 +182,56 @@ export default function ProfileScreen({
             ) : null}
           </div>
 
+          {!isOnline ? (
+            <section className="profile-sync-card profile-sync-card-offline">
+              <div>
+                <strong>Offline profile editing is on</strong>
+                <p>
+                  Name, phone number, and avatar changes will be saved on this
+                  device and sent as soon as the connection comes back.
+                </p>
+              </div>
+            </section>
+          ) : null}
+
+          {pendingProfileUpdates > 0 ? (
+            <section
+              className={`profile-sync-card ${
+                profileSyncError
+                  ? "profile-sync-card-error"
+                  : "profile-sync-card-pending"
+              }`}
+            >
+              <div>
+                <strong>
+                  {isSyncingQueuedUpdates
+                    ? "Syncing your saved profile change"
+                    : pendingProfileUpdates === 1
+                      ? "1 saved profile change is waiting to sync"
+                      : `${pendingProfileUpdates} saved profile changes are waiting to sync`}
+                </strong>
+                <p>
+                  {profileSyncError
+                    ? profileSyncError
+                    : isOnline
+                      ? "We will keep retrying automatically while this app is open."
+                      : "Your change is safe on this device until you reconnect."}
+                </p>
+              </div>
+
+              {isOnline ? (
+                <button
+                  className="ghost-outline profile-sync-action"
+                  disabled={isSyncingQueuedUpdates}
+                  onClick={() => void onSyncQueuedUpdates()}
+                  type="button"
+                >
+                  {isSyncingQueuedUpdates ? "Syncing..." : "Sync now"}
+                </button>
+              ) : null}
+            </section>
+          ) : null}
+
           <section className="profile-details-card">
             <div className="profile-readonly-card">
               <div className="profile-label-row">
@@ -238,7 +285,13 @@ export default function ProfileScreen({
             onClick={handleSave}
             type="button"
           >
-            {isSaving ? "Updating..." : "Update Profile"}
+            {isSaving
+              ? isOnline
+                ? "Updating..."
+                : "Saving offline..."
+              : isOnline
+                ? "Update Profile"
+                : "Save Offline"}
           </button>
         </section>
       </div>

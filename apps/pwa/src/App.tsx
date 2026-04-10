@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AuthenticatedUser, LoginCredentials } from "@promolocation/shared";
 import { loginPromoter } from "@promolocation/shared";
 import ActivationMapScreen from "./components/ActivationMapScreen";
 import AuthenticatedShell from "./components/AuthenticatedShell";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
+import ConnectivityBanner from "./components/ConnectivityBanner";
 import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
 import IncidentsScreen from "./components/IncidentsScreen";
 import LoginScreen from "./components/LoginScreen";
 import OnboardingScreen from "./components/OnboardingScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import SettingsScreen from "./components/SettingsScreen";
+import useNetworkStatus from "./hooks/useNetworkStatus";
+import useOfflineProfileQueue from "./hooks/useOfflineProfileQueue";
 import usePwaInstall from "./hooks/usePwaInstall";
 
 const ONBOARDING_STORAGE_KEY = "promolocation-pwa-onboarding-complete";
@@ -92,6 +95,7 @@ function getDefaultAuthenticatedScreen(session: StoredSession | null): ScreenSta
 
 export default function App() {
   const install = usePwaInstall();
+  const networkStatus = useNetworkStatus();
   const [session, setSession] = useState<StoredSession | null>(null);
   const [screenStack, setScreenStack] = useState<ScreenState[]>([{ name: "login" }]);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
@@ -114,6 +118,28 @@ export default function App() {
     ]);
     setIsHydrating(false);
   }, []);
+
+  const handleSessionPatch = useCallback((partialSession: Partial<StoredSession>) => {
+    setSession((currentSession) => {
+      if (!currentSession) {
+        return currentSession;
+      }
+
+      const nextSession = {
+        ...currentSession,
+        ...partialSession,
+      };
+
+      writeStoredSession(nextSession);
+      return nextSession;
+    });
+  }, []);
+
+  const profileQueue = useOfflineProfileQueue({
+    isOnline: networkStatus.isOnline,
+    onSessionPatch: handleSessionPatch,
+    session,
+  });
 
   const navigateTo = (nextScreen: ScreenState, replace = false) => {
     setScreenStack((currentStack) => {
@@ -144,6 +170,14 @@ export default function App() {
   };
 
   const handleLogin = async (credentials: LoginCredentials) => {
+    if (!networkStatus.isOnline) {
+      const message =
+        "You are offline. Login needs an internet connection, but any saved session on this device can still reopen the app.";
+
+      setAuthError(message);
+      throw new Error(message);
+    }
+
     setIsLoggingIn(true);
     setAuthError(null);
 
@@ -175,22 +209,6 @@ export default function App() {
     resetNavigation({ name: "login" });
   };
 
-  const handleSessionPatch = (partialSession: Partial<StoredSession>) => {
-    setSession((currentSession) => {
-      if (!currentSession) {
-        return currentSession;
-      }
-
-      const nextSession = {
-        ...currentSession,
-        ...partialSession,
-      };
-
-      writeStoredSession(nextSession);
-      return nextSession;
-    });
-  };
-
   const handleCompleteOnboarding = () => {
     setIsOnboardingComplete(true);
     writeOnboardingComplete(true);
@@ -204,8 +222,20 @@ export default function App() {
       ? currentScreen.name
       : undefined;
 
+  const renderWithConnectivity = (content: ReactNode) => (
+    <>
+      <ConnectivityBanner
+        isOnline={networkStatus.isOnline}
+        isSyncingProfileUpdates={profileQueue.isSyncing}
+        lastSyncError={profileQueue.lastSyncError}
+        pendingProfileUpdates={profileQueue.pendingCount}
+      />
+      {content}
+    </>
+  );
+
   if (isHydrating) {
-    return (
+    return renderWithConnectivity(
       <main className="app-shell">
         <section className="loading-screen">
           <p className="eyebrow">Promolocation PWA</p>
@@ -219,7 +249,7 @@ export default function App() {
   }
 
   if (!isOnboardingComplete || currentScreen.name === "onboarding") {
-    return (
+    return renderWithConnectivity(
       <OnboardingScreen
         install={install}
         onComplete={handleCompleteOnboarding}
@@ -229,7 +259,7 @@ export default function App() {
 
   if (!session) {
     if (currentScreen.name === "forgot-password") {
-      return (
+      return renderWithConnectivity(
         <ForgotPasswordScreen
           apiKey={null}
           onBack={goBack}
@@ -238,7 +268,7 @@ export default function App() {
       );
     }
 
-    return (
+    return renderWithConnectivity(
       <LoginScreen
         error={authError}
         isLoading={isLoggingIn}
@@ -250,7 +280,7 @@ export default function App() {
   }
 
   if (currentScreen.name === "forgot-password") {
-    return (
+    return renderWithConnectivity(
       <ForgotPasswordScreen
         apiKey={session.apiKey}
         onBack={goBack}
@@ -260,7 +290,7 @@ export default function App() {
   }
 
   if (currentScreen.name === "incidents") {
-    return (
+    return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
         onLogout={handleLogout}
@@ -274,7 +304,7 @@ export default function App() {
   }
 
   if (currentScreen.name === "profile") {
-    return (
+    return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
         onLogout={handleLogout}
@@ -283,8 +313,13 @@ export default function App() {
         onOpenSettings={() => resetNavigation({ name: "settings" })}
       >
         <ProfileScreen
+          isOnline={networkStatus.isOnline}
+          isSyncingQueuedUpdates={profileQueue.isSyncing}
           onBack={goBack}
-          onSessionPatch={handleSessionPatch}
+          onSaveProfile={profileQueue.saveProfile}
+          onSyncQueuedUpdates={profileQueue.flushQueue}
+          pendingProfileUpdates={profileQueue.pendingCount}
+          profileSyncError={profileQueue.lastSyncError}
           session={session}
         />
       </AuthenticatedShell>
@@ -292,7 +327,7 @@ export default function App() {
   }
 
   if (currentScreen.name === "settings") {
-    return (
+    return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
         onLogout={handleLogout}
@@ -316,7 +351,7 @@ export default function App() {
   }
 
   if (currentScreen.name === "change-password") {
-    return (
+    return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
         onLogout={handleLogout}
@@ -343,7 +378,7 @@ export default function App() {
     );
   }
 
-  return (
+  return renderWithConnectivity(
     <AuthenticatedShell
       activeSection={activeAuthenticatedSection}
       fullBleed
@@ -353,6 +388,7 @@ export default function App() {
       onOpenSettings={() => resetNavigation({ name: "settings" })}
     >
       <ActivationMapScreen
+        isOnline={networkStatus.isOnline}
         onOpenChangePassword={() =>
           navigateTo({ name: "change-password", forcedReset: false })
         }
