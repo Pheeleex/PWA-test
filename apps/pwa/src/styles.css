@@ -371,8 +371,10 @@ textarea {
 }
 
 .pwa-app-brand,
-.pwa-app-nav-link,
-.pwa-app-logout {
+.pwa-app-menu-trigger,
+.pwa-drawer-close,
+.pwa-drawer-item,
+.pwa-drawer-logout {
   border: 0;
   cursor: pointer;
 }
@@ -398,35 +400,21 @@ textarea {
   letter-spacing: 0.04em;
 }
 
-.pwa-app-nav-links {
-  display: flex;
+.pwa-app-menu-trigger {
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
   margin-left: auto;
-}
-
-.pwa-app-nav-link,
-.pwa-app-logout {
-  min-height: 42px;
-  padding: 0.7rem 1rem;
   border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 700;
-}
-
-.pwa-app-nav-link {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.pwa-app-nav-link-active {
-  background: #ffffff;
-  color: #0e2b63;
-}
-
-.pwa-app-logout {
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   color: #ffffff;
+}
+
+.pwa-app-menu-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .authenticated-shell-content {
@@ -439,6 +427,107 @@ textarea {
   width: 100%;
   max-width: none;
   padding: 0 0 1.5rem;
+}
+
+.pwa-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.pwa-drawer-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(75vw, 360px);
+  min-width: 280px;
+  max-width: calc(100vw - 1.5rem);
+  padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
+  background: #ffffff;
+  box-shadow: -24px 0 48px rgba(15, 23, 42, 0.18);
+  animation: pwa-drawer-slide-in 180ms ease-out;
+}
+
+.pwa-drawer-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1rem 0.5rem;
+}
+
+.pwa-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: transparent;
+  color: #11181c;
+}
+
+.pwa-drawer-nav {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+}
+
+.pwa-drawer-item,
+.pwa-drawer-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 48px;
+  padding: 0 0.95rem;
+  border-radius: 25px;
+  background: rgba(217, 217, 217, 0.63);
+  color: #0e2b63;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.pwa-drawer-item-active {
+  background: rgba(14, 43, 99, 0.15);
+}
+
+.pwa-app-drawer-item-icon {
+  width: 20px;
+  height: 20px;
+  color: #747474;
+  flex: 0 0 auto;
+}
+
+.pwa-drawer-footer {
+  margin-top: auto;
+  padding: 1rem 1rem 0;
+  border-top: 1px solid #f4f4f4;
+}
+
+.pwa-drawer-logout {
+  width: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  color: #ff3b30;
+  padding-inline: 0;
+}
+
+.pwa-drawer-logout .pwa-app-drawer-item-icon {
+  color: #ff3b30;
+}
+
+@keyframes pwa-drawer-slide-in {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .map-screen-layout {
@@ -1866,7 +1955,7 @@ textarea {
 
 @media (max-width: 720px) {
   :root {
-    --shell-nav-height: 134px;
+    --shell-nav-height: 88px;
   }
 
   .app-shell {
@@ -1875,7 +1964,6 @@ textarea {
   }
 
   .pwa-app-navbar-inner {
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
     width: min(100% - 0.85rem, 1380px);
@@ -1883,22 +1971,6 @@ textarea {
 
   .pwa-app-brand {
     flex: 1 1 auto;
-  }
-
-  .pwa-app-nav-links {
-    order: 3;
-    width: 100%;
-    margin-left: 0;
-    overflow-x: auto;
-    padding-bottom: 0.15rem;
-  }
-
-  .pwa-app-nav-link {
-    flex: 0 0 auto;
-  }
-
-  .pwa-app-logout {
-    margin-left: auto;
   }
 
   .onboarding-card {
@@ -2018,5 +2090,10 @@ textarea {
 
   .profile-sync-action {
     width: 100%;
+  }
+
+  .pwa-drawer-panel {
+    width: min(82vw, 320px);
+    min-width: 0;
   }
 }
