@@ -1,6 +1,6 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Image, TouchableOpacity, useColorScheme } from 'react-native';
+import { Image, TouchableOpacity, useColorScheme, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
 import { StatusBar } from 'expo-status-bar';
@@ -32,15 +32,20 @@ export default function DrawerLayout() {
                     },
                     headerTintColor: '#fff',
                     headerLeft: () => (
-                        <TouchableOpacity 
-                            onPress={isLocked ? undefined : () => navigation.navigate('map')} 
+                        <TouchableOpacity
+                            onPress={isLocked ? undefined : () => navigation.navigate('map')}
                             style={{ marginBottom: 10 }}
                             activeOpacity={isLocked ? 1 : 0.7}
                         >
-                            <Image
-                                source={require('@/assets/images/Logo.png')}
-                                style={{ width: 30, height: 30, marginLeft: 16, resizeMode: 'contain' }}
-                            />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 16 }}>
+                                <Image
+                                    source={require('@/assets/images/Logo.png')}
+                                    style={{ width: 30, height: 30, resizeMode: 'contain' }}
+                                />
+                                <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 8 }}>
+                                    Promolocation
+                                </Text>
+                            </View>
                         </TouchableOpacity>
                     ),
                     headerRight: isLocked ? undefined : () => (

@@ -223,10 +223,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push("/(drawer)/report?ref=login")}
+              onPress={() => router.push("/(drawer)/report?ref=login" as any)}
               style={styles.optionButton}
             >
-              <Text style={styles.reportButtonText}>Report Incident</Text>
+              {/* <Text style={styles.reportButtonText}>Report Incident</Text> */}
             </TouchableOpacity>
           </View>
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   optionsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     marginBottom: 24,
     alignItems: "center",
   },

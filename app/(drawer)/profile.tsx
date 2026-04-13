@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -19,6 +19,7 @@ export default function ProfileScreen() {
     const [image, setImage] = useState<string | null>(user?.avatar || null);
     const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
     useEffect(() => {
         if (user) {
             setFullname(user.fullname);
@@ -118,7 +119,15 @@ export default function ProfileScreen() {
                     <View style={styles.imageContainer}>
                         <TouchableOpacity onPress={() => currentDisplayImage && setModalVisible(true)} disabled={!currentDisplayImage}>
                             {currentDisplayImage ? (
-                                <Image source={{ uri: currentDisplayImage }} style={styles.profileImage} />
+                                <View style={[styles.profileImage, { overflow: 'hidden' }]}>
+                                    <Image 
+                                        source={{ uri: currentDisplayImage }} 
+                                        style={[styles.profileImage, { position: 'absolute' }]} 
+                                        onLoadStart={() => setImageLoading(true)}
+                                        onLoadEnd={() => setImageLoading(false)}
+                                    />
+                                    {imageLoading && <ActivityIndicator size="small" color={theme.icon} />}
+                                </View>
                             ) : (
                                 <View style={[styles.profileImage, styles.placeholderImage, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#E0E0E0' }]}>
                                     <Ionicons name="person" size={60} color={theme.icon} />
@@ -150,6 +159,14 @@ export default function ProfileScreen() {
                             <Ionicons name="lock-closed" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
                         </View>
                         <Text style={[styles.value, { color: theme.icon }]}>{user?.promoter_id || ''}</Text>
+                    </View>
+
+                    <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
+                        <View style={styles.labelRow}>
+                            <Text style={[styles.label, { color: theme.icon }]}>Promo Code</Text>
+                            <Ionicons name="pricetag" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
+                        </View>
+                        <Text style={[styles.value, { color: theme.icon }]}>{user?.promo_code || 'N/A'}</Text>
                     </View>
 
                     <View style={styles.editItem}>
