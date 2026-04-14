@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, BackHandler, useColorScheme, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -15,7 +15,6 @@ export default function ProfileScreen() {
     const theme = Colors[colorScheme];
 
     const [fullname, setFullname] = useState(user?.fullname || '');
-    const [phone, setPhone] = useState(user?.phone || '');
     const [image, setImage] = useState<string | null>(user?.avatar || null);
     const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
@@ -23,15 +22,28 @@ export default function ProfileScreen() {
     useEffect(() => {
         if (user) {
             setFullname(user.fullname);
-            setPhone(user.phone);
             if (user.avatar) setImage(user.avatar);
         }
     }, [user]);
+
+    const hasChanges = fullname !== (user?.fullname || '') || 
+                       pendingImage !== null;
 
     useEffect(() => {
         const onBackPress = () => {
             if (modalVisible) {
                 setModalVisible(false);
+                return true;
+            }
+            if (hasChanges) {
+                Alert.alert(
+                    'Unsaved Changes',
+                    'You have unsaved changes. Are you sure you want to leave?',
+                    [
+                        { text: 'Stay', style: 'cancel' },
+                        { text: 'Leave', style: 'destructive', onPress: () => router.back() }
+                    ]
+                );
                 return true;
             }
             router.back();
@@ -41,17 +53,24 @@ export default function ProfileScreen() {
         const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
         return () => subscription.remove();
-    }, [router, modalVisible]);
+    }, [router, modalVisible, hasChanges]);
 
     const handleSave = async () => {
-        if (!fullname || !phone) {
-            Alert.alert('Error', 'Full Name and Phone Number are required.');
+        if (!fullname) {
+            Alert.alert('Error', 'Full Name is required.');
             return;
         }
 
+        if (fullname.trim().length < 3) {
+            Alert.alert('Error', 'Full Name must be at least 3 characters long.');
+            return;
+        }
+
+
+
         try {
             // Pass the pending image as well
-            await updateProfile({ fullname, phone }, pendingImage);
+            await updateProfile({ fullname }, pendingImage);
             setPendingImage(null); // Clear pending state after success
             Alert.alert('Success', 'Profile updated successfully.');
         } catch (error: any) {
@@ -111,9 +130,13 @@ export default function ProfileScreen() {
     const currentDisplayImage = pendingImage && pendingImage !== 'delete' ? pendingImage : (pendingImage === 'delete' ? null : image);
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[styles.container, { backgroundColor: theme.background }]}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
             <ScreenHeader title="Profile" withSafeArea={false} showBackButton={true} />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
                 <View style={styles.headerSection}>
                     <View style={styles.imageContainer}>
@@ -139,7 +162,19 @@ export default function ProfileScreen() {
                             <TouchableOpacity onPress={pickImage} style={[styles.actionButton, styles.editButton]}>
                                 <Ionicons name="camera" size={18} color="#fff" />
                             </TouchableOpacity>
-
+                            {(image || (pendingImage && pendingImage !== 'delete')) && (
+                                <TouchableOpacity 
+                                    onPress={() => {
+                                        Alert.alert('Delete Photo', 'Are you sure you want to remove your profile picture?', [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            { text: 'Delete', style: 'destructive', onPress: () => setPendingImage('delete') }
+                                        ]);
+                                    }} 
+                                    style={[styles.actionButton, styles.deleteButton]}
+                                >
+                                    <Ionicons name="trash" size={18} color="#fff" />
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                     <Text style={[styles.userIdText, { color: theme.text }]}>{user?.fullname || 'Promoter'}</Text>
@@ -180,16 +215,12 @@ export default function ProfileScreen() {
                         />
                     </View>
 
-                    <View style={styles.editItem}>
-                        <Text style={[styles.label, { color: theme.icon }]}>Phone Number</Text>
-                        <TextInput
-                            style={[styles.input, { color: theme.text, borderBottomColor: '#00B1EB' }]}
-                            value={phone}
-                            onChangeText={setPhone}
-                            placeholder="Enter your phone number"
-                            placeholderTextColor={theme.icon}
-                            keyboardType="phone-pad"
-                        />
+                    <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
+                        <View style={styles.labelRow}>
+                            <Text style={[styles.label, { color: theme.icon }]}>Phone Number</Text>
+                            <Ionicons name="lock-closed" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
+                        </View>
+                        <Text style={[styles.value, { color: theme.icon }]}>{user?.phone || ''}</Text>
                     </View>
 
                     <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
@@ -201,12 +232,15 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                <TouchableOpacity style={styles.updateButton} onPress={handleSave}>
+                <TouchableOpacity 
+                    style={[styles.updateButton, !hasChanges && styles.updateButtonDisabled]} 
+                    onPress={handleSave}
+                    disabled={!hasChanges}
+                >
                     <Text style={styles.updateButtonText}>Update Profile</Text>
                 </TouchableOpacity>
 
             </ScrollView>
-
             <Modal
                 visible={modalVisible}
                 transparent={true}
@@ -229,7 +263,7 @@ export default function ProfileScreen() {
                     )}
                 </View>
             </Modal>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -280,6 +314,9 @@ const styles = StyleSheet.create({
     },
     editButton: {
         backgroundColor: '#00B1EB',
+    },
+    deleteButton: {
+        backgroundColor: '#FF3B30',
     },
     userIdText: {
         fontSize: 24,
@@ -365,5 +402,9 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    updateButtonDisabled: {
+        backgroundColor: '#94A3B8',
+        opacity: 0.7,
     },
 });
