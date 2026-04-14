@@ -75,6 +75,7 @@ export default function ProfileScreen({
   const currentDisplayImage = useMemo(() => {
     return pendingAvatarPreview || session.user.avatar || "";
   }, [pendingAvatarPreview, session.user.avatar]);
+  const promoCode = session.user.promo_code?.trim() || "N/A";
 
   const showAlert = (
     title: string,
@@ -239,6 +240,14 @@ export default function ProfileScreen({
                 <span className="profile-lock-tag">Locked</span>
               </div>
               <strong>{session.user.promoter_id}</strong>
+            </div>
+
+            <div className="profile-readonly-card">
+              <div className="profile-label-row">
+                <span className="profile-detail-label">Promo Code</span>
+                <span className="profile-lock-tag">Locked</span>
+              </div>
+              <strong>{promoCode}</strong>
             </div>
 
             <label className="mobile-field">

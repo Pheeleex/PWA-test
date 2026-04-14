@@ -1,16 +1,20 @@
-import QRCode from "react-qr-code";
-
 type ActivationQrModalProps = {
   onClose: () => void;
-  qrUrl: string;
+  promoCode?: string;
+  promoImageUrl: string;
   zoneName: string;
 };
 
 export default function ActivationQrModal({
   onClose,
-  qrUrl,
+  promoCode,
+  promoImageUrl,
   zoneName,
 }: ActivationQrModalProps) {
+  const trimmedPromoImageUrl = promoImageUrl.trim();
+  const trimmedPromoCode = promoCode?.trim() ?? "";
+  const hasPromoImage = trimmedPromoImageUrl.length > 0;
+
   return (
     <div
       aria-modal="true"
@@ -24,8 +28,8 @@ export default function ActivationQrModal({
       >
         <div className="card-header">
           <div>
-            <p className="eyebrow">Activation QR</p>
-            <h2>{zoneName}</h2>
+            <p className="eyebrow">{zoneName}</p>
+            <h2>Scan To Activate</h2>
           </div>
           <button className="ghost-button" onClick={onClose} type="button">
             Close
@@ -33,16 +37,32 @@ export default function ActivationQrModal({
         </div>
 
         <div className="qr-code-frame">
-          <QRCode
-            bgColor="#FFFFFF"
-            fgColor="#000000"
-            size={260}
-            value={qrUrl}
-          />
+          {hasPromoImage ? (
+            <img
+              alt="Promotional activation"
+              className="qr-promo-image"
+              src={trimmedPromoImageUrl}
+            />
+          ) : (
+            <div className="qr-error-state">
+              <span className="qr-error-badge">!</span>
+              <strong>No promotional image found</strong>
+              <p>
+                This account does not have a promo image yet. Please contact
+                support if this should already be available.
+              </p>
+            </div>
+          )}
         </div>
 
+        {trimmedPromoCode ? (
+          <p className="qr-promo-code">
+            Promo Code: <strong>{trimmedPromoCode}</strong>
+          </p>
+        ) : null}
+
         <p className="qr-help-text">
-          This QR stays available while you remain inside the activation zone
+          This activation stays available while you remain inside the activation zone
           with a reliable GPS fix.
         </p>
 

@@ -17,7 +17,6 @@ import useBrowserLocation from "../hooks/useBrowserLocation";
 type ActivationMapScreenProps = {
   isOnline: boolean;
   onOpenChangePassword: () => void;
-  onOpenIncidents: () => void;
   onSessionPatch: (session: {
     accessToken?: string;
     apiKey?: string;
@@ -97,7 +96,6 @@ function writeCachedZones(zones: ApiLocation[]) {
 export default function ActivationMapScreen({
   isOnline,
   onOpenChangePassword,
-  onOpenIncidents,
   onSessionPatch,
   session,
 }: ActivationMapScreenProps) {
@@ -253,35 +251,32 @@ export default function ActivationMapScreen({
   const isGpsReliable =
     location.accuracy !== null && location.accuracy <= GPS_ACCURACY_THRESHOLD;
 
-  const qrLocationSource = useMemo(() => {
-    if (!activeGreenZone) {
-      return null;
-    }
-
-    return (
-      zones.find(
-        (zone) =>
-          String(zone.id ?? zone.location_id ?? "") === activeGreenZone.id,
-      ) ?? null
-    );
-  }, [activeGreenZone, zones]);
-
-  const activeQrUrl = useMemo(() => {
-    const rawUrl = qrLocationSource?.image_url;
+  const activePromoImageUrl = useMemo(() => {
+    const rawUrl = session.user.promo_URL;
 
     if (typeof rawUrl !== "string") {
       return "";
     }
 
     return rawUrl.trim();
-  }, [qrLocationSource?.image_url]);
+  }, [session.user.promo_URL]);
+
+  const activePromoCode = useMemo(() => {
+    const rawPromoCode = session.user.promo_code;
+
+    if (typeof rawPromoCode !== "string") {
+      return "";
+    }
+
+    return rawPromoCode.trim();
+  }, [session.user.promo_code]);
 
   const qrState = useMemo(() => {
     if (location.isLoading) {
       return {
         buttonLabel: "Checking location...",
         canOpen: false,
-        detail: "We need your current browser location before we can unlock the QR.",
+        detail: "We need your current browser location before we can unlock scan to activate.",
         title: "Waiting for location",
       };
     }
@@ -297,9 +292,9 @@ export default function ActivationMapScreen({
 
     if (activeZone?.type === "red" && !activeGreenZone) {
       return {
-        buttonLabel: "QR unavailable in red zone",
+        buttonLabel: "Locked - red zone",
         canOpen: false,
-        detail: "You are inside a restricted red zone, so the activation QR stays locked.",
+        detail: "You are inside a restricted red zone, so scan to activate stays locked.",
         title: "Restricted area",
       };
     }
@@ -308,38 +303,28 @@ export default function ActivationMapScreen({
       return {
         buttonLabel: "Improve GPS",
         canOpen: false,
-        detail: "You are in a green zone, but the GPS fix is too weak to safely unlock the QR.",
+        detail: "You are in a green zone, but the GPS fix is too weak to safely unlock scan to activate.",
         title: "GPS too weak",
       };
     }
 
-    if (activeGreenZone && !activeQrUrl) {
+    if (activeGreenZone) {
       return {
-        buttonLabel: "No QR available",
-        canOpen: false,
-        detail: "This activation zone does not currently have a QR payload from the API.",
-        title: "Missing QR payload",
-      };
-    }
-
-    if (activeGreenZone && activeQrUrl) {
-      return {
-        buttonLabel: "Open activation QR",
+        buttonLabel: "Scan to activate",
         canOpen: true,
-        detail: `You are inside ${activeGreenZone.name}. The QR is ready.`,
-        title: "QR unlocked",
+        detail: `You are inside ${activeGreenZone.name}. Scan to activate is ready.`,
+        title: "Activation ready",
       };
     }
 
     return {
-      buttonLabel: "Enter a green zone",
+      buttonLabel: "Locked - enter a zone",
       canOpen: false,
-      detail: "Move into a green activation zone to unlock the browser QR.",
-      title: "QR locked",
+      detail: "Move into a green activation zone to unlock scan to activate.",
+      title: "Activation locked",
     };
   }, [
     activeGreenZone,
-    activeQrUrl,
     activeZone?.type,
     isGpsReliable,
     location.error,
@@ -402,11 +387,11 @@ export default function ActivationMapScreen({
 
   const statusMessage = useMemo(() => {
     if (activeGreenZone && isGpsReliable) {
-      return `You are in ${activeGreenZone.name}. QR unlocked.`;
+      return `You are in ${activeGreenZone.name}. Scan to activate is ready.`;
     }
 
     if (activeGreenZone && !isGpsReliable) {
-      return `Inside ${activeGreenZone.name}, but GPS needs a cleaner fix. Move to open space.`;
+      return `Inside ${activeGreenZone.name}, but GPS needs a cleaner fix before scan to activate can open.`;
     }
 
     if (activeZone?.type === "red") {
@@ -428,10 +413,10 @@ export default function ActivationMapScreen({
   ]);
 
   const mapQrButtonLabel = qrState.canOpen
-    ? "Activation QR code"
+    ? "Scan to activate"
     : qrState.title === "Restricted area"
-      ? "QR locked - red zone"
-      : "QR locked - enter a green zone";
+      ? "Locked - red zone"
+      : qrState.buttonLabel;
 
   return (
     <main className="map-screen-layout">
@@ -584,9 +569,6 @@ export default function ActivationMapScreen({
               <span className="stat-tag">Mobile parity</span>
             </div>
             <div className="quick-action-stack">
-              <button className="quick-action-button" onClick={onOpenIncidents} type="button">
-                View incidents
-              </button>
               <button
                 className="quick-action-button"
                 onClick={onOpenChangePassword}
@@ -620,10 +602,11 @@ export default function ActivationMapScreen({
         </section>
       </section>
 
-      {isQrOpen && activeGreenZone && activeQrUrl ? (
+      {isQrOpen && activeGreenZone ? (
         <ActivationQrModal
           onClose={() => setIsQrOpen(false)}
-          qrUrl={activeQrUrl}
+          promoCode={activePromoCode}
+          promoImageUrl={activePromoImageUrl}
           zoneName={activeGreenZone.name}
         />
       ) : null}

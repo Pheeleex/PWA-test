@@ -6,7 +6,6 @@ import AuthenticatedShell from "./components/AuthenticatedShell";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
 import ConnectivityBanner from "./components/ConnectivityBanner";
 import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
-import IncidentsScreen from "./components/IncidentsScreen";
 import LoginScreen from "./components/LoginScreen";
 import OnboardingScreen from "./components/OnboardingScreen";
 import ProfileScreen from "./components/ProfileScreen";
@@ -28,7 +27,6 @@ type ScreenState =
   | { name: "onboarding" }
   | { name: "change-password"; forcedReset: boolean }
   | { name: "forgot-password" }
-  | { name: "incidents" }
   | { name: "login" }
   | { name: "map" }
   | { name: "profile" }
@@ -91,6 +89,29 @@ function getDefaultAuthenticatedScreen(session: StoredSession | null): ScreenSta
   }
 
   return { name: "login" };
+}
+
+function getFallbackBackTarget(
+  currentScreen: ScreenState,
+  session: StoredSession | null,
+): ScreenState | null {
+  if (!session) {
+    if (currentScreen.name === "forgot-password") {
+      return { name: "login" };
+    }
+
+    return null;
+  }
+
+  if (currentScreen.name === "map") {
+    return null;
+  }
+
+  if (currentScreen.name === "change-password" && currentScreen.forcedReset) {
+    return null;
+  }
+
+  return { name: "map" };
 }
 
 export default function App() {
@@ -161,11 +182,20 @@ export default function App() {
 
   const goBack = () => {
     setScreenStack((currentStack) => {
-      if (currentStack.length <= 1) {
+      if (currentStack.length > 1) {
+        return currentStack.slice(0, -1);
+      }
+
+      const activeScreen = currentStack[currentStack.length - 1];
+      const fallbackScreen = activeScreen
+        ? getFallbackBackTarget(activeScreen, session)
+        : null;
+
+      if (!fallbackScreen) {
         return currentStack;
       }
 
-      return currentStack.slice(0, -1);
+      return [fallbackScreen];
     });
   };
 
@@ -289,20 +319,6 @@ export default function App() {
     );
   }
 
-  if (currentScreen.name === "incidents") {
-    return renderWithConnectivity(
-      <AuthenticatedShell
-        activeSection={activeAuthenticatedSection}
-        onLogout={handleLogout}
-        onOpenMap={() => resetNavigation({ name: "map" })}
-        onOpenProfile={() => resetNavigation({ name: "profile" })}
-        onOpenSettings={() => resetNavigation({ name: "settings" })}
-      >
-        <IncidentsScreen onBack={goBack} session={session} />
-      </AuthenticatedShell>
-    );
-  }
-
   if (currentScreen.name === "profile") {
     return renderWithConnectivity(
       <AuthenticatedShell
@@ -338,11 +354,9 @@ export default function App() {
         <SettingsScreen
           install={install}
           onBack={goBack}
-          onLogout={handleLogout}
           onOpenChangePassword={() =>
             navigateTo({ name: "change-password", forcedReset: false })
           }
-          onOpenIncidents={() => navigateTo({ name: "incidents" })}
           onOpenProfile={() => navigateTo({ name: "profile" })}
           session={session}
         />
@@ -392,7 +406,6 @@ export default function App() {
         onOpenChangePassword={() =>
           navigateTo({ name: "change-password", forcedReset: false })
         }
-        onOpenIncidents={() => navigateTo({ name: "incidents" })}
         onSessionPatch={handleSessionPatch}
         session={session}
       />

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AuthenticatedUser } from "@promolocation/shared";
 import changePasswordIcon from "../../../../assets/images/changepassword.png";
-import incidentHistoryIcon from "../../../../assets/images/incidenthistory.png";
 import type { PwaInstallState } from "../hooks/usePwaInstall";
 import PwaInstallCard from "./PwaInstallCard";
 import PwaScreenHeader from "./PwaScreenHeader";
@@ -11,9 +10,7 @@ const NOTIFICATION_PREFERENCE_KEY = "promolocation-pwa-notifications-enabled";
 type SettingsScreenProps = {
   install: PwaInstallState;
   onBack: () => void;
-  onLogout: () => void;
   onOpenChangePassword: () => void;
-  onOpenIncidents: () => void;
   onOpenProfile: () => void;
   session: {
     user: AuthenticatedUser;
@@ -48,9 +45,7 @@ function writeNotificationPreference(enabled: boolean) {
 export default function SettingsScreen({
   install,
   onBack,
-  onLogout,
   onOpenChangePassword,
-  onOpenIncidents,
   onOpenProfile,
   session,
 }: SettingsScreenProps) {
@@ -147,20 +142,6 @@ export default function SettingsScreen({
               <span className="settings-menu-chevron">&gt;</span>
             </button>
 
-            <button className="settings-menu-item" onClick={onOpenIncidents} type="button">
-              <div className="settings-menu-item-left">
-                <span className="settings-icon-shell">
-                  <img
-                    alt=""
-                    className="settings-menu-icon-image"
-                    src={incidentHistoryIcon}
-                  />
-                </span>
-                <span className="settings-menu-label">Incident History</span>
-              </div>
-              <span className="settings-menu-chevron">&gt;</span>
-            </button>
-
             <div className="settings-menu-item settings-toggle-item">
               <div className="settings-menu-item-left">
                 <span className="settings-icon-shell settings-notification-icon">
@@ -189,10 +170,6 @@ export default function SettingsScreen({
           )}
 
           <PwaInstallCard install={install} persistent />
-
-          <button className="ghost-outline settings-logout-button" onClick={onLogout} type="button">
-            Logout
-          </button>
         </section>
       </div>
     </main>
