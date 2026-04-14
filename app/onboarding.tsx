@@ -18,7 +18,7 @@ const slides = [
         id: '1',
         title: 'Welcome to Promolocation',
         subtitle: 'Your Intelligent Field Companion',
-        description: 'Helping you connect with customer, optimize routes, and ensure compliance, effortleslly.',
+        description: 'Helping you connect with customer, optimize routes, and ensure compliance effortlesly.',
         image: require('@/assets/images/onboarding-1.png'),
         backgroundColor: '#0E2B63',
     },
@@ -116,7 +116,7 @@ import { useAuth } from '@/context';
 
 export default function OnboardingScreen() {
     const router = useRouter();
-    const { completeOnboarding } = useAuth();
+    const { completeOnboarding, toggleNotifications } = useAuth();
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
     const slidesRef = useRef<FlatList>(null);
@@ -129,18 +129,27 @@ export default function OnboardingScreen() {
 
     const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
+    const finalizeOnboarding = async () => {
+        // Explicitly ask for notification permissions on the last step
+        try {
+            await toggleNotifications(true);
+        } catch (e) {
+            console.warn("[Onboarding] Notification request failed:", e);
+        }
+        await completeOnboarding();
+        router.replace('/login');
+    };
+
     const scrollToNext = async () => {
         if (currentIndex < slides.length - 1) {
             slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
-            await completeOnboarding();
-            router.replace('/login');
+            await finalizeOnboarding();
         }
     };
 
     const handleSkip = async () => {
-        await completeOnboarding();
-        router.replace('/login');
+        await finalizeOnboarding();
     };
 
     return (
