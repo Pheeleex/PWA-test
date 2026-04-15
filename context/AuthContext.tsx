@@ -86,14 +86,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const initialize = async () => {
       console.log("[AUTH] Initializing session...");
       try {
-        const [storedToken, storedApiKey, onboardingStatus, storedUser, pushStatus] =
-          await Promise.all([
-            AsyncStorage.getItem("jwt_token"),
-            AsyncStorage.getItem("api_key"),
-            AsyncStorage.getItem("onboarding_complete"),
-            AsyncStorage.getItem("user_data"),
-            AsyncStorage.getItem("push_notifications_enabled")
-          ]);
+        const [
+          storedToken,
+          storedApiKey,
+          onboardingStatus,
+          storedUser,
+          pushStatus,
+        ] = await Promise.all([
+          AsyncStorage.getItem("jwt_token"),
+          AsyncStorage.getItem("api_key"),
+          AsyncStorage.getItem("onboarding_complete"),
+          AsyncStorage.getItem("user_data"),
+          AsyncStorage.getItem("push_notifications_enabled"),
+        ]);
 
         // 1. Prepare all state updates
         let userObj: User | null = null;
@@ -113,22 +118,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         // 3. Handle Notifications status status
         try {
-          const { status: osStatus } = await Notifications.getPermissionsAsync();
+          const { status: osStatus } =
+            await Notifications.getPermissionsAsync();
           const osGranted = osStatus === "granted";
           const userWantsEnabled = pushStatus !== "false";
           setPushEnabled(osGranted && userWantsEnabled);
         } catch (e) {
-          console.warn("[AUTH] Error checking push permissions during init:", e);
+          console.warn(
+            "[AUTH] Error checking push permissions during init:",
+            e,
+          );
         }
 
-        console.log("[AUTH] Session restoration complete. Authenticated:", !!storedToken);
+        console.log(
+          "[AUTH] Session restoration complete. Authenticated:",
+          !!storedToken,
+        );
 
-        // If we have a token but missing user/apiKey, attempt one silent refresh 
+        // If we have a token but missing user/apiKey, attempt one silent refresh
         if (storedToken && (!userObj || !storedApiKey)) {
-          console.warn("[AUTH] Partial session found, triggering silent refresh.");
-          refreshUser().catch(err => console.error("[AUTH] Silent refresh failed:", err));
+          console.warn(
+            "[AUTH] Partial session found, triggering silent refresh.",
+          );
+          refreshUser().catch((err) =>
+            console.error("[AUTH] Silent refresh failed:", err),
+          );
         }
-
       } catch (error) {
         console.error("[AUTH] Initialization error:", error);
       } finally {
@@ -138,8 +153,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     initialize();
   }, []);
-
-
 
   const fetchApiKey = async (): Promise<string | null> => {
     if (isConnected === false || isInternetReachable === false) return null;
@@ -176,7 +189,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     password: string;
   }) => {
     if (isConnected === false || isInternetReachable === false) {
-      throw new Error("No internet connection. Please check your network settings.");
+      throw new Error(
+        "No internet connection. Please check your network settings.",
+      );
     }
     setIsLoading(true);
     try {
@@ -239,9 +254,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         // Block login if account is inactive or not approved
         if (userData.active === false) {
-          throw new Error("Your account has been deactivated. Please contact support.");
+          throw new Error(
+            "Your account has been deactivated. Please contact support.",
+          );
         }
-
 
         setUser(userData);
 
@@ -327,7 +343,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       if (user) {
-        const updatedUser = { ...user, resetKey: 'No' };
+        const updatedUser = { ...user, resetKey: "No" };
         setUser(updatedUser);
         await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
       }
@@ -347,18 +363,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       throw new Error("No internet connection.");
     }
     setIsLoading(true);
-    console.log("[DEBUG] updateProfile started", { profileData, hasImage: !!imageUri });
+    console.log("[DEBUG] updateProfile started", {
+      profileData,
+      hasImage: !!imageUri,
+    });
 
     try {
       if (!token || !user?.user_id) {
-        console.error("[AUTH] Profile update attempted without token or user_id");
+        console.error(
+          "[AUTH] Profile update attempted without token or user_id",
+        );
         await logout("UpdateProfile - Missing Critical Session Data");
         throw new Error("Session expired. Please log in again.");
       }
 
       let currentApiKey = apiKey;
       if (!currentApiKey) {
-        console.log("[AUTH] API key missing in updateProfile, attempting to fetch...");
+        console.log(
+          "[AUTH] API key missing in updateProfile, attempting to fetch...",
+        );
         currentApiKey = await fetchApiKey();
       }
 
@@ -457,14 +480,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       if (!token || !user?.user_id) {
-        console.error("[AUTH] Delete profile picture attempted without token or user_id");
+        console.error(
+          "[AUTH] Delete profile picture attempted without token or user_id",
+        );
         await logout("DeleteProfilePicture - Missing Critical Session Data");
         throw new Error("Session expired. Please log in again.");
       }
 
       let currentApiKey = apiKey;
       if (!currentApiKey) {
-        console.log("[AUTH] API key missing in deleteProfilePicture, attempting to fetch...");
+        console.log(
+          "[AUTH] API key missing in deleteProfilePicture, attempting to fetch...",
+        );
         currentApiKey = await fetchApiKey();
       }
 
@@ -485,7 +512,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       console.log("[API POST] Delete Profile Picture Request:", {
         url,
-        token: currentApiKey ? `${currentApiKey.substring(0, 10)}...` : "MISSING",
+        token: currentApiKey
+          ? `${currentApiKey.substring(0, 10)}...`
+          : "MISSING",
       });
 
       const response = await fetch(url, {
@@ -597,17 +626,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     const remoteUser = data.user[0];
-    const isActuallyLocked = remoteUser.resetKey?.toLowerCase() === "yes" || remoteUser.reset_key?.toLowerCase() === "yes";
+    const isActuallyLocked =
+      remoteUser.resetKey?.toLowerCase() === "yes" ||
+      remoteUser.reset_key?.toLowerCase() === "yes";
 
     const updatedUser: User = {
       ...user,
       ...remoteUser,
-      resetKey: isActuallyLocked ? "Yes" : (remoteUser.resetKey || remoteUser.reset_key || "No"),
+      resetKey: isActuallyLocked
+        ? "Yes"
+        : remoteUser.resetKey || remoteUser.reset_key || "No",
     } as User;
 
     setUser(updatedUser);
     await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
-    console.log("[AUTH] User data refreshed from array. Locked:", isActuallyLocked);
+    console.log(
+      "[AUTH] User data refreshed from array. Locked:",
+      isActuallyLocked,
+    );
 
     if (isActuallyLocked) {
       console.warn("[AUTH] resetKey is Yes — user will be restricted.");
@@ -630,19 +666,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
             Authorization: `Bearer ${currentToken}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             token: currentApiKey,
-            promoter_id: user?.promoter_id
+            promoter_id: user?.promoter_id,
           }),
         },
       );
       if (response.status === 401) {
-        console.warn("[AUTH] Refresh user received 401. Checking network before logout...");
+        console.warn(
+          "[AUTH] Refresh user received 401. Checking network before logout...",
+        );
         if (isConnected && isInternetReachable) {
           const newApiKey = await fetchApiKey();
           if (newApiKey) {
@@ -650,35 +688,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             const retryResponse = await fetch(
               `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}`,
               {
-                method: 'POST',
+                method: "POST",
                 headers: {
                   Authorization: `Bearer ${currentToken}`,
-                  'Content-Type': 'application/json'
+                  "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                   token: currentApiKey,
-                  promoter_id: user?.promoter_id
+                  promoter_id: user?.promoter_id,
                 }),
-              }
+              },
             );
             if (retryResponse.status === 401) {
-              console.error("[AUTH] Persistent 401 after key refresh. Logout required.");
+              console.error(
+                "[AUTH] Persistent 401 after key refresh. Logout required.",
+              );
               await logout("RefreshUser - Persistent 401");
             } else if (retryResponse.ok) {
               const retryData = await retryResponse.json();
               await applyRefreshedUser(retryData);
             }
           } else {
-            console.warn("[AUTH] API Key refresh failed during 401 recovery. Keeping session for now.");
+            console.warn(
+              "[AUTH] API Key refresh failed during 401 recovery. Keeping session for now.",
+            );
           }
         } else {
           console.log("[AUTH] 401 received while offline. Preserving session.");
         }
         return;
       }
-      console.log(response)
+      console.log(response);
       if (!response.ok) {
-        console.warn(`[AUTH] Background refresh failed with status: ${response.status}`);
+        console.warn(
+          `[AUTH] Background refresh failed with status: ${response.status}`,
+        );
         return;
       }
 
@@ -704,7 +748,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const stored = await AsyncStorage.getItem("push_notifications_enabled");
         setPushEnabled(stored !== "false"); // true when null (default) or explicitly "true"
       }
-    } catch { /* non-critical — ignore */ }
+    } catch {
+      /* non-critical — ignore */
+    }
   };
 
   useEffect(() => {
