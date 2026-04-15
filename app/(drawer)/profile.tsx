@@ -26,8 +26,8 @@ export default function ProfileScreen() {
         }
     }, [user]);
 
-    const hasChanges = fullname !== (user?.fullname || '') || 
-                       pendingImage !== null;
+    const hasChanges = fullname !== (user?.fullname || '') ||
+        pendingImage !== null;
 
     useEffect(() => {
         const onBackPress = () => {
@@ -58,6 +58,12 @@ export default function ProfileScreen() {
     const handleSave = async () => {
         if (!fullname) {
             Alert.alert('Error', 'Full Name is required.');
+            return;
+        }
+
+        const nameParts = fullname.trim().split(/\s+/);
+        if (nameParts.length < 2) {
+            Alert.alert('Error', 'Full Name must contain First and Last name.');
             return;
         }
 
@@ -130,7 +136,7 @@ export default function ProfileScreen() {
     const currentDisplayImage = pendingImage && pendingImage !== 'delete' ? pendingImage : (pendingImage === 'delete' ? null : image);
 
     return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.container, { backgroundColor: theme.background }]}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
@@ -143,9 +149,9 @@ export default function ProfileScreen() {
                         <TouchableOpacity onPress={() => currentDisplayImage && setModalVisible(true)} disabled={!currentDisplayImage}>
                             {currentDisplayImage ? (
                                 <View style={[styles.profileImage, { overflow: 'hidden' }]}>
-                                    <Image 
-                                        source={{ uri: currentDisplayImage }} 
-                                        style={[styles.profileImage, { position: 'absolute' }]} 
+                                    <Image
+                                        source={{ uri: currentDisplayImage }}
+                                        style={[styles.profileImage, { position: 'absolute' }]}
                                         onLoadStart={() => setImageLoading(true)}
                                         onLoadEnd={() => setImageLoading(false)}
                                     />
@@ -163,13 +169,13 @@ export default function ProfileScreen() {
                                 <Ionicons name="camera" size={18} color="#fff" />
                             </TouchableOpacity>
                             {(image || (pendingImage && pendingImage !== 'delete')) && (
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     onPress={() => {
                                         Alert.alert('Delete Photo', 'Are you sure you want to remove your profile picture?', [
                                             { text: 'Cancel', style: 'cancel' },
                                             { text: 'Delete', style: 'destructive', onPress: () => setPendingImage('delete') }
                                         ]);
-                                    }} 
+                                    }}
                                     style={[styles.actionButton, styles.deleteButton]}
                                 >
                                     <Ionicons name="trash" size={18} color="#fff" />
@@ -215,13 +221,7 @@ export default function ProfileScreen() {
                         />
                     </View>
 
-                    <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
-                        <View style={styles.labelRow}>
-                            <Text style={[styles.label, { color: theme.icon }]}>Phone Number</Text>
-                            <Ionicons name="lock-closed" size={14} color={theme.icon} style={{ marginLeft: 4 }} />
-                        </View>
-                        <Text style={[styles.value, { color: theme.icon }]}>{user?.phone || ''}</Text>
-                    </View>
+
 
                     <View style={[styles.detailItem, styles.readOnlyItem, { backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#EAEAEA' }]}>
                         <View style={styles.labelRow}>
@@ -232,8 +232,8 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                <TouchableOpacity 
-                    style={[styles.updateButton, !hasChanges && styles.updateButtonDisabled]} 
+                <TouchableOpacity
+                    style={[styles.updateButton, !hasChanges && styles.updateButtonDisabled]}
                     onPress={handleSave}
                     disabled={!hasChanges}
                 >
