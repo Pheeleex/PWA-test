@@ -405,7 +405,7 @@ export default function MapScreen() {
         if (
           distance === nearestDistance &&
           (zone.centerDistance ?? Infinity) <
-            (nearest.centerDistance ?? Infinity)
+          (nearest.centerDistance ?? Infinity)
         ) {
           return zone;
         }
@@ -631,6 +631,72 @@ export default function MapScreen() {
             </View>
           ) : (
             <>
+              <View style={styles.topOverlay}>
+                <View style={styles.statusRow}>
+                  <View style={styles.statusTitleGroup}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: statusDotColor },
+                      ]}
+                    />
+                    <Text style={styles.statusTitle}>{statusTitle}</Text>
+                  </View>
+                  {locationAccuracy !== null && (
+                    <View
+                      style={[
+                        styles.gpsChip,
+                        !isGpsReliable && styles.gpsChipWeak,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.gpsChipText,
+                          !isGpsReliable && styles.gpsChipTextWeak,
+                        ]}
+                      >
+                        GPS ±{Math.round(locationAccuracy)}m
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {isInsideZone && activeZone ? (
+                  <Text style={styles.statusMessage}>
+                    {"You are in "}
+                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
+                    {". "}
+                    <Text style={styles.statusGreen}>QR unlocked.</Text>
+                  </Text>
+                ) : activeZone && !isGpsReliable ? (
+                  <Text style={styles.statusMessage}>
+                    {"Inside "}
+                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
+                    {" but "}
+                    <Text style={styles.statusAmber}>
+                      GPS needs a cleaner fix.
+                    </Text>
+                    {" Move to open space."}
+                  </Text>
+                ) : nearestZoneInfo ? (
+                  <Text style={styles.statusMessage}>
+                    {"Nearest: "}
+                    <Text style={styles.statusStrong}>
+                      {nearestZoneInfo.name}
+                    </Text>
+                    {" — "}
+                    <Text style={styles.statusGreen}>
+                      {getZoneDistanceLabel(nearestZoneInfo)}
+                    </Text>
+                    {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : "."}
+                  </Text>
+                ) : (
+                  <Text style={styles.statusMessage}>
+                    Finding nearby activation zones...
+                  </Text>
+                )}
+              </View>
+
               <View style={styles.mapWrap} onLayout={handleMapLayout}>
                 <MapView
                   ref={mapRef}
@@ -755,71 +821,7 @@ export default function MapScreen() {
                 </View>
               </View>
 
-              <View style={styles.topOverlay}>
-                <View style={styles.statusRow}>
-                  <View style={styles.statusTitleGroup}>
-                    <View
-                      style={[
-                        styles.statusDot,
-                        { backgroundColor: statusDotColor },
-                      ]}
-                    />
-                    <Text style={styles.statusTitle}>{statusTitle}</Text>
-                  </View>
-                  {locationAccuracy !== null && (
-                    <View
-                      style={[
-                        styles.gpsChip,
-                        !isGpsReliable && styles.gpsChipWeak,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.gpsChipText,
-                          !isGpsReliable && styles.gpsChipTextWeak,
-                        ]}
-                      >
-                        GPS ±{Math.round(locationAccuracy)}m
-                      </Text>
-                    </View>
-                  )}
-                </View>
 
-                {isInsideZone && activeZone ? (
-                  <Text style={styles.statusMessage}>
-                    {"You are in "}
-                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                    {". "}
-                    <Text style={styles.statusGreen}>QR unlocked.</Text>
-                  </Text>
-                ) : activeZone && !isGpsReliable ? (
-                  <Text style={styles.statusMessage}>
-                    {"Inside "}
-                    <Text style={styles.statusStrong}>{activeZone.name}</Text>
-                    {" but "}
-                    <Text style={styles.statusAmber}>
-                      GPS needs a cleaner fix.
-                    </Text>
-                    {" Move to open space."}
-                  </Text>
-                ) : nearestZoneInfo ? (
-                  <Text style={styles.statusMessage}>
-                    {"Nearest: "}
-                    <Text style={styles.statusStrong}>
-                      {nearestZoneInfo.name}
-                    </Text>
-                    {" — "}
-                    <Text style={styles.statusGreen}>
-                      {getZoneDistanceLabel(nearestZoneInfo)}
-                    </Text>
-                    {nearestZoneHeading ? `. Head ${nearestZoneHeading}.` : "."}
-                  </Text>
-                ) : (
-                  <Text style={styles.statusMessage}>
-                    Finding nearby activation zones...
-                  </Text>
-                )}
-              </View>
 
               <View style={styles.actionCol}>
                 <TouchableOpacity
@@ -912,19 +914,15 @@ const styles = StyleSheet.create({
   },
 
   topOverlay: {
-    position: "absolute",
-    top: 16,
-    left: 14,
-    right: 14,
-    backgroundColor: "rgba(255,255,255,0.98)",
+    backgroundColor: "#fff",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
-    elevation: 8,
+    marginHorizontal: 14,
+    marginTop: 7,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
   },
   statusRow: {
     flexDirection: "row",
