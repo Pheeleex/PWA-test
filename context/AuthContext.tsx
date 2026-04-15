@@ -20,7 +20,7 @@ interface User {
   last_name: string;
   phone: string;
   user_role: string;
-  avatar: string;
+  avatar: string | null;
   active: boolean;
   email_verified: boolean;
   is_approved: boolean;
@@ -55,6 +55,7 @@ interface AuthContextType {
     profileData: Partial<User>,
     imageUri?: string | null,
   ) => Promise<void>;
+  deleteProfilePicture: () => Promise<void>;
   resetPassword: (promoter_id: string) => Promise<void>;
   fetchApiKey: () => Promise<string | null>;
   pushEnabled: boolean;
@@ -349,20 +350,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     console.log("[DEBUG] updateProfile started", { profileData, hasImage: !!imageUri });
 
     try {
-      if (!apiKey || !token || !user?.user_id) {
-        console.warn("[AUTH] Profile update attempted with incomplete session data. Attempting recovery...");
-        // Instead of immediate logout, we just block the update and try to refresh
-        if (token) {
-          await refreshUser();
-          // If it still fails, then we can consider logout, but let's be safe for now
-          if (!apiKey || !user?.user_id) {
-            console.error("[AUTH] Session data still missing after recovery attempt.");
-            return;
-          }
-        } else {
-          await logout("UpdateProfile - Missing Token");
-          throw new Error("Session expired. Please log in again.");
-        }
+      if (!token || !user?.user_id) {
+        console.error("[AUTH] Profile update attempted without token or user_id");
+        await logout("UpdateProfile - Missing Critical Session Data");
+        throw new Error("Session expired. Please log in again.");
+      }
+
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        console.log("[AUTH] API key missing in updateProfile, attempting to fetch...");
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error("Unable to authorize request. Please try again.");
       }
 
       const isRemovingImage = imageUri === "delete";
@@ -375,7 +376,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       };
 
       const fields: any = {
-        token: apiKey,
+        token: currentApiKey,
         jwt: token,
         user_id: user.user_id,
         ...profileData,
@@ -442,6 +443,82 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     } catch (error: any) {
       console.error("[API Error] Update Profile Catch:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteProfilePicture = async () => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection.");
+    }
+    setIsLoading(true);
+
+    try {
+      if (!token || !user?.user_id) {
+        console.error("[AUTH] Delete profile picture attempted without token or user_id");
+        await logout("DeleteProfilePicture - Missing Critical Session Data");
+        throw new Error("Session expired. Please log in again.");
+      }
+
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        console.log("[AUTH] API key missing in deleteProfilePicture, attempting to fetch...");
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error("Unable to authorize request. Please try again.");
+      }
+
+      const payload = {
+        token: currentApiKey,
+        jwt: token,
+      };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_PROFILE_PICTURE}`;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      console.log("[API POST] Delete Profile Picture Request:", {
+        url,
+        token: currentApiKey ? `${currentApiKey.substring(0, 10)}...` : "MISSING",
+      });
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      console.log("[API Response] Delete Profile Picture:", {
+        status: response.status,
+        data,
+      });
+
+      if (response.status === 401) {
+        console.error("[API Error] Unauthorized in deleteProfilePicture");
+        await logout("DeleteProfilePicture - 401 Unauthorized");
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
+      if (response.status === 200) {
+        // Update user avatar to null
+        const updatedUser = {
+          ...user,
+          avatar: null,
+        };
+        setUser(updatedUser);
+        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+      } else {
+        throw new Error(data.message || "Failed to delete profile picture");
+      }
+    } catch (error: any) {
+      console.error("[API Error] Delete Profile Picture Catch:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -699,6 +776,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updateUser,
         updatePassword,
         updateProfile,
+        deleteProfilePicture,
         resetPassword,
         fetchApiKey,
         pushEnabled,

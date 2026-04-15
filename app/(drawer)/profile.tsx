@@ -10,7 +10,7 @@ import { useAuth } from '@/context';
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, deleteProfilePicture } = useAuth();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
 
@@ -19,6 +19,7 @@ export default function ProfileScreen() {
     const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
+    const [deletingImage, setDeletingImage] = useState(false);
     useEffect(() => {
         if (user) {
             setFullname(user.fullname);
@@ -173,12 +174,32 @@ export default function ProfileScreen() {
                                     onPress={() => {
                                         Alert.alert('Delete Photo', 'Are you sure you want to remove your profile picture?', [
                                             { text: 'Cancel', style: 'cancel' },
-                                            { text: 'Delete', style: 'destructive', onPress: () => setPendingImage('delete') }
+                                            {
+                                                text: 'Delete',
+                                                style: 'destructive',
+                                                onPress: async () => {
+                                                    setDeletingImage(true);
+                                                    try {
+                                                        await deleteProfilePicture();
+                                                        setImage(null);
+                                                        Alert.alert('Success', 'Profile picture removed successfully.');
+                                                    } catch (error: any) {
+                                                        Alert.alert('Error', error.message || 'Failed to delete profile picture.');
+                                                    } finally {
+                                                        setDeletingImage(false);
+                                                    }
+                                                }
+                                            }
                                         ]);
                                     }}
                                     style={[styles.actionButton, styles.deleteButton]}
+                                    disabled={deletingImage}
                                 >
-                                    <Ionicons name="trash" size={18} color="#fff" />
+                                    {deletingImage ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <Ionicons name="trash" size={18} color="#fff" />
+                                    )}
                                 </TouchableOpacity>
                             )}
                         </View>
