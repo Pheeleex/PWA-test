@@ -626,6 +626,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     const remoteUser = data.user[0];
+    console.log(remoteUser, "remoteUser");
     const isActuallyLocked =
       remoteUser.resetKey?.toLowerCase() === "yes" ||
       remoteUser.reset_key?.toLowerCase() === "yes";
@@ -718,15 +719,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
         return;
       }
-      console.log(response);
-      if (!response.ok) {
-        console.warn(
-          `[AUTH] Background refresh failed with status: ${response.status}`,
-        );
-        return;
-      }
 
       const data = await response.json();
+      console.log("[AUTH] User data refresh response:", {
+        status: response.status,
+        data,
+      });
       await applyRefreshedUser(data);
     } catch (error) {
       console.error("[AUTH] Failed to refresh user info:", error);
