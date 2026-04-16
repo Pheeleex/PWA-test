@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -25,9 +26,10 @@ import { useAuth } from "@/context";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, updateProfile, deleteProfilePicture } = useAuth();
+  const { user, updateProfile, deleteProfilePicture, refreshUser } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
+  const [refreshing, setRefreshing] = useState(false);
 
   const [fullname, setFullname] = useState(user?.fullname || "");
   const [image, setImage] = useState<string | null>(user?.avatar || null);
@@ -44,6 +46,29 @@ export default function ProfileScreen() {
 
   const hasChanges =
     fullname !== (user?.fullname || "") || pendingImage !== null;
+
+  const onRefresh = async () => {
+    if (hasChanges) {
+      Alert.alert(
+        "Unsaved Changes",
+        "Please save or discard your changes before refreshing your profile.",
+      );
+      return;
+    }
+
+    setRefreshing(true);
+    try {
+      await refreshUser();
+    } catch (error: any) {
+      console.error("Error refreshing profile:", error);
+      Alert.alert(
+        "Refresh Failed",
+        error?.message || "Unable to refresh profile. Please try again.",
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const onBackPress = () => {
@@ -174,6 +199,17 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.icon}
+            colors={["#00B1EB"]}
+            progressBackgroundColor={
+              colorScheme === "dark" ? "#2C2C2E" : "#fff"
+            }
+          />
+        }
       >
         <View style={styles.headerSection}>
           <View style={styles.imageContainer}>

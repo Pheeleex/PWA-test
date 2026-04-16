@@ -54,6 +54,7 @@ interface AuthContextType {
     profileData: Partial<User>,
     imageUri?: string | null,
   ) => Promise<void>;
+  refreshUser: () => Promise<void>;
   deleteProfilePicture: () => Promise<void>;
   resetPassword: (promoter_id: string) => Promise<void>;
   fetchApiKey: () => Promise<string | null>;
@@ -818,6 +819,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updateUser,
         updatePassword,
         updateProfile,
+        refreshUser,
         deleteProfilePicture,
         resetPassword,
         fetchApiKey,
