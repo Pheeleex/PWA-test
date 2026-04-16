@@ -20,14 +20,13 @@ interface User {
   last_name: string;
   phone: string;
   user_role: string;
-  avatar: string;
+  avatar: string | null;
   active: boolean;
   email_verified: boolean;
   is_approved: boolean;
   area?: string;
   resetKey?: string;
   fcm_token?: string;
-  promo_code?: string;
   promo_URL?: string;
 }
 
@@ -55,6 +54,8 @@ interface AuthContextType {
     profileData: Partial<User>,
     imageUri?: string | null,
   ) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  deleteProfilePicture: () => Promise<void>;
   resetPassword: (promoter_id: string) => Promise<void>;
   fetchApiKey: () => Promise<string | null>;
   pushEnabled: boolean;
@@ -83,30 +84,68 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   // Initial load from storage
   useEffect(() => {
     const initialize = async () => {
+      console.log("[AUTH] Initializing session...");
       try {
-        const [storedToken, storedApiKey, onboardingStatus, storedUser, pushStatus] =
-          await Promise.all([
-            AsyncStorage.getItem("jwt_token"),
-            AsyncStorage.getItem("api_key"),
-            AsyncStorage.getItem("onboarding_complete"),
-            AsyncStorage.getItem("user_data"),
-            AsyncStorage.getItem("push_notifications_enabled"),
-          ]);
+        const [
+          storedToken,
+          storedApiKey,
+          onboardingStatus,
+          storedUser,
+          pushStatus,
+        ] = await Promise.all([
+          AsyncStorage.getItem("jwt_token"),
+          AsyncStorage.getItem("api_key"),
+          AsyncStorage.getItem("onboarding_complete"),
+          AsyncStorage.getItem("user_data"),
+          AsyncStorage.getItem("push_notifications_enabled"),
+        ]);
 
+        // 1. Prepare all state updates
+        let userObj: User | null = null;
+        if (storedUser) {
+          try {
+            userObj = JSON.parse(storedUser);
+          } catch (e) {
+            console.error("[AUTH] Error parsing stored user data:", e);
+          }
+        }
+
+        // 2. Batch updates
         if (storedToken) setToken(storedToken);
         if (storedApiKey) setApiKey(storedApiKey);
         if (onboardingStatus === "true") setIsOnboardingComplete(true);
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (userObj) setUser(userObj);
 
-        // Derive pushEnabled from BOTH the OS permission AND the stored preference.
-        // If the OS has notifications disabled, the toggle must show as off
-        // regardless of what we have saved in AsyncStorage.
-        const { status: osStatus } = await Notifications.getPermissionsAsync();
-        const osGranted = osStatus === "granted";
-        const userWantsEnabled = pushStatus !== "false"; // default true when never set
-        setPushEnabled(osGranted && userWantsEnabled);
+        // 3. Handle Notifications status status
+        try {
+          const { status: osStatus } =
+            await Notifications.getPermissionsAsync();
+          const osGranted = osStatus === "granted";
+          const userWantsEnabled = pushStatus !== "false";
+          setPushEnabled(osGranted && userWantsEnabled);
+        } catch (e) {
+          console.warn(
+            "[AUTH] Error checking push permissions during init:",
+            e,
+          );
+        }
+
+        console.log(
+          "[AUTH] Session restoration complete. Authenticated:",
+          !!storedToken,
+        );
+
+        // If we have a token but missing user/apiKey, attempt one silent refresh
+        if (storedToken && (!userObj || !storedApiKey)) {
+          console.warn(
+            "[AUTH] Partial session found, triggering silent refresh.",
+          );
+          refreshUser().catch((err) =>
+            console.error("[AUTH] Silent refresh failed:", err),
+          );
+        }
       } catch (error) {
-        console.error("Initialization Error:", error);
+        console.error("[AUTH] Initialization error:", error);
       } finally {
         setIsInitialized(true);
       }
@@ -114,8 +153,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     initialize();
   }, []);
-
-
 
   const fetchApiKey = async (): Promise<string | null> => {
     if (isConnected === false || isInternetReachable === false) return null;
@@ -152,7 +189,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     password: string;
   }) => {
     if (isConnected === false || isInternetReachable === false) {
-      throw new Error("No internet connection. Please check your network settings.");
+      throw new Error(
+        "No internet connection. Please check your network settings.",
+      );
     }
     setIsLoading(true);
     try {
@@ -209,15 +248,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           email_verified: !!data.email_verified,
           is_approved: !!data.is_approved,
           resetKey: data.resetKey || data.reset_key || "No",
-          promo_code: data.promo_code,
           promo_URL: data.promo_URL,
         };
 
         // Block login if account is inactive or not approved
         if (userData.active === false) {
-          throw new Error("Your account has been deactivated. Please contact support.");
+          throw new Error(
+            "Your account has been deactivated. Please contact support.",
+          );
         }
-
 
         setUser(userData);
 
@@ -255,6 +294,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       AsyncStorage.removeItem("jwt_token"),
       AsyncStorage.removeItem("user_data"),
       AsyncStorage.removeItem("api_key"),
+      AsyncStorage.removeItem("push_notifications_enabled"),
     ]);
     console.log("[AUTH] Session cleared from memory and storage.");
   };
@@ -302,7 +342,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       if (user) {
-        const updatedUser = { ...user, resetKey: 'No' };
+        const updatedUser = { ...user, resetKey: "No" };
         setUser(updatedUser);
         await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
       }
@@ -322,13 +362,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       throw new Error("No internet connection.");
     }
     setIsLoading(true);
-    console.log("[DEBUG] updateProfile started", { profileData, hasImage: !!imageUri });
+    console.log("[DEBUG] updateProfile started", {
+      profileData,
+      hasImage: !!imageUri,
+    });
 
     try {
-      if (!apiKey || !token || !user?.user_id) {
-        console.error("[DEBUG] Missing session data", { apiKey: !!apiKey, token: !!token, userId: user?.user_id });
-        logout()
-        throw new Error("Session data missing. Please log in again.");
+      if (!token || !user?.user_id) {
+        console.error(
+          "[AUTH] Profile update attempted without token or user_id",
+        );
+        await logout("UpdateProfile - Missing Critical Session Data");
+        throw new Error("Session expired. Please log in again.");
+      }
+
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        console.log(
+          "[AUTH] API key missing in updateProfile, attempting to fetch...",
+        );
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error("Unable to authorize request. Please try again.");
       }
 
       const isRemovingImage = imageUri === "delete";
@@ -341,7 +398,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       };
 
       const fields: any = {
-        token: apiKey,
+        token: currentApiKey,
         jwt: token,
         user_id: user.user_id,
         ...profileData,
@@ -353,7 +410,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         fields.last_name = parts.slice(1).join(" ") || parts[0];
       }
 
-      if (hasNewImage) {
+      if (hasNewImage || isRemovingImage) {
         const formData = new FormData();
         Object.keys(fields).forEach((key) => {
           formData.append(key, String(fields[key]));
@@ -367,6 +424,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             name: `avatar.${fileType}`,
             type: `image/${fileType}`,
           } as any);
+        } else if (isRemovingImage) {
+          // Explicitly tell the backend to remove the avatar
+          formData.append("remove_avatar", "1");
         }
 
         console.log("[API POST] Update Profile (FormData):", formData);
@@ -390,7 +450,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (response.status === 401) {
         console.error("[API Error] Unauthorized in updateProfile");
-        await logout();
+        await logout("UpdateProfile - 401 Unauthorized");
         throw new Error("Your session has expired. Please log in again.");
       }
 
@@ -405,6 +465,88 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     } catch (error: any) {
       console.error("[API Error] Update Profile Catch:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteProfilePicture = async () => {
+    if (isConnected === false || isInternetReachable === false) {
+      throw new Error("No internet connection.");
+    }
+    setIsLoading(true);
+
+    try {
+      if (!token || !user?.user_id) {
+        console.error(
+          "[AUTH] Delete profile picture attempted without token or user_id",
+        );
+        await logout("DeleteProfilePicture - Missing Critical Session Data");
+        throw new Error("Session expired. Please log in again.");
+      }
+
+      let currentApiKey = apiKey;
+      if (!currentApiKey) {
+        console.log(
+          "[AUTH] API key missing in deleteProfilePicture, attempting to fetch...",
+        );
+        currentApiKey = await fetchApiKey();
+      }
+
+      if (!currentApiKey) {
+        throw new Error("Unable to authorize request. Please try again.");
+      }
+
+      const payload = {
+        token: currentApiKey,
+        jwt: token,
+      };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_PROFILE_PICTURE}`;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      console.log("[API POST] Delete Profile Picture Request:", {
+        url,
+        token: currentApiKey
+          ? `${currentApiKey.substring(0, 10)}...`
+          : "MISSING",
+      });
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      console.log("[API Response] Delete Profile Picture:", {
+        status: response.status,
+        data,
+      });
+
+      if (response.status === 401) {
+        console.error("[API Error] Unauthorized in deleteProfilePicture");
+        await logout("DeleteProfilePicture - 401 Unauthorized");
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
+      if (response.status === 200) {
+        // Update user avatar to null
+        const updatedUser = {
+          ...user,
+          avatar: null,
+        };
+        setUser(updatedUser);
+        await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
+      } else {
+        throw new Error(data.message || "Failed to delete profile picture");
+      }
+    } catch (error: any) {
+      console.error("[API Error] Delete Profile Picture Catch:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -477,20 +619,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   /** Apply user data from a successful refresh response */
   const applyRefreshedUser = async (data: any) => {
-    if (!data?.user) return;
+    if (!data.user || !Array.isArray(data.user) || data.user.length === 0) {
+      console.warn("[AUTH] No user data found in response array.");
+      return;
+    }
+
+    const remoteUser = data.user[0];
+    console.log(remoteUser, "remoteUser");
     const isActuallyLocked =
-      data.user.resetKey?.toLowerCase() === 'yes' ||
-      data.user.reset_key?.toLowerCase() === 'yes';
+      remoteUser.resetKey?.toLowerCase() === "yes" ||
+      remoteUser.reset_key?.toLowerCase() === "yes";
+
     const updatedUser: User = {
       ...user,
-      ...data.user,
+      ...remoteUser,
       resetKey: isActuallyLocked
         ? "Yes"
-        : (data.user.resetKey || data.user.reset_key || "No"),
+        : remoteUser.resetKey || remoteUser.reset_key || "No",
     } as User;
+
     setUser(updatedUser);
     await AsyncStorage.setItem("user_data", JSON.stringify(updatedUser));
-    console.log("[AUTH] User data refreshed. Locked:", isActuallyLocked);
+    console.log(
+      "[AUTH] User data refreshed from array. Locked:",
+      isActuallyLocked,
+    );
+
     if (isActuallyLocked) {
       console.warn("[AUTH] resetKey is Yes — user will be restricted.");
     }
@@ -507,56 +661,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const currentUserId = explicitUserId || user?.user_id;
 
     if (!currentToken || !currentApiKey || !currentUserId) return;
-
     try {
-      console.log("[AUTH] Refreshing user data...");
+      console.log("[AUTH] Refreshing user data with payload...");
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}?token=${currentApiKey}&user_id=${currentUserId}`,
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}`,
         {
-          headers: { Authorization: `Bearer ${currentToken}` },
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: currentApiKey,
+            promoter_id: user?.promoter_id,
+          }),
         },
       );
-
       if (response.status === 401) {
-        // --- RETRY WITH A FRESH API KEY BEFORE LOGGING OUT ---
-        // The apiKey (not the JWT) may have rotated on the server.
-        // Re-fetching it costs one cheap unauthenticated request and
-        // avoids destroying a valid session unnecessarily.
-        console.warn("[AUTH] 401 on refresh — attempting API key refresh...");
-        const newApiKey = await fetchApiKey();
-        if (!newApiKey) {
-          console.warn("[AUTH] API key refresh failed — logging out.");
-          await logout("Background Refresh 401 - key refresh failed");
-          return;
-        }
-        currentApiKey = newApiKey;
-
-        // Retry with the fresh API key
-        const retryResponse = await fetch(
-          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}?token=${currentApiKey}&user_id=${currentUserId}`,
-          {
-            headers: { Authorization: `Bearer ${currentToken}` },
-          },
+        console.warn(
+          "[AUTH] Refresh user received 401. Checking network before logout...",
         );
-
-        if (retryResponse.status === 401) {
-          // JWT itself is expired — now we must logout
-          console.warn("[AUTH] Still 401 after API key refresh — JWT expired, logging out.");
-          await logout("Background Refresh 401 - JWT expired");
-          return;
-        }
-
-        if (retryResponse.ok) {
-          const retryData = await retryResponse.json();
-          await applyRefreshedUser(retryData);
+        if (isConnected && isInternetReachable) {
+          const newApiKey = await fetchApiKey();
+          if (newApiKey) {
+            // Retry once
+            const retryResponse = await fetch(
+              `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${currentToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  token: currentApiKey,
+                  promoter_id: user?.promoter_id,
+                }),
+              },
+            );
+            if (retryResponse.status === 401) {
+              console.error(
+                "[AUTH] Persistent 401 after key refresh. Logout required.",
+              );
+              await logout("RefreshUser - Persistent 401");
+            } else if (retryResponse.ok) {
+              const retryData = await retryResponse.json();
+              await applyRefreshedUser(retryData);
+            }
+          } else {
+            console.warn(
+              "[AUTH] API Key refresh failed during 401 recovery. Keeping session for now.",
+            );
+          }
+        } else {
+          console.log("[AUTH] 401 received while offline. Preserving session.");
         }
         return;
       }
 
       const data = await response.json();
-      if (response.status === 200) {
-        await applyRefreshedUser(data);
-      }
+      console.log("[AUTH] User data refresh response:", {
+        status: response.status,
+        data,
+      });
+      await applyRefreshedUser(data);
     } catch (error) {
       console.error("[AUTH] Failed to refresh user info:", error);
     }
@@ -577,7 +745,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const stored = await AsyncStorage.getItem("push_notifications_enabled");
         setPushEnabled(stored !== "false"); // true when null (default) or explicitly "true"
       }
-    } catch { /* non-critical — ignore */ }
+    } catch {
+      /* non-critical — ignore */
+    }
   };
 
   useEffect(() => {
@@ -618,6 +788,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
         // Permission denied — send user to Settings and leave the toggle as-is
+        console.log("[AUTH] Notification permission denied on iOS.");
+        // Only set false if it was true, otherwise it resets the UI state incorrectly
+        setPushEnabled(false);
         Linking.openSettings();
         return;
       }
@@ -646,6 +819,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updateUser,
         updatePassword,
         updateProfile,
+        refreshUser,
+        deleteProfilePicture,
         resetPassword,
         fetchApiKey,
         pushEnabled,

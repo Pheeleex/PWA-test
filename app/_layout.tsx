@@ -61,12 +61,15 @@ function RootLayoutNav() {
       }
     }
 
-    if (isOnboardingComplete && rootSegment === "onboarding") {
-      router.replace("/login");
-    } else if (isAuthenticated && !isPublic) {
-      if (rootSegment === "login") {
+    if (isOnboardingComplete && (rootSegment === "onboarding" || !rootSegment)) {
+      if (isAuthenticated) {
         router.replace("/(drawer)/map");
+      } else {
+        router.replace("/login");
       }
+    } else if (isAuthenticated && isPublic) {
+      // If already logged in, don't allow staying on public screens
+      router.replace("/(drawer)/map");
     } else if (!isAuthenticated && !isPublic) {
       router.replace("/login");
     }
