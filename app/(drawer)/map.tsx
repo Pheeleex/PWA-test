@@ -231,7 +231,16 @@ export default function MapScreen() {
 
       const getUserLocation = async () => {
         try {
-          const { status } = await Location.requestForegroundPermissionsAsync();
+          // Inform user about location requirements
+          Alert.alert(
+            "Location Permission Required",
+            Platform.OS === "ios"
+              ? "This app needs 'Always Allow' location access to track your position and send notifications when you enter activation zones. Please select 'Always Allow' when prompted."
+              : "This app needs location access to track your position and send notifications when you enter activation zones. Please grant location permissions when prompted.",
+            [{ text: "OK", onPress: () => {} }],
+          );
+
+          const { status } = await Location.requestBackgroundPermissionsAsync();
 
           if (status !== "granted") {
             setPermissionDenied(true);
@@ -315,18 +324,26 @@ export default function MapScreen() {
 
       const setupGeofencing = async () => {
         try {
-          const { status: foregroundStatus } =
-            await Location.requestForegroundPermissionsAsync();
-          if (foregroundStatus !== "granted") {
-            console.warn("[Geofencing] Foreground location permission denied");
-            return;
-          }
-
-          // On iOS we need background permission for geofencing specifically
+          // Check if background location permission is granted (already requested in location tracking)
           const { status: backgroundStatus } =
-            await Location.requestBackgroundPermissionsAsync();
+            await Location.getBackgroundPermissionsAsync();
           if (backgroundStatus !== "granted") {
-            console.warn("[Geofencing] Background location permission denied");
+            console.warn(
+              "[Geofencing] Background location permission not granted",
+            );
+            Alert.alert(
+              "Location Permission Required",
+              Platform.OS === "ios"
+                ? "To receive notifications when entering activation zones, please enable 'Always Allow' location permission in Settings > Privacy & Security > Location Services > Promolocation."
+                : "To receive notifications when entering activation zones, please enable location permissions in Settings > Apps > Promolocation > Permissions.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Open Settings",
+                  onPress: () => Linking.openSettings(),
+                },
+              ],
+            );
             return;
           }
 
@@ -405,7 +422,7 @@ export default function MapScreen() {
         if (
           distance === nearestDistance &&
           (zone.centerDistance ?? Infinity) <
-          (nearest.centerDistance ?? Infinity)
+            (nearest.centerDistance ?? Infinity)
         ) {
           return zone;
         }
@@ -820,8 +837,6 @@ export default function MapScreen() {
                   })}
                 </View>
               </View>
-
-
 
               <View style={styles.actionCol}>
                 <TouchableOpacity
