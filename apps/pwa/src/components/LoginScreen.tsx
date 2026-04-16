@@ -3,6 +3,71 @@ import type { LoginCredentials } from "@promolocation/shared";
 import type { PwaInstallState } from "../hooks/usePwaInstall";
 import PwaInstallCard from "./PwaInstallCard";
 
+function EyeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="password-toggle-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M2.25 12C3.93 8.6 7.55 6.25 12 6.25C16.45 6.25 20.07 8.6 21.75 12C20.07 15.4 16.45 17.75 12 17.75C7.55 17.75 3.93 15.4 2.25 12Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="2.75"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="password-toggle-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M3 3L21 21"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M10.58 6.41C11.03 6.31 11.5 6.25 12 6.25C16.45 6.25 20.07 8.6 21.75 12C21.04 13.43 19.99 14.66 18.7 15.57"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M14.83 14.83C14.11 15.55 13.1 16 12 16C9.79 16 8 14.21 8 12C8 10.9 8.45 9.89 9.17 9.17"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6.1 6.11C4.56 7.08 3.26 8.41 2.25 12C3.93 15.4 7.55 17.75 12 17.75C13.38 17.75 14.69 17.52 15.89 17.09"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 type LoginScreenProps = {
   error: string | null;
   isLoading: boolean;
@@ -46,53 +111,53 @@ export default function LoginScreen({
   const activeError = localError || error;
 
   return (
-    <main className="auth-screen">
-      <section className="auth-card">
-        <div className="auth-header">
-          <p className="eyebrow">Promolocation</p>
+    <main className="auth-screen auth-screen-mobile">
+      <section className="auth-mobile-shell">
+        <div className="auth-mobile-header">
           <h1>Welcome Back</h1>
-          <p className="auth-subtitle">Login to access your dashboard.</p>
+          <p>Login to access your dashboard.</p>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="field">
+        <form className="auth-mobile-form" onSubmit={handleSubmit}>
+          <label className="mobile-field">
             <span>Promoter ID</span>
             <input
               autoCapitalize="none"
               autoComplete="username"
-              className="input"
+              className="mobile-input auth-mobile-input"
               onChange={(event) => setPromoterId(event.target.value)}
-              placeholder="Enter your promoter ID"
+              placeholder="Enter your Promoter ID"
               value={promoterId}
             />
           </label>
 
-          <label className="field">
+          <label className="mobile-field">
             <span>Password</span>
-            <div className="password-row">
+            <div className="password-field-row auth-mobile-password-row">
               <input
                 autoComplete="current-password"
-                className="input"
+                className="mobile-input password-input-web auth-mobile-input"
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
                 type={showPassword ? "text" : "password"}
                 value={password}
               />
               <button
-                className="ghost-button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="password-toggle-button auth-mobile-toggle"
                 onClick={() => setShowPassword((current) => !current)}
                 type="button"
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
           </label>
 
-          {activeError ? <p className="form-error">{activeError}</p> : null}
+          {activeError ? <p className="form-error auth-mobile-error">{activeError}</p> : null}
 
-          <div className="auth-options-row">
+          <div className="auth-mobile-options-row">
             <button
-              className="text-link-button"
+              className="auth-mobile-forgot"
               onClick={onForgotPassword}
               type="button"
             >
@@ -100,17 +165,18 @@ export default function LoginScreen({
             </button>
           </div>
 
-          <button className="primary-button" disabled={isLoading} type="submit">
-            {isLoading ? "Signing in..." : "Login"}
+          <button
+            className="fixed-width-primary auth-mobile-login-button"
+            disabled={isLoading}
+            type="submit"
+          >
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="auth-footer-note">
-          <span className="status-dot status-green" />
-          <p>After login, the browser app follows the mobile map, settings, and QR flow.</p>
+        <div className="auth-mobile-install">
+          <PwaInstallCard install={install} />
         </div>
-
-        <PwaInstallCard install={install} />
       </section>
     </main>
   );

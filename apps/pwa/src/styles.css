@@ -114,9 +114,37 @@ textarea {
   padding: 1rem;
 }
 
+.auth-screen-mobile {
+  padding: 1.5rem;
+}
+
 .auth-card {
   width: min(100%, 440px);
   padding: 1.5rem;
+}
+
+.auth-mobile-shell {
+  width: min(100%, 420px);
+}
+
+.auth-mobile-header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.auth-mobile-header h1 {
+  margin: 0 0 0.5rem;
+  color: #0e2b63;
+  font-size: clamp(2rem, 5vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.auth-mobile-header p {
+  margin: 0;
+  color: #0e2b63;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .inline-note {
@@ -219,6 +247,11 @@ textarea {
   display: grid;
   gap: 1rem;
   margin-top: 1.25rem;
+}
+
+.auth-mobile-form {
+  display: grid;
+  gap: 1rem;
 }
 
 .auth-options-row {
@@ -337,6 +370,10 @@ textarea {
   margin: 0;
   color: #b91c1c;
   font-weight: 600;
+}
+
+.auth-mobile-error {
+  text-align: center;
 }
 
 .map-screen {
@@ -1300,10 +1337,89 @@ textarea {
   border: 0;
   background: transparent;
   color: #64748b;
-  font-size: 0.88rem;
-  font-weight: 700;
-  min-width: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
   cursor: pointer;
+}
+
+.password-toggle-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.auth-mobile-form .mobile-field span {
+  color: #0e2b63;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.auth-mobile-input,
+.auth-mobile-password-row {
+  border-color: #e0e0e0;
+  background: #ffffff;
+}
+
+.auth-mobile-input:focus {
+  outline: none;
+  border-color: #00b1eb;
+  box-shadow: 0 0 0 1px #00b1eb;
+}
+
+.auth-mobile-password-row {
+  min-height: 50px;
+  padding-left: 0;
+}
+
+.auth-mobile-password-row:focus-within {
+  border-color: #00b1eb;
+  box-shadow: 0 0 0 1px #00b1eb;
+}
+
+.auth-mobile-password-row .auth-mobile-input {
+  flex: 1;
+  min-height: 48px;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.auth-mobile-password-row .auth-mobile-input:focus {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.auth-mobile-toggle {
+  padding: 0 0.65rem;
+}
+
+.auth-mobile-options-row {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-mobile-forgot {
+  border: 0;
+  background: transparent;
+  color: #00b1eb;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0;
+  cursor: pointer;
+}
+
+.auth-mobile-login-button {
+  margin-top: 0.25rem;
+}
+
+.auth-mobile-install {
+  margin-top: 1.5rem;
 }
 
 .fixed-width-primary {
