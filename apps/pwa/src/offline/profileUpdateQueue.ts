@@ -16,6 +16,7 @@ export type QueuedProfileUpdate = {
   lastError: string | null;
   profile: ProfileUpdatePayload;
   promoterId: string;
+  removeAvatar: boolean;
   updatedAt: string;
   userId: number;
 };
@@ -185,14 +186,16 @@ export async function flushQueuedProfileUpdate(
 
   try {
     const updatedUser = await updatePromoterProfile(
-      {
-        accessToken: session.accessToken,
-        apiKey: session.apiKey,
-        userId: session.user.user_id,
-      },
-      queuedUpdate.profile,
-      queuedUpdate.avatarFile,
-    );
+        {
+          accessToken: session.accessToken,
+          apiKey: session.apiKey,
+          promoterId: session.user.promoter_id,
+          userId: session.user.user_id,
+        },
+        queuedUpdate.profile,
+        queuedUpdate.avatarFile,
+        queuedUpdate.removeAvatar,
+      );
 
     await removeQueuedProfileUpdate(session.user.user_id);
     options.onSuccess?.(queuedUpdate, updatedUser);

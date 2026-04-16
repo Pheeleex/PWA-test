@@ -2,6 +2,8 @@ export { API_CONFIG } from "./api-config";
 export type { ApiConfig } from "./api-config";
 export type { ApiLocation, Incident } from "./api-types";
 export {
+  deletePromoterProfilePicture,
+  refreshPromoterUser,
   resetPromoterPassword,
   updatePromoterPassword,
   updatePromoterProfile,

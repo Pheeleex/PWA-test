@@ -10,14 +10,13 @@ export interface AuthenticatedUser {
   last_name: string;
   phone: string;
   user_role: string;
-  avatar: string;
+  avatar: string | null;
   active: boolean;
   email_verified: boolean;
   is_approved: boolean;
   area?: string;
   resetKey?: string;
   fcm_token?: string;
-  promo_code?: string;
   promo_URL?: string;
 }
 
@@ -117,14 +116,13 @@ export async function loginPromoter(
       last_name: String(data.last_name ?? ""),
       phone: String(data.phone ?? ""),
       user_role: String(data.user_role ?? ""),
-      avatar: String(data.avatar ?? ""),
+      avatar: data.avatar ? String(data.avatar) : null,
       active: Boolean(data.active),
       email_verified: Boolean(data.email_verified),
       is_approved: Boolean(data.is_approved),
       area: data.area ? String(data.area) : undefined,
       resetKey: String(data.resetKey ?? data.reset_key ?? "No"),
       fcm_token: data.fcm_token ? String(data.fcm_token) : undefined,
-      promo_code: data.promo_code ? String(data.promo_code) : undefined,
       promo_URL:
         data.promo_URL
           ? String(data.promo_URL)

@@ -36,6 +36,7 @@ export const API_CONFIG = {
     LOGIN: "login",
     UPDATE_PASSWORD: "update_password",
     UPDATE_PROFILE: "update_profile",
+    DELETE_PROFILE_PICTURE: "delete_profile_picture",
     CREATE_INCIDENT: "create_incident",
     GET_INCIDENTS: "get_incidents",
     GET_ACTIVE_LOCATIONS: "activate_location",

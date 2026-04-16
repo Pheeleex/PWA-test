@@ -640,6 +640,13 @@ textarea {
   cursor: pointer;
 }
 
+.onboarding-skip-button:disabled,
+.onboarding-next-button:disabled,
+.onboarding-start-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .onboarding-slide {
   display: grid;
   place-items: center;
@@ -1198,6 +1205,10 @@ textarea {
   align-items: center;
 }
 
+.header-side-right {
+  justify-content: flex-end;
+}
+
 .pwa-screen-header-title {
   text-align: center;
   color: #0e2b63;
@@ -1219,6 +1230,23 @@ textarea {
   font-size: 1.35rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+.profile-header-refresh {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #0e2b63;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-header-refresh:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .mobile-form-content,
@@ -1453,6 +1481,15 @@ textarea {
   position: relative;
 }
 
+.profile-avatar-actions {
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .profile-avatar-button {
   width: 120px;
   height: 120px;
@@ -1487,23 +1524,54 @@ textarea {
 }
 
 .profile-camera-badge {
-  position: absolute;
-  right: -0.25rem;
-  bottom: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  height: 42px;
-  padding: 0 0.8rem;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 2px solid #ffffff;
   border-radius: 999px;
   background: #00b1eb;
   color: #ffffff;
-  font-size: 0.76rem;
-  font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(0, 177, 235, 0.28);
+}
+
+.profile-delete-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #ff3b30;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 59, 48, 0.24);
+}
+
+.profile-delete-badge:disabled {
+  cursor: default;
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.profile-avatar-action-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profile-avatar-action-spinner {
+  font-size: 0.72rem;
+  cursor: pointer;
 }
 
 .profile-name-heading {

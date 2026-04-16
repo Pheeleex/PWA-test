@@ -2,12 +2,16 @@ import { useMemo, useState } from "react";
 import onboardingImageOne from "../../../../assets/images/onboarding-1.png";
 import onboardingImageTwo from "../../../../assets/images/onboarding-2.png";
 import onboardingImageThree from "../../../../assets/images/onboarding-3.png";
+import {
+  requestBrowserNotificationPermission,
+  writeNotificationPreference,
+} from "../browserNotifications";
 import type { PwaInstallState } from "../hooks/usePwaInstall";
 import PwaInstallCard from "./PwaInstallCard";
 
 type OnboardingScreenProps = {
   install: PwaInstallState;
-  onComplete: () => void;
+  onComplete: () => Promise<void> | void;
 };
 
 type OnboardingSlide = {
@@ -52,6 +56,7 @@ export default function OnboardingScreen({
   onComplete,
 }: OnboardingScreenProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const activeSlide = useMemo(() => slides[currentIndex], [currentIndex]);
 
@@ -59,6 +64,27 @@ export default function OnboardingScreen({
     setCurrentIndex((currentValue) =>
       Math.min(currentValue + 1, slides.length - 1),
     );
+  };
+
+  const finalizeOnboarding = async () => {
+    if (isCompleting) {
+      return;
+    }
+
+    setIsCompleting(true);
+
+    try {
+      const { enabled } = await requestBrowserNotificationPermission();
+      writeNotificationPreference(enabled);
+    } catch (error) {
+      console.warn("[Onboarding] Notification request failed:", error);
+    }
+
+    try {
+      await onComplete();
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   return (
@@ -69,7 +95,8 @@ export default function OnboardingScreen({
           {currentIndex < slides.length - 1 ? (
             <button
               className="onboarding-skip-button"
-              onClick={onComplete}
+              disabled={isCompleting}
+              onClick={() => void finalizeOnboarding()}
               type="button"
             >
               Skip
@@ -116,6 +143,7 @@ export default function OnboardingScreen({
           {currentIndex < slides.length - 1 ? (
             <button
               className="onboarding-next-button"
+              disabled={isCompleting}
               onClick={goToNextSlide}
               type="button"
             >
@@ -127,10 +155,11 @@ export default function OnboardingScreen({
 
           <button
             className="onboarding-start-button"
-            onClick={onComplete}
+            disabled={isCompleting}
+            onClick={() => void finalizeOnboarding()}
             type="button"
           >
-            Get Started
+            {isCompleting ? "Loading..." : "Get Started"}
           </button>
         </footer>
       </section>

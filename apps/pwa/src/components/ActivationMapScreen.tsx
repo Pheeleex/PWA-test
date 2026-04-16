@@ -261,16 +261,6 @@ export default function ActivationMapScreen({
     return rawUrl.trim();
   }, [session.user.promo_URL]);
 
-  const activePromoCode = useMemo(() => {
-    const rawPromoCode = session.user.promo_code;
-
-    if (typeof rawPromoCode !== "string") {
-      return "";
-    }
-
-    return rawPromoCode.trim();
-  }, [session.user.promo_code]);
-
   const qrState = useMemo(() => {
     if (location.isLoading) {
       return {
@@ -605,7 +595,6 @@ export default function ActivationMapScreen({
       {isQrOpen && activeGreenZone ? (
         <ActivationQrModal
           onClose={() => setIsQrOpen(false)}
-          promoCode={activePromoCode}
           promoImageUrl={activePromoImageUrl}
           zoneName={activeGreenZone.name}
         />

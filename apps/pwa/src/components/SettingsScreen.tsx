@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AuthenticatedUser } from "@promolocation/shared";
 import changePasswordIcon from "../../../../assets/images/changepassword.png";
+import {
+  readNotificationPreference,
+  requestBrowserNotificationPermission,
+  writeNotificationPreference,
+} from "../browserNotifications";
 import type { PwaInstallState } from "../hooks/usePwaInstall";
 import PwaInstallCard from "./PwaInstallCard";
 import PwaScreenHeader from "./PwaScreenHeader";
-
-const NOTIFICATION_PREFERENCE_KEY = "promolocation-pwa-notifications-enabled";
 
 type SettingsScreenProps = {
   install: PwaInstallState;
@@ -16,31 +19,6 @@ type SettingsScreenProps = {
     user: AuthenticatedUser;
   };
 };
-
-function readNotificationPreference() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const storedValue = window.localStorage.getItem(NOTIFICATION_PREFERENCE_KEY);
-
-  if (storedValue === null) {
-    return typeof Notification !== "undefined" && Notification.permission === "granted";
-  }
-
-  return storedValue === "true";
-}
-
-function writeNotificationPreference(enabled: boolean) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(
-    NOTIFICATION_PREFERENCE_KEY,
-    enabled ? "true" : "false",
-  );
-}
 
 export default function SettingsScreen({
   install,
@@ -71,35 +49,10 @@ export default function SettingsScreen({
       return;
     }
 
-    if (typeof Notification === "undefined") {
-      setNotificationMessage("This browser does not support notifications.");
-      setNotificationsEnabled(false);
-      return;
-    }
-
-    if (Notification.permission === "granted") {
-      setNotificationsEnabled(true);
-      setNotificationMessage("Browser notifications are enabled on this device.");
-      return;
-    }
-
-    if (Notification.permission === "denied") {
-      setNotificationsEnabled(false);
-      setNotificationMessage(
-        "Notifications are blocked in this browser. Re-enable them in browser settings first.",
-      );
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    const enabled = permission === "granted";
+    const { enabled, message } = await requestBrowserNotificationPermission();
 
     setNotificationsEnabled(enabled);
-    setNotificationMessage(
-      enabled
-        ? "Browser notifications are enabled on this device."
-        : "Notification permission was not granted.",
-    );
+    setNotificationMessage(message);
   };
 
   return (

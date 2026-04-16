@@ -1,18 +1,15 @@
 type ActivationQrModalProps = {
   onClose: () => void;
-  promoCode?: string;
   promoImageUrl: string;
   zoneName: string;
 };
 
 export default function ActivationQrModal({
   onClose,
-  promoCode,
   promoImageUrl,
   zoneName,
 }: ActivationQrModalProps) {
   const trimmedPromoImageUrl = promoImageUrl.trim();
-  const trimmedPromoCode = promoCode?.trim() ?? "";
   const hasPromoImage = trimmedPromoImageUrl.length > 0;
 
   return (
@@ -54,12 +51,6 @@ export default function ActivationQrModal({
             </div>
           )}
         </div>
-
-        {trimmedPromoCode ? (
-          <p className="qr-promo-code">
-            Promo Code: <strong>{trimmedPromoCode}</strong>
-          </p>
-        ) : null}
 
         <p className="qr-help-text">
           This activation stays available while you remain inside the activation zone

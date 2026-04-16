@@ -11,10 +11,10 @@ export interface SessionCredentials {
 
 export interface ProfileUpdatePayload {
   fullname: string;
-  phone: string;
 }
 
 export interface ProfileSessionCredentials extends SessionCredentials {
+  promoterId: string;
   userId: number;
 }
 
@@ -30,6 +30,31 @@ async function parseJson(response: Response) {
   } catch {
     return null;
   }
+}
+
+function normalizeUserPatch(userPatch: Partial<AuthenticatedUser> | null) {
+  if (!userPatch) {
+    return {};
+  }
+
+  const normalizedPatch: Partial<AuthenticatedUser> = {
+    ...userPatch,
+  };
+
+  if ("avatar" in userPatch) {
+    normalizedPatch.avatar =
+      typeof userPatch.avatar === "string" && userPatch.avatar.trim().length > 0
+        ? userPatch.avatar
+        : null;
+  }
+
+  if ("reset_key" in (userPatch as UnknownRecord) || "resetKey" in userPatch) {
+    const resetValue =
+      (userPatch as UnknownRecord).resetKey ?? (userPatch as UnknownRecord).reset_key;
+    normalizedPatch.resetKey = String(resetValue ?? "No");
+  }
+
+  return normalizedPatch;
 }
 
 export async function updatePromoterPassword(
@@ -106,6 +131,7 @@ export async function updatePromoterProfile(
   session: ProfileSessionCredentials,
   profile: ProfileUpdatePayload,
   avatarFile?: File | null,
+  removeAvatar = false,
 ) {
   const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROFILE}`;
   const headers: Record<string, string> = {
@@ -117,7 +143,6 @@ export async function updatePromoterProfile(
     jwt: session.accessToken,
     user_id: session.userId,
     fullname: profile.fullname,
-    phone: profile.phone,
   };
 
   if (profile.fullname.trim()) {
@@ -128,14 +153,18 @@ export async function updatePromoterProfile(
 
   let response: Response;
 
-  if (avatarFile) {
+  if (avatarFile || removeAvatar) {
     const formData = new FormData();
 
     Object.entries(fields).forEach(([key, value]) => {
       formData.append(key, String(value));
     });
 
-    formData.append("avatar", avatarFile);
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    } else if (removeAvatar) {
+      formData.append("remove_avatar", "1");
+    }
 
     response = await fetch(url, {
       method: "POST",
@@ -172,5 +201,99 @@ export async function updatePromoterProfile(
     data
   ) as Partial<AuthenticatedUser> | null;
 
-  return nextUser ?? {};
+  return normalizeUserPatch(nextUser);
+}
+
+export async function deletePromoterProfilePicture(
+  session: SessionCredentials,
+) {
+  const response = await fetch(
+    `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_PROFILE_PICTURE}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+      body: JSON.stringify({
+        token: session.apiKey,
+        jwt: session.accessToken,
+      }),
+    },
+  );
+
+  const data = (await parseJson(response)) as UnknownRecord | null;
+
+  if (response.status === 401) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  if (response.status !== 200) {
+    const message =
+      data && typeof data.message === "string"
+        ? data.message
+        : "Failed to delete profile picture.";
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+export async function refreshPromoterUser(
+  session: ProfileSessionCredentials,
+) {
+  const requestUser = async (apiKey: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_DATA}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify({
+          token: apiKey,
+          promoter_id: session.promoterId,
+        }),
+      },
+    );
+
+    const data = (await parseJson(response)) as UnknownRecord | null;
+    return { data, response };
+  };
+
+  let { data, response } = await requestUser(session.apiKey);
+
+  if (response.status === 401) {
+    const refreshedApiKey = await fetchApiKey();
+    ({ data, response } = await requestUser(refreshedApiKey));
+  }
+
+  if (response.status === 401) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  if (!response.ok) {
+    const message =
+      data && typeof data.message === "string"
+        ? data.message
+        : "Unable to refresh your profile right now.";
+    throw new Error(message);
+  }
+
+  const nextUserCollection =
+    data && typeof data === "object" && "user" in data
+      ? (data.user as unknown)
+      : null;
+
+  if (Array.isArray(nextUserCollection) && nextUserCollection.length > 0) {
+    return normalizeUserPatch(nextUserCollection[0] as Partial<AuthenticatedUser>);
+  }
+
+  const nextUser =
+    data && typeof data === "object" && "data" in data
+      ? (data.data as Partial<AuthenticatedUser>)
+      : (data as Partial<AuthenticatedUser> | null);
+
+  return normalizeUserPatch(nextUser);
 }

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AuthenticatedUser, LoginCredentials } from "@promolocation/shared";
-import { loginPromoter } from "@promolocation/shared";
+import {
+  deletePromoterProfilePicture,
+  loginPromoter,
+  refreshPromoterUser,
+} from "@promolocation/shared";
 import ActivationMapScreen from "./components/ActivationMapScreen";
 import AuthenticatedShell from "./components/AuthenticatedShell";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
@@ -245,6 +249,52 @@ export default function App() {
     resetNavigation(getDefaultAuthenticatedScreen(session));
   };
 
+  const handleRefreshProfile = useCallback(async () => {
+    if (!session) {
+      throw new Error("You need to be signed in to refresh your profile.");
+    }
+
+    if (!networkStatus.isOnline) {
+      throw new Error("No internet connection.");
+    }
+
+    const refreshedUser = await refreshPromoterUser({
+      accessToken: session.accessToken,
+      apiKey: session.apiKey,
+      promoterId: session.user.promoter_id,
+      userId: session.user.user_id,
+    });
+
+    handleSessionPatch({
+      user: {
+        ...session.user,
+        ...refreshedUser,
+      },
+    });
+  }, [handleSessionPatch, networkStatus.isOnline, session]);
+
+  const handleDeleteProfilePicture = useCallback(async () => {
+    if (!session) {
+      throw new Error("You need to be signed in to update your profile.");
+    }
+
+    if (!networkStatus.isOnline) {
+      throw new Error("No internet connection.");
+    }
+
+    await deletePromoterProfilePicture({
+      accessToken: session.accessToken,
+      apiKey: session.apiKey,
+    });
+
+    handleSessionPatch({
+      user: {
+        ...session.user,
+        avatar: null,
+      },
+    });
+  }, [handleSessionPatch, networkStatus.isOnline, session]);
+
   const activeAuthenticatedSection =
     currentScreen.name === "profile" ||
     currentScreen.name === "settings" ||
@@ -332,6 +382,8 @@ export default function App() {
           isOnline={networkStatus.isOnline}
           isSyncingQueuedUpdates={profileQueue.isSyncing}
           onBack={goBack}
+          onDeleteProfilePicture={handleDeleteProfilePicture}
+          onRefreshProfile={handleRefreshProfile}
           onSaveProfile={profileQueue.saveProfile}
           onSyncQueuedUpdates={profileQueue.flushQueue}
           pendingProfileUpdates={profileQueue.pendingCount}

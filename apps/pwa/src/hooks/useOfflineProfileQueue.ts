@@ -34,7 +34,7 @@ type UseOfflineProfileQueueOptions = {
 export type ProfileSaveRequest = {
   avatarFile?: File | null;
   fullname: string;
-  phone: string;
+  removeAvatar?: boolean;
 };
 
 export type ProfileSaveResult = {
@@ -46,13 +46,13 @@ function mergeOptimisticUser(
   user: AuthenticatedUser,
   profile: ProfileUpdatePayload,
   avatarPreviewUrl: string | null,
-) : AuthenticatedUser {
-  const nextAvatar = avatarPreviewUrl ?? user.avatar;
+  removeAvatar = false,
+): AuthenticatedUser {
+  const nextAvatar = removeAvatar ? null : (avatarPreviewUrl ?? user.avatar);
 
   return {
     ...user,
     fullname: profile.fullname,
-    phone: profile.phone,
     avatar: nextAvatar,
   };
 }
@@ -62,22 +62,29 @@ function mergeSyncedUser(
   profile: ProfileUpdatePayload,
   updatedUser: Partial<AuthenticatedUser>,
   avatarPreviewUrl: string | null,
-) : AuthenticatedUser {
+  removeAvatar = false,
+): AuthenticatedUser {
   const hasSyncedAvatar =
     typeof updatedUser.avatar === "string" && updatedUser.avatar.trim().length > 0;
-  const nextAvatar: string =
-    hasSyncedAvatar && typeof updatedUser.avatar === "string"
-      ? updatedUser.avatar
-      : avatarPreviewUrl ?? user.avatar;
+  const nextAvatar: string | null =
+    removeAvatar
+      ? null
+      : hasSyncedAvatar && typeof updatedUser.avatar === "string"
+        ? updatedUser.avatar
+        : avatarPreviewUrl ?? user.avatar ?? null;
 
   return {
     ...user,
     ...updatedUser,
     fullname: String(updatedUser.fullname ?? profile.fullname),
-    phone: String(updatedUser.phone ?? profile.phone),
     avatar: nextAvatar,
   };
 }
+
+type QueuedProfileUpdateOptions = {
+  avatarFile?: File | null;
+  removeAvatar?: boolean;
+};
 
 export default function useOfflineProfileQueue({
   isOnline,
@@ -103,7 +110,10 @@ export default function useOfflineProfileQueue({
   }, [session]);
 
   const queueProfileUpdate = useCallback(
-    async (profile: ProfileUpdatePayload, avatarFile: File | null = null) => {
+    async (
+      profile: ProfileUpdatePayload,
+      { avatarFile = null, removeAvatar = false }: QueuedProfileUpdateOptions = {},
+    ) => {
       if (!session) {
         throw new Error("You need to be signed in to update your profile.");
       }
@@ -123,11 +133,17 @@ export default function useOfflineProfileQueue({
         avatarPreviewUrl,
         profile,
         promoterId: session.user.promoter_id,
+        removeAvatar,
         userId: session.user.user_id,
       });
 
       onSessionPatch({
-        user: mergeOptimisticUser(session.user, profile, avatarPreviewUrl),
+        user: mergeOptimisticUser(
+          session.user,
+          profile,
+          avatarPreviewUrl,
+          removeAvatar,
+        ),
       });
 
       await refreshPendingState();
@@ -155,6 +171,7 @@ export default function useOfflineProfileQueue({
               queuedUpdate.profile,
               updatedUser,
               queuedUpdate.avatarPreviewUrl,
+              queuedUpdate.removeAvatar,
             ),
           });
         },
@@ -185,7 +202,7 @@ export default function useOfflineProfileQueue({
     async ({
       avatarFile = null,
       fullname,
-      phone,
+      removeAvatar = false,
     }: ProfileSaveRequest): Promise<ProfileSaveResult> => {
       if (!session) {
         throw new Error("You need to be signed in to update your profile.");
@@ -193,11 +210,10 @@ export default function useOfflineProfileQueue({
 
       const profile = {
         fullname: fullname.trim(),
-        phone: phone.trim(),
       };
 
       if (!isOnline) {
-        await queueProfileUpdate(profile, avatarFile);
+        await queueProfileUpdate(profile, { avatarFile, removeAvatar });
 
         return {
           message:
@@ -211,10 +227,12 @@ export default function useOfflineProfileQueue({
           {
             accessToken: session.accessToken,
             apiKey: session.apiKey,
+            promoterId: session.user.promoter_id,
             userId: session.user.user_id,
           },
           profile,
           avatarFile,
+          removeAvatar,
         );
 
         let avatarPreviewUrl: string | null = null;
@@ -232,7 +250,13 @@ export default function useOfflineProfileQueue({
 
         await removeQueuedProfileUpdate(session.user.user_id);
         onSessionPatch({
-          user: mergeSyncedUser(session.user, profile, updatedUser, avatarPreviewUrl),
+          user: mergeSyncedUser(
+            session.user,
+            profile,
+            updatedUser,
+            avatarPreviewUrl,
+            removeAvatar,
+          ),
         });
         await refreshPendingState();
 
@@ -245,7 +269,7 @@ export default function useOfflineProfileQueue({
           throw error;
         }
 
-        await queueProfileUpdate(profile, avatarFile);
+        await queueProfileUpdate(profile, { avatarFile, removeAvatar });
 
         return {
           message:
