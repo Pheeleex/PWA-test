@@ -231,15 +231,6 @@ export default function MapScreen() {
 
       const getUserLocation = async () => {
         try {
-          // Inform user about location requirements
-          Alert.alert(
-            "Location Permission Required",
-            Platform.OS === "ios"
-              ? "This app needs 'Always Allow' location access to track your position and send notifications when you enter activation zones. Please select 'Always Allow' when prompted."
-              : "This app needs location access to track your position and send notifications when you enter activation zones. Please grant location permissions when prompted.",
-            [{ text: "OK", onPress: () => {} }],
-          );
-
           const { status } = await Location.requestBackgroundPermissionsAsync();
 
           if (status !== "granted") {
@@ -632,8 +623,9 @@ export default function MapScreen() {
                 <Text
                   style={[styles.permissionDescription, { color: "#64748B" }]}
                 >
-                  Enable location permissions to discover activation zones and
-                  view your position on the map.
+                  {Platform.OS === "ios"
+                    ? "Enable 'Always Allow' location permissions to discover activation zones, view your position on the map, and receive notifications when entering zones."
+                    : "Enable location permissions to discover activation zones, view your position on the map, and receive notifications when entering zones."}
                 </Text>
                 <TouchableOpacity
                   style={styles.settingsButton}
