@@ -327,7 +327,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.labelRow}>
               <Text style={[styles.label, { color: theme.icon }]}>
-                Promoter ID
+                Promoter Code
               </Text>
               <Ionicons
                 name="lock-closed"

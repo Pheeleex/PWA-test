@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else {
         let errorMsg = data.message || "Login failed";
         if (response.status === 404)
-          errorMsg = "No account found with this promoter ID.";
+          errorMsg = "No account found with this promoter Code.";
         if (response.status === 400)
           errorMsg = "Invalid credentials. Check your password.";
         if (response.status === 403) errorMsg = "Email not verified.";
@@ -603,7 +603,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         let errorMsg =
           data.message || "Failed to reset password. Please try again.";
         if (response.status === 404) {
-          errorMsg = "Promoter ID not found.";
+          errorMsg = "Promoter Code not found.";
         }
         throw new Error(errorMsg);
       }

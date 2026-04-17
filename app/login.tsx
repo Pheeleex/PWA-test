@@ -68,8 +68,8 @@ export default function LoginScreen() {
       if (!savedUserId || !savedPassword) {
         showAlert(
           "Setup Required",
-          "Please login with your Promoter ID and password first to enable biometric login.",
-          "error"
+          "Please login with your Promoter Code and password first to enable biometric login.",
+          "error",
         );
         return;
       }
@@ -81,7 +81,10 @@ export default function LoginScreen() {
 
       if (authResult.success) {
         setIsLoading(true);
-        const result = await login({ promoter_id: savedUserId, password: savedPassword });
+        const result = await login({
+          promoter_id: savedUserId,
+          password: savedPassword,
+        });
         setLoginResult(result);
         showAlert("Success", "Login successful!", "success");
       }
@@ -115,7 +118,7 @@ export default function LoginScreen() {
     if (!userId || !password) {
       showAlert(
         "Error",
-        "Please enter both Promoter ID and password.",
+        "Please enter both Promoter Code and password.",
         "error",
       );
       return;
@@ -162,7 +165,7 @@ export default function LoginScreen() {
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={[styles.label, { color: theme.icon2 }]}>
-              Promoter ID
+              Promoter Code
             </Text>
             <TextInput
               style={[
@@ -173,7 +176,7 @@ export default function LoginScreen() {
                   backgroundColor: colorScheme === "dark" ? "#1C1C1E" : "#fff",
                 },
               ]}
-              placeholder="Enter your Promoter ID"
+              placeholder="Enter your Promoter Code"
               placeholderTextColor={theme.icon}
               value={userId}
               onChangeText={setUserId}
@@ -245,12 +248,18 @@ export default function LoginScreen() {
               disabled={isLoading}
             >
               <Ionicons
-                name={Platform.OS === 'ios' ? "scan-outline" : "finger-print-outline"}
+                name={
+                  Platform.OS === "ios"
+                    ? "scan-outline"
+                    : "finger-print-outline"
+                }
                 size={22}
                 color="#0E2B63"
                 style={{ marginRight: 8 }}
               />
-              <Text style={styles.biometricButtonText}>Login with Biometrics</Text>
+              <Text style={styles.biometricButtonText}>
+                Login with Biometrics
+              </Text>
             </TouchableOpacity>
           )}
         </View>

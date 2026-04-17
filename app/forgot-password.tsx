@@ -64,7 +64,7 @@ export default function ForgotPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!promoterId.trim()) {
-      showAlert("Error", "Please enter your Promoter ID.", "error");
+      showAlert("Error", "Please enter your Promoter Code.", "error");
       return;
     }
 
@@ -93,12 +93,15 @@ export default function ForgotPasswordScreen() {
       />
       <View style={styles.content}>
         <Text style={[styles.description, { color: theme.icon }]}>
-          Enter your Promoter ID to reset your password. Your new password will
-          be "password" and you'll be required to change it after logging in.
+          Enter your Promoter Code to reset your password. Your new password
+          will be "password" and you'll be required to change it after logging
+          in.
         </Text>
 
         <View style={styles.inputContainer}>
-          <Text style={[styles.label, { color: theme.text }]}>Promoter ID</Text>
+          <Text style={[styles.label, { color: theme.text }]}>
+            Promoter Code
+          </Text>
           <TextInput
             style={[
               styles.input,
@@ -107,7 +110,7 @@ export default function ForgotPasswordScreen() {
                 backgroundColor: colorScheme === "dark" ? "#2C2C2E" : "#fff",
               },
             ]}
-            placeholder="Enter your Promoter ID"
+            placeholder="Enter your Promoter Code"
             placeholderTextColor={theme.icon}
             value={promoterId}
             onChangeText={setPromoterId}
