@@ -134,7 +134,7 @@ export default function ReportScreen() {
     }
 
     if (!promoterId.trim()) {
-      showAlert("Error", "Please provide your Promoter ID.", "error");
+      showAlert("Error", "Please provide your Promoter Code.", "error");
       return;
     }
 
@@ -212,20 +212,20 @@ export default function ReportScreen() {
         onBack={
           showBack
             ? () => {
-              if (isFromLogin) {
-                router.replace("/login");
-              } else if (params.ref === "settings") {
-                router.navigate("/(drawer)/settings");
-              } else {
-                router.back();
+                if (isFromLogin) {
+                  router.replace("/login");
+                } else if (params.ref === "settings") {
+                  router.navigate("/(drawer)/settings");
+                } else {
+                  router.back();
+                }
               }
-            }
             : undefined
         }
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Promoter ID Field */}
-        <Text style={[styles.label, { color: theme.text }]}>Promoter ID</Text>
+        {/* Promoter Code Field */}
+        <Text style={[styles.label, { color: theme.text }]}>Promoter Code</Text>
         <TextInput
           style={[
             styles.inputContainer,
@@ -235,7 +235,7 @@ export default function ReportScreen() {
               opacity: user ? 0.6 : 1,
             },
           ]}
-          placeholder="Your Promoter ID"
+          placeholder="Your Promoter Code"
           placeholderTextColor={theme.icon}
           value={promoterId}
           onChangeText={setPromoterId}

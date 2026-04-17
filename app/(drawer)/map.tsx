@@ -231,7 +231,7 @@ export default function MapScreen() {
 
       const getUserLocation = async () => {
         try {
-          const { status } = await Location.requestForegroundPermissionsAsync();
+          const { status } = await Location.requestBackgroundPermissionsAsync();
 
           if (status !== "granted") {
             setPermissionDenied(true);
@@ -315,18 +315,26 @@ export default function MapScreen() {
 
       const setupGeofencing = async () => {
         try {
-          const { status: foregroundStatus } =
-            await Location.requestForegroundPermissionsAsync();
-          if (foregroundStatus !== "granted") {
-            console.warn("[Geofencing] Foreground location permission denied");
-            return;
-          }
-
-          // On iOS we need background permission for geofencing specifically
+          // Check if background location permission is granted (already requested in location tracking)
           const { status: backgroundStatus } =
-            await Location.requestBackgroundPermissionsAsync();
+            await Location.getBackgroundPermissionsAsync();
           if (backgroundStatus !== "granted") {
-            console.warn("[Geofencing] Background location permission denied");
+            console.warn(
+              "[Geofencing] Background location permission not granted",
+            );
+            Alert.alert(
+              "Location Permission Required",
+              Platform.OS === "ios"
+                ? "To receive notifications when entering activation zones, please enable 'Always Allow' location permission in Settings > Privacy & Security > Location Services > Promolocation."
+                : "To receive notifications when entering activation zones, please enable location permissions in Settings > Apps > Promolocation > Permissions.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Open Settings",
+                  onPress: () => Linking.openSettings(),
+                },
+              ],
+            );
             return;
           }
 
@@ -405,7 +413,7 @@ export default function MapScreen() {
         if (
           distance === nearestDistance &&
           (zone.centerDistance ?? Infinity) <
-          (nearest.centerDistance ?? Infinity)
+            (nearest.centerDistance ?? Infinity)
         ) {
           return zone;
         }
@@ -615,8 +623,9 @@ export default function MapScreen() {
                 <Text
                   style={[styles.permissionDescription, { color: "#64748B" }]}
                 >
-                  Enable location permissions to discover activation zones and
-                  view your position on the map.
+                  {Platform.OS === "ios"
+                    ? "Enable 'Always Allow' location permissions to discover activation zones, view your position on the map, and receive notifications when entering zones."
+                    : "Enable location permissions to discover activation zones, view your position on the map, and receive notifications when entering zones."}
                 </Text>
                 <TouchableOpacity
                   style={styles.settingsButton}
@@ -820,8 +829,6 @@ export default function MapScreen() {
                   })}
                 </View>
               </View>
-
-
 
               <View style={styles.actionCol}>
                 <TouchableOpacity

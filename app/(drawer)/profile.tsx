@@ -185,6 +185,18 @@ export default function ProfileScreen() {
         ? null
         : image;
 
+  const formattedDisplayImage = currentDisplayImage
+    ? currentDisplayImage.startsWith("http") ||
+      currentDisplayImage.startsWith("file:") ||
+      currentDisplayImage.startsWith("data:")
+      ? currentDisplayImage
+      : `https://promolocation.nubiaville.com/${
+          currentDisplayImage.startsWith("/")
+            ? currentDisplayImage.substring(1)
+            : currentDisplayImage
+        }`
+    : null;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -217,13 +229,17 @@ export default function ProfileScreen() {
               onPress={() => currentDisplayImage && setModalVisible(true)}
               disabled={!currentDisplayImage}
             >
-              {currentDisplayImage ? (
+              {formattedDisplayImage ? (
                 <View style={[styles.profileImage, { overflow: "hidden" }]}>
                   <Image
-                    source={{ uri: currentDisplayImage }}
+                    source={{ uri: formattedDisplayImage }}
                     style={[styles.profileImage, { position: "absolute" }]}
                     onLoadStart={() => setImageLoading(true)}
                     onLoadEnd={() => setImageLoading(false)}
+                    onError={() => {
+                      console.log("Failed to load image:", formattedDisplayImage);
+                      setImageLoading(false);
+                    }}
                   />
                   {imageLoading && (
                     <ActivityIndicator size="small" color={theme.icon} />
@@ -327,7 +343,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.labelRow}>
               <Text style={[styles.label, { color: theme.icon }]}>
-                Promoter ID
+                Promoter Code
               </Text>
               <Ionicons
                 name="lock-closed"
@@ -408,9 +424,9 @@ export default function ProfileScreen() {
           >
             <Ionicons name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          {image && (
+          {formattedDisplayImage && (
             <Image
-              source={{ uri: image }}
+              source={{ uri: formattedDisplayImage }}
               style={styles.fullImage}
               resizeMode="contain"
             />
