@@ -92,7 +92,7 @@ export default function LoginScreen({
     event.preventDefault();
 
     if (!promoterId.trim() || !password.trim()) {
-      setLocalError("Enter both your promoter ID and password.");
+      setLocalError("Enter both your promoter code and password.");
       return;
     }
 
@@ -120,13 +120,13 @@ export default function LoginScreen({
 
         <form className="auth-mobile-form" onSubmit={handleSubmit}>
           <label className="mobile-field">
-            <span>Promoter ID</span>
+            <span>Promoter Code</span>
             <input
               autoCapitalize="none"
               autoComplete="username"
               className="mobile-input auth-mobile-input"
               onChange={(event) => setPromoterId(event.target.value)}
-              placeholder="Enter your Promoter ID"
+              placeholder="Enter your Promoter Code"
               value={promoterId}
             />
           </label>

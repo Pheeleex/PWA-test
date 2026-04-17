@@ -46,7 +46,7 @@ export default function ForgotPasswordScreen({
 
   const handleResetPassword = async () => {
     if (!promoterId.trim()) {
-      showAlert("Error", "Please enter your Promoter ID.", "error");
+      showAlert("Error", "Please enter your Promoter Code.", "error");
       return;
     }
 
@@ -77,18 +77,18 @@ export default function ForgotPasswordScreen({
 
         <section className="mobile-form-content">
           <p className="screen-description">
-            Enter your Promoter ID to reset your password. Your new password
+            Enter your Promoter Code to reset your password. Your new password
             will be "password" and you&apos;ll be required to change it after
             logging in.
           </p>
 
           <label className="mobile-field">
-            <span>Promoter ID</span>
+            <span>Promoter Code</span>
             <input
               className="mobile-input"
               disabled={isLoading}
               onChange={(event) => setPromoterId(event.target.value)}
-              placeholder="Enter your Promoter ID"
+              placeholder="Enter your Promoter Code"
               value={promoterId}
             />
           </label>

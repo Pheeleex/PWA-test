@@ -78,6 +78,7 @@ export default function ProfileScreen({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isViewingAvatar, setIsViewingAvatar] = useState(false);
+  const [hasAvatarLoadError, setHasAvatarLoadError] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     message: string;
@@ -111,9 +112,33 @@ export default function ProfileScreen({
     return pendingAvatarPreview || session.user.avatar || "";
   }, [pendingAvatarPreview, session.user.avatar]);
 
+  const formattedDisplayImage = useMemo(() => {
+    if (!currentDisplayImage) {
+      return "";
+    }
+
+    if (
+      currentDisplayImage.startsWith("http") ||
+      currentDisplayImage.startsWith("blob:") ||
+      currentDisplayImage.startsWith("data:")
+    ) {
+      return currentDisplayImage;
+    }
+
+    return `https://promolocation.nubiaville.com/${
+      currentDisplayImage.startsWith("/")
+        ? currentDisplayImage.slice(1)
+        : currentDisplayImage
+    }`;
+  }, [currentDisplayImage]);
+
   const hasChanges = useMemo(() => {
     return fullname.trim() !== (session.user.fullname || "").trim() || pendingAvatarFile !== null;
   }, [fullname, pendingAvatarFile, session.user.fullname]);
+
+  useEffect(() => {
+    setHasAvatarLoadError(false);
+  }, [formattedDisplayImage]);
 
   useEffect(() => {
     if (!hasChanges) {
@@ -304,15 +329,18 @@ export default function ProfileScreen({
             <div className="profile-avatar-shell">
               <button
                 className={`profile-avatar-button ${!currentDisplayImage ? "profile-avatar-placeholder" : ""}`}
-                disabled={!currentDisplayImage}
-                onClick={() => currentDisplayImage && setIsViewingAvatar(true)}
+                disabled={!formattedDisplayImage || hasAvatarLoadError}
+                onClick={() =>
+                  formattedDisplayImage && !hasAvatarLoadError && setIsViewingAvatar(true)
+                }
                 type="button"
               >
-                {currentDisplayImage ? (
+                {formattedDisplayImage && !hasAvatarLoadError ? (
                   <img
                     alt={session.user.fullname || "Promoter avatar"}
                     className="profile-avatar-image"
-                    src={currentDisplayImage}
+                    onError={() => setHasAvatarLoadError(true)}
+                    src={formattedDisplayImage}
                   />
                 ) : (
                   <span className="profile-avatar-fallback">
@@ -413,7 +441,7 @@ export default function ProfileScreen({
           <section className="profile-details-card">
             <div className="profile-readonly-card">
               <div className="profile-label-row">
-                <span className="profile-detail-label">Promoter ID</span>
+                <span className="profile-detail-label">Promoter Code</span>
                 <span className="profile-lock-tag">Locked</span>
               </div>
               <strong>{session.user.promoter_id}</strong>
@@ -463,7 +491,7 @@ export default function ProfileScreen({
         </section>
       </div>
 
-      {isViewingAvatar && currentDisplayImage ? (
+      {isViewingAvatar && formattedDisplayImage && !hasAvatarLoadError ? (
         <div
           aria-modal="true"
           className="modal-backdrop"
@@ -487,7 +515,8 @@ export default function ProfileScreen({
             <img
               alt={session.user.fullname || "Promoter avatar"}
               className="profile-image-modal-image"
-              src={currentDisplayImage}
+              onError={() => setHasAvatarLoadError(true)}
+              src={formattedDisplayImage}
             />
           </div>
         </div>

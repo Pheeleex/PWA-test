@@ -121,7 +121,7 @@ export async function resetPromoterPassword(
       : "Failed to reset password. Please try again.";
 
   if (response.status === 404) {
-    message = "Promoter ID not found.";
+    message = "Promoter Code not found.";
   }
 
   throw new Error(message);
