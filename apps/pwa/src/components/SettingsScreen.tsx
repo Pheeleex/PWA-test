@@ -103,10 +103,7 @@ export default function SettingsScreen({
                 <span className="settings-icon-shell settings-notification-icon">
                   <BellIcon />
                 </span>
-                <span className="settings-menu-label">
-                  Enable Notifications
-                  <span className="settings-not-live-tag">Not live yet</span>
-                </span>
+                <span className="settings-menu-label">Enable Notifications</span>
               </div>
 
               <button
@@ -122,12 +119,7 @@ export default function SettingsScreen({
 
           {notificationMessage ? (
             <p className="settings-help-text">{notificationMessage}</p>
-          ) : (
-            <p className="settings-help-text">
-              Notifications are not live yet. You can save your preference now,
-              and we will wire delivery in later.
-            </p>
-          )}
+          ) : null}
 
           <PwaInstallCard install={install} persistent />
         </section>

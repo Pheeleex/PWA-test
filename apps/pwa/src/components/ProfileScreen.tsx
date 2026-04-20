@@ -491,21 +491,19 @@ export default function ProfileScreen({
                   />
                 </label>
 
-                {currentDisplayImage ? (
-                  <button
-                    aria-label="Delete profile picture"
-                    className="profile-delete-badge"
-                    disabled={isDeletingImage}
-                    onClick={() => void handleDeletePicture()}
-                    type="button"
-                  >
-                    {isDeletingImage ? (
-                      <span className="profile-avatar-action-spinner">...</span>
-                    ) : (
-                      <TrashIcon />
-                    )}
-                  </button>
-                ) : null}
+                <button
+                  aria-label="Delete profile picture"
+                  className="profile-delete-badge"
+                  disabled={!currentDisplayImage || isDeletingImage}
+                  onClick={() => void handleDeletePicture()}
+                  type="button"
+                >
+                  {isDeletingImage ? (
+                    <span className="profile-avatar-action-spinner">...</span>
+                  ) : (
+                    <TrashIcon />
+                  )}
+                </button>
               </div>
             </div>
 
