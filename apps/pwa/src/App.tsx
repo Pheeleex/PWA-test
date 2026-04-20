@@ -10,9 +10,11 @@ import AuthenticatedShell from "./components/AuthenticatedShell";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
 import ConnectivityBanner from "./components/ConnectivityBanner";
 import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
+import IncidentHistoryScreen from "./components/IncidentHistoryScreen";
 import LoginScreen from "./components/LoginScreen";
 import OnboardingScreen from "./components/OnboardingScreen";
 import ProfileScreen from "./components/ProfileScreen";
+import ReportIncidentScreen from "./components/ReportIncidentScreen";
 import SettingsScreen from "./components/SettingsScreen";
 import useNetworkStatus from "./hooks/useNetworkStatus";
 import useOfflineProfileQueue from "./hooks/useOfflineProfileQueue";
@@ -31,9 +33,11 @@ type ScreenState =
   | { name: "onboarding" }
   | { name: "change-password"; forcedReset: boolean }
   | { name: "forgot-password" }
+  | { name: "incidents" }
   | { name: "login" }
   | { name: "map" }
   | { name: "profile" }
+  | { name: "report" }
   | { name: "settings" };
 
 function readStoredSession() {
@@ -373,6 +377,7 @@ export default function App() {
     return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
+        isLocked={session.user.resetKey === "Yes"}
         onLogout={handleLogout}
         onOpenMap={() => resetNavigation({ name: "map" })}
         onOpenProfile={() => resetNavigation({ name: "profile" })}
@@ -398,6 +403,7 @@ export default function App() {
     return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
+        isLocked={session.user.resetKey === "Yes"}
         onLogout={handleLogout}
         onOpenMap={() => resetNavigation({ name: "map" })}
         onOpenProfile={() => resetNavigation({ name: "profile" })}
@@ -409,7 +415,41 @@ export default function App() {
           onOpenChangePassword={() =>
             navigateTo({ name: "change-password", forcedReset: false })
           }
-          onOpenProfile={() => navigateTo({ name: "profile" })}
+        />
+      </AuthenticatedShell>
+    );
+  }
+
+  if (currentScreen.name === "report") {
+    return renderWithConnectivity(
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
+        isLocked={session.user.resetKey === "Yes"}
+        onLogout={handleLogout}
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <ReportIncidentScreen
+          onBack={goBack}
+          session={session}
+        />
+      </AuthenticatedShell>
+    );
+  }
+
+  if (currentScreen.name === "incidents") {
+    return renderWithConnectivity(
+      <AuthenticatedShell
+        activeSection={activeAuthenticatedSection}
+        isLocked={session.user.resetKey === "Yes"}
+        onLogout={handleLogout}
+        onOpenMap={() => resetNavigation({ name: "map" })}
+        onOpenProfile={() => resetNavigation({ name: "profile" })}
+        onOpenSettings={() => resetNavigation({ name: "settings" })}
+      >
+        <IncidentHistoryScreen
+          onBack={goBack}
           session={session}
         />
       </AuthenticatedShell>
@@ -420,6 +460,7 @@ export default function App() {
     return renderWithConnectivity(
       <AuthenticatedShell
         activeSection={activeAuthenticatedSection}
+        isLocked={session.user.resetKey === "Yes"}
         onLogout={handleLogout}
         onOpenMap={() => resetNavigation({ name: "map" })}
         onOpenProfile={() => resetNavigation({ name: "profile" })}
@@ -448,6 +489,7 @@ export default function App() {
     <AuthenticatedShell
       activeSection={activeAuthenticatedSection}
       fullBleed
+      isLocked={session.user.resetKey === "Yes"}
       onLogout={handleLogout}
       onOpenMap={() => resetNavigation({ name: "map" })}
       onOpenProfile={() => resetNavigation({ name: "profile" })}
@@ -455,9 +497,6 @@ export default function App() {
     >
       <ActivationMapScreen
         isOnline={networkStatus.isOnline}
-        onOpenChangePassword={() =>
-          navigateTo({ name: "change-password", forcedReset: false })
-        }
         onSessionPatch={handleSessionPatch}
         session={session}
       />

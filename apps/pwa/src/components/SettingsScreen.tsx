@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import type { AuthenticatedUser } from "@promolocation/shared";
+import { useEffect, useState } from "react";
 import changePasswordIcon from "../../../../assets/images/changepassword.png";
 import {
   readNotificationPreference,
@@ -10,22 +9,40 @@ import type { PwaInstallState } from "../hooks/usePwaInstall";
 import PwaInstallCard from "./PwaInstallCard";
 import PwaScreenHeader from "./PwaScreenHeader";
 
+function BellIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="settings-inline-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M18 10.2C18 7 15.3 4.5 12 4.5C8.7 4.5 6 7 6 10.2V13.8L4.5 16.5H19.5L18 13.8V10.2Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M9.5 18.5C10 19.4 10.9 20 12 20C13.1 20 14 19.4 14.5 18.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 type SettingsScreenProps = {
   install: PwaInstallState;
   onBack: () => void;
   onOpenChangePassword: () => void;
-  onOpenProfile: () => void;
-  session: {
-    user: AuthenticatedUser;
-  };
 };
 
 export default function SettingsScreen({
   install,
   onBack,
   onOpenChangePassword,
-  onOpenProfile,
-  session,
 }: SettingsScreenProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     readNotificationPreference,
@@ -33,26 +50,27 @@ export default function SettingsScreen({
   const [notificationMessage, setNotificationMessage] = useState<string | null>(
     null,
   );
-
   useEffect(() => {
     writeNotificationPreference(notificationsEnabled);
   }, [notificationsEnabled]);
 
-  const profileInitial = useMemo(() => {
-    return session.user.fullname?.trim().charAt(0).toUpperCase() || "P";
-  }, [session.user.fullname]);
-
   const handleToggleNotifications = async () => {
     if (notificationsEnabled) {
       setNotificationsEnabled(false);
-      setNotificationMessage("Browser notifications have been turned off for this device.");
+      setNotificationMessage(
+        "Notifications are not live yet. This preference is saved for later.",
+      );
       return;
     }
 
     const { enabled, message } = await requestBrowserNotificationPermission();
 
     setNotificationsEnabled(enabled);
-    setNotificationMessage(message);
+    setNotificationMessage(
+      enabled
+        ? "Notifications are not live yet. We saved this preference for later."
+        : message,
+    );
   };
 
   return (
@@ -61,27 +79,12 @@ export default function SettingsScreen({
         <PwaScreenHeader onBack={onBack} showBackButton title="Settings" />
 
         <section className="list-screen-content settings-screen-content">
-          <button className="settings-profile-card" onClick={onOpenProfile} type="button">
-            <div className="settings-profile-avatar">
-              {session.user.avatar ? (
-                <img
-                  alt={session.user.fullname || "Promoter avatar"}
-                  className="settings-profile-avatar-image"
-                  src={session.user.avatar}
-                />
-              ) : (
-                <span>{profileInitial}</span>
-              )}
-            </div>
-            <div className="settings-profile-copy">
-              <strong>{session.user.fullname || "Promoter"}</strong>
-              <p>{session.user.promoter_id}</p>
-            </div>
-            <span className="settings-menu-chevron">&gt;</span>
-          </button>
-
           <div className="settings-list">
-            <button className="settings-menu-item" onClick={onOpenChangePassword} type="button">
+            <button
+              className="settings-menu-item"
+              onClick={onOpenChangePassword}
+              type="button"
+            >
               <div className="settings-menu-item-left">
                 <span className="settings-icon-shell">
                   <img
@@ -98,9 +101,12 @@ export default function SettingsScreen({
             <div className="settings-menu-item settings-toggle-item">
               <div className="settings-menu-item-left">
                 <span className="settings-icon-shell settings-notification-icon">
-                  <span className="settings-bell-glyph">!</span>
+                  <BellIcon />
                 </span>
-                <span className="settings-menu-label">Enable Notifications</span>
+                <span className="settings-menu-label">
+                  Enable Notifications
+                  <span className="settings-not-live-tag">Not live yet</span>
+                </span>
               </div>
 
               <button
@@ -118,7 +124,8 @@ export default function SettingsScreen({
             <p className="settings-help-text">{notificationMessage}</p>
           ) : (
             <p className="settings-help-text">
-              Browser notifications are optional here and stay device-specific.
+              Notifications are not live yet. You can save your preference now,
+              and we will wire delivery in later.
             </p>
           )}
 

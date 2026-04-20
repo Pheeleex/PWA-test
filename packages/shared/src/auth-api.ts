@@ -57,7 +57,7 @@ function extractApiKey(data: unknown) {
 }
 
 function getLoginErrorMessage(status: number, fallback: string) {
-  if (status === 404) return "No account found with this promoter ID.";
+  if (status === 404) return "No account found with this promoter code.";
   if (status === 400) return "Invalid credentials. Check your password.";
   if (status === 403) return "Email not verified.";
   if (status === 406) return "Account pending admin approval.";

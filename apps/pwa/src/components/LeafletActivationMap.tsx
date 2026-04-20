@@ -53,8 +53,8 @@ function getZoneColors(zone: ActivationZoneWithDistance, highlightedZoneId: stri
   }
 
   return {
-    fill: isActive ? "rgba(22, 163, 74, 0.2)" : "rgba(34, 197, 94, 0.1)",
-    stroke: isActive ? "rgba(21, 128, 61, 0.96)" : "rgba(34, 197, 94, 0.72)",
+    fill: isActive ? "rgba(0, 177, 235, 0.18)" : "rgba(14, 43, 99, 0.1)",
+    stroke: isActive ? "rgba(0, 177, 235, 0.96)" : "rgba(14, 43, 99, 0.72)",
     weight: isActive ? 3 : 2,
   };
 }
@@ -128,7 +128,7 @@ export default function LeafletActivationMap({
 
       L.circleMarker([zone.center.latitude, zone.center.longitude], {
         color: "#ffffff",
-        fillColor: zone.type === "red" ? "#ef4444" : "#16a34a",
+        fillColor: zone.type === "red" ? "#ef4444" : "#0e2b63",
         fillOpacity: 1,
         radius: zone.id === highlightedZoneId ? 8 : 6,
         weight: 2,

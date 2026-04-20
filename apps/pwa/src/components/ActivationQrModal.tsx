@@ -1,3 +1,6 @@
+import { useMemo, useState } from "react";
+import { resolvePromolocationMediaUrl } from "../utils/mediaUrl";
+
 type ActivationQrModalProps = {
   onClose: () => void;
   promoImageUrl: string;
@@ -9,8 +12,11 @@ export default function ActivationQrModal({
   promoImageUrl,
   zoneName,
 }: ActivationQrModalProps) {
-  const trimmedPromoImageUrl = promoImageUrl.trim();
-  const hasPromoImage = trimmedPromoImageUrl.length > 0;
+  const [hasLoadError, setHasLoadError] = useState(false);
+  const resolvedPromoImageUrl = useMemo(() => {
+    return resolvePromolocationMediaUrl(promoImageUrl);
+  }, [promoImageUrl]);
+  const hasPromoImage = resolvedPromoImageUrl.length > 0 && !hasLoadError;
 
   return (
     <div
@@ -38,7 +44,8 @@ export default function ActivationQrModal({
             <img
               alt="Promotional activation"
               className="qr-promo-image"
-              src={trimmedPromoImageUrl}
+              onError={() => setHasLoadError(true)}
+              src={resolvedPromoImageUrl}
             />
           ) : (
             <div className="qr-error-state">
@@ -58,8 +65,8 @@ export default function ActivationQrModal({
         </p>
 
         <div className="qr-disclaimer">
-          <strong>Important:</strong> Nur fur erwachsene Raucher/innen. Wenn Du
-          junger als 25 Jahre aussiehst, ist die Vorlage eines Ausweises
+          <strong>Important:</strong> Nur für erwachsene Raucher/innen – wenn Du
+          jünger als 25 Jahre aussiehst, ist die Vorlage eines Ausweises
           erforderlich.
         </div>
       </div>

@@ -1,10 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import appLogo from "../../../../assets/images/Logo.png";
+import AlertDialog from "./AlertDialog";
 
 type AuthenticatedShellProps = {
   activeSection?: "map" | "profile" | "settings";
   children: ReactNode;
   fullBleed?: boolean;
+  isLocked?: boolean;
   onLogout: () => void;
   onOpenMap: () => void;
   onOpenProfile: () => void;
@@ -79,15 +81,18 @@ function SettingsIcon() {
       viewBox="0 0 24 24"
     >
       <path
-        d="M12 15.25C13.7949 15.25 15.25 13.7949 15.25 12C15.25 10.2051 13.7949 8.75 12 8.75C10.2051 8.75 8.75 10.2051 8.75 12C8.75 13.7949 10.2051 15.25 12 15.25Z"
+        d="M12 15.2C13.7673 15.2 15.2 13.7673 15.2 12C15.2 10.2327 13.7673 8.8 12 8.8C10.2327 8.8 8.8 10.2327 8.8 12C8.8 13.7673 10.2327 15.2 12 15.2Z"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
       />
       <path
-        d="M19.4 15.1L20.4 16.8L18.8 19.4L16.9 18.9C16.2 19.5 15.4 19.9 14.5 20.2L14 22H10L9.5 20.2C8.6 19.9 7.8 19.5 7.1 18.9L5.2 19.4L3.6 16.8L4.6 15.1C4.4 14.5 4.3 13.8 4.3 13.1C4.3 12.4 4.4 11.7 4.6 11.1L3.6 9.4L5.2 6.8L7.1 7.3C7.8 6.7 8.6 6.3 9.5 6L10 4.2H14L14.5 6C15.4 6.3 16.2 6.7 16.9 7.3L18.8 6.8L20.4 9.4L19.4 11.1C19.6 11.7 19.7 12.4 19.7 13.1C19.7 13.8 19.6 14.5 19.4 15.1Z"
+        d="M19.1 13.6C19.2 13.1 19.2 12.6 19.2 12C19.2 11.4 19.2 10.9 19.1 10.4L21 9L19 5.6L16.8 6.5C16 5.9 15.2 5.4 14.2 5.1L13.9 2.8H10.1L9.8 5.1C8.8 5.4 8 5.9 7.2 6.5L5 5.6L3 9L4.9 10.4C4.8 10.9 4.8 11.4 4.8 12C4.8 12.6 4.8 13.1 4.9 13.6L3 15L5 18.4L7.2 17.5C8 18.1 8.8 18.6 9.8 18.9L10.1 21.2H13.9L14.2 18.9C15.2 18.6 16 18.1 16.8 17.5L19 18.4L21 15L19.1 13.6Z"
         stroke="currentColor"
+        strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.5"
+        strokeWidth="1.7"
       />
     </svg>
   );
@@ -128,12 +133,14 @@ export default function AuthenticatedShell({
   activeSection,
   children,
   fullBleed = false,
+  isLocked = false,
   onLogout,
   onOpenMap,
   onOpenProfile,
   onOpenSettings,
 }: AuthenticatedShellProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!isDrawerOpen) {
@@ -157,6 +164,12 @@ export default function AuthenticatedShell({
     };
   }, [isDrawerOpen]);
 
+  useEffect(() => {
+    if (isLocked && isDrawerOpen) {
+      setIsDrawerOpen(false);
+    }
+  }, [isDrawerOpen, isLocked]);
+
   const closeDrawer = () => {
     setIsDrawerOpen(false);
   };
@@ -178,6 +191,11 @@ export default function AuthenticatedShell({
 
   const handleLogout = () => {
     closeDrawer();
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setIsLogoutConfirmOpen(false);
     onLogout();
   };
 
@@ -187,6 +205,7 @@ export default function AuthenticatedShell({
         <div className="pwa-app-navbar-inner">
           <button
             className="pwa-app-brand"
+            disabled={isLocked}
             onClick={handleOpenMap}
             type="button"
           >
@@ -194,15 +213,17 @@ export default function AuthenticatedShell({
             <span className="pwa-app-brand-text">Promolocation</span>
           </button>
 
-          <button
-            aria-expanded={isDrawerOpen}
-            aria-label="Open navigation menu"
-            className="pwa-app-menu-trigger"
-            onClick={() => setIsDrawerOpen(true)}
-            type="button"
-          >
-            <MenuIcon />
-          </button>
+          {!isLocked ? (
+            <button
+              aria-expanded={isDrawerOpen}
+              aria-label="Open navigation menu"
+              className="pwa-app-menu-trigger"
+              onClick={() => setIsDrawerOpen(true)}
+              type="button"
+            >
+              <MenuIcon />
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -234,25 +255,27 @@ export default function AuthenticatedShell({
               </button>
             </div>
 
-            <nav aria-label="Drawer navigation" className="pwa-drawer-nav">
-              <button
-                className={`pwa-drawer-item ${activeSection === "profile" ? "pwa-drawer-item-active" : ""}`}
-                onClick={handleOpenProfile}
-                type="button"
-              >
-                <PersonIcon />
-                <span>Profile</span>
-              </button>
+            {!isLocked ? (
+              <nav aria-label="Drawer navigation" className="pwa-drawer-nav">
+                <button
+                  className={`pwa-drawer-item ${activeSection === "profile" ? "pwa-drawer-item-active" : ""}`}
+                  onClick={handleOpenProfile}
+                  type="button"
+                >
+                  <PersonIcon />
+                  <span>Profile</span>
+                </button>
 
-              <button
-                className={`pwa-drawer-item ${activeSection === "settings" ? "pwa-drawer-item-active" : ""}`}
-                onClick={handleOpenSettings}
-                type="button"
-              >
-                <SettingsIcon />
-                <span>Settings</span>
-              </button>
-            </nav>
+                <button
+                  className={`pwa-drawer-item ${activeSection === "settings" ? "pwa-drawer-item-active" : ""}`}
+                  onClick={handleOpenSettings}
+                  type="button"
+                >
+                  <SettingsIcon />
+                  <span>Settings</span>
+                </button>
+              </nav>
+            ) : null}
 
             <div className="pwa-drawer-footer">
               <button
@@ -267,6 +290,18 @@ export default function AuthenticatedShell({
           </aside>
         </div>
       ) : null}
+
+      <AlertDialog
+        cancelText="Cancel"
+        confirmText="Yes"
+        message="Are you sure you want to log out?"
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={confirmLogout}
+        showCancel
+        title="Confirm Logout"
+        type="error"
+        visible={isLogoutConfirmOpen}
+      />
     </div>
   );
 }

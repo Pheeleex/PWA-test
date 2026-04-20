@@ -16,7 +16,6 @@ import useBrowserLocation from "../hooks/useBrowserLocation";
 
 type ActivationMapScreenProps = {
   isOnline: boolean;
-  onOpenChangePassword: () => void;
   onSessionPatch: (session: {
     accessToken?: string;
     apiKey?: string;
@@ -36,19 +35,6 @@ type CachedActivationZones = {
   savedAt: string;
   zones: ApiLocation[];
 };
-
-function formatSavedTime(savedAt: string) {
-  const timestamp = new Date(savedAt);
-
-  if (Number.isNaN(timestamp.getTime())) {
-    return null;
-  }
-
-  return timestamp.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function readCachedZones(): CachedActivationZones | null {
   if (typeof window === "undefined") {
@@ -95,7 +81,6 @@ function writeCachedZones(zones: ApiLocation[]) {
 
 export default function ActivationMapScreen({
   isOnline,
-  onOpenChangePassword,
   onSessionPatch,
   session,
 }: ActivationMapScreenProps) {
@@ -105,8 +90,6 @@ export default function ActivationMapScreen({
   const [fitAllSignal, setFitAllSignal] = useState(0);
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [recenterSignal, setRecenterSignal] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [zonesNotice, setZonesNotice] = useState<string | null>(null);
   const previousOnlineRef = useRef(isOnline);
 
   const location = useBrowserLocation();
@@ -119,14 +102,11 @@ export default function ActivationMapScreen({
     }
 
     setZones(cachedZones.zones);
-    setLastUpdated(formatSavedTime(cachedZones.savedAt));
-    setZonesNotice("Showing the last synced activation zones while we refresh.");
   }, []);
 
   const loadZones = useCallback(async () => {
     setIsLoadingZones(true);
     setZonesError(null);
-    setZonesNotice(null);
 
     try {
       let apiKey = session.apiKey;
@@ -139,21 +119,11 @@ export default function ActivationMapScreen({
       const activeLocations = await fetchActiveLocations(apiKey);
       setZones(activeLocations);
       writeCachedZones(activeLocations);
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
     } catch (error) {
       const cachedZones = readCachedZones();
 
       if (cachedZones && cachedZones.zones.length > 0) {
         setZones(cachedZones.zones);
-        setLastUpdated(formatSavedTime(cachedZones.savedAt));
-        setZonesNotice(
-          `Offline snapshot loaded${formatSavedTime(cachedZones.savedAt) ? ` from ${formatSavedTime(cachedZones.savedAt)}` : ""}.`,
-        );
       } else {
         const message =
           error instanceof Error ? error.message : "Unable to load activation zones.";
@@ -227,18 +197,6 @@ export default function ActivationMapScreen({
       return closestZone;
     });
   }, [activationZonesWithDistance]);
-
-  const sortedGreenZones = useMemo(
-    () =>
-      activationZonesWithDistance
-        .filter((zone) => zone.type === "green")
-        .sort(
-          (firstZone, secondZone) =>
-            (firstZone.distanceToZone ?? Number.POSITIVE_INFINITY) -
-            (secondZone.distanceToZone ?? Number.POSITIVE_INFINITY),
-        ),
-    [activationZonesWithDistance],
-  );
 
   const nearestHeading = useMemo(() => {
     if (!location.coords || !nearestGreenZone) {
@@ -376,6 +334,10 @@ export default function ActivationMapScreen({
   }, [status.tone]);
 
   const statusMessage = useMemo(() => {
+    if (zonesError) {
+      return zonesError;
+    }
+
     if (activeGreenZone && isGpsReliable) {
       return `You are in ${activeGreenZone.name}. Scan to activate is ready.`;
     }
@@ -400,6 +362,7 @@ export default function ActivationMapScreen({
     isGpsReliable,
     nearestGreenZone,
     nearestHeading,
+    zonesError,
   ]);
 
   const mapQrButtonLabel = qrState.canOpen
@@ -467,129 +430,6 @@ export default function ActivationMapScreen({
             />
           </div>
         </div>
-      </section>
-
-      <section className="map-panels-shell">
-        {session.user.resetKey === "Yes" ? (
-          <section className="notice-banner">
-            <strong>Password update recommended.</strong> Your account indicates a
-            reset is still pending. The map remains available while we wire the
-            rest of the PWA account flow.
-          </section>
-        ) : null}
-
-        <section className="map-info-grid">
-          <article className={`card-panel status-panel tone-${status.tone}`}>
-            <div className="card-header">
-              <h2>Zone status</h2>
-              <span className={`status-pill pill-${status.tone}`}>
-                {status.title}
-              </span>
-            </div>
-            <p>{status.detail}</p>
-          </article>
-
-          <article className="card-panel">
-            <div className="card-header">
-              <h2>Live location</h2>
-              <button className="ghost-button" onClick={location.retry} type="button">
-                Retry
-              </button>
-            </div>
-
-            {location.isLoading ? (
-              <p className="muted">Requesting browser location...</p>
-            ) : location.error ? (
-              <p className="form-error">{location.error}</p>
-            ) : location.coords ? (
-              <dl className="stats-grid">
-                <div>
-                  <dt>Latitude</dt>
-                  <dd>{location.coords.latitude.toFixed(6)}</dd>
-                </div>
-                <div>
-                  <dt>Longitude</dt>
-                  <dd>{location.coords.longitude.toFixed(6)}</dd>
-                </div>
-                <div>
-                  <dt>GPS</dt>
-                  <dd>{isGpsReliable ? "Reliable" : "Watch accuracy"}</dd>
-                </div>
-                <div>
-                  <dt>Browser support</dt>
-                  <dd>{location.isSupported ? "Available" : "Unavailable"}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="muted">Waiting for the first location update...</p>
-            )}
-          </article>
-
-          <article className="card-panel">
-            <div className="card-header">
-              <h2>Activation zones</h2>
-              <button className="ghost-button" onClick={() => void loadZones()} type="button">
-                {isLoadingZones ? "Refreshing..." : "Refresh"}
-              </button>
-            </div>
-
-            {zonesError ? <p className="form-error">{zonesError}</p> : null}
-            <p className="muted">
-              {isLoadingZones
-                ? "Loading red and green zones from the live API..."
-                : `${activationZonesWithDistance.length} zones loaded${lastUpdated ? ` · Updated ${lastUpdated}` : ""}.`}
-            </p>
-            {zonesNotice ? <p className="inline-note">{zonesNotice}</p> : null}
-
-            {nearestGreenZone ? (
-              <div className="nearest-card">
-                <p className="eyebrow">Nearest green zone</p>
-                <h3>{nearestGreenZone.name}</h3>
-                <p>{getZoneDistanceLabel(nearestGreenZone)}</p>
-                {nearestHeading ? (
-                  <p className="muted">Head {nearestHeading}.</p>
-                ) : null}
-              </div>
-            ) : null}
-          </article>
-
-          <article className="card-panel">
-            <div className="card-header">
-              <h2>Quick actions</h2>
-              <span className="stat-tag">Mobile parity</span>
-            </div>
-            <div className="quick-action-stack">
-              <button
-                className="quick-action-button"
-                onClick={onOpenChangePassword}
-                type="button"
-              >
-                Change password
-              </button>
-            </div>
-          </article>
-
-          <article className="card-panel">
-            <h2>Green zone distances</h2>
-            {sortedGreenZones.length === 0 ? (
-              <p className="muted">No green zones are available yet.</p>
-            ) : (
-              <div className="zone-stack">
-                {sortedGreenZones.map((zone) => (
-                  <article className="zone-item" key={zone.id}>
-                    <div>
-                      <strong>{zone.name}</strong>
-                      <p className="muted">
-                        {zone.isInside ? "Inside zone" : getZoneDistanceLabel(zone)}
-                      </p>
-                    </div>
-                    <span className="stat-tag">{Math.round(zone.radius)}m radius</span>
-                  </article>
-                ))}
-              </div>
-            )}
-          </article>
-        </section>
       </section>
 
       {isQrOpen && activeGreenZone ? (

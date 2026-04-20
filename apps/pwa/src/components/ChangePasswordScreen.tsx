@@ -4,6 +4,7 @@ import {
   type AuthenticatedUser,
 } from "@promolocation/shared";
 import AlertDialog from "./AlertDialog";
+import PasswordToggleIcon from "./PasswordToggleIcon";
 import PwaScreenHeader from "./PwaScreenHeader";
 
 type ChangePasswordScreenProps = {
@@ -125,11 +126,12 @@ export default function ChangePasswordScreen({
                 value={currentPassword}
               />
               <button
+                aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
                 className="password-toggle-button"
                 onClick={() => setShowCurrentPassword((value) => !value)}
                 type="button"
               >
-                {showCurrentPassword ? "Hide" : "Show"}
+                <PasswordToggleIcon visible={showCurrentPassword} />
               </button>
             </div>
           </label>
@@ -145,11 +147,12 @@ export default function ChangePasswordScreen({
                 value={newPassword}
               />
               <button
+                aria-label={showNewPassword ? "Hide new password" : "Show new password"}
                 className="password-toggle-button"
                 onClick={() => setShowNewPassword((value) => !value)}
                 type="button"
               >
-                {showNewPassword ? "Hide" : "Show"}
+                <PasswordToggleIcon visible={showNewPassword} />
               </button>
             </div>
           </label>
@@ -165,11 +168,12 @@ export default function ChangePasswordScreen({
                 value={confirmPassword}
               />
               <button
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                 className="password-toggle-button"
                 onClick={() => setShowConfirmPassword((value) => !value)}
                 type="button"
               >
-                {showConfirmPassword ? "Hide" : "Show"}
+                <PasswordToggleIcon visible={showConfirmPassword} />
               </button>
             </div>
           </label>

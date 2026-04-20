@@ -7,6 +7,25 @@ type PwaScreenHeaderProps = {
   title: string;
 };
 
+function BackChevronIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pwa-back-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M15 5L8 12L15 19"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export default function PwaScreenHeader({
   onBack,
   rightSlot,
@@ -17,8 +36,13 @@ export default function PwaScreenHeader({
     <header className="pwa-screen-header">
       <div className="pwa-screen-header-side">
         {showBackButton ? (
-          <button className="pwa-back-button" onClick={onBack} type="button">
-            &lt;
+          <button
+            aria-label="Go back"
+            className="pwa-back-button"
+            onClick={onBack}
+            type="button"
+          >
+            <BackChevronIcon />
           </button>
         ) : (
           <div className="pwa-header-placeholder" />

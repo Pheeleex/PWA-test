@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AuthenticatedUser } from "@promolocation/shared";
 import type {
   ProfileSaveRequest,
@@ -38,6 +38,48 @@ function TrashIcon() {
   );
 }
 
+function LockIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="profile-lock-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path d="M7.5 10V8C7.5 5.5 9.4 3.8 12 3.8C14.6 3.8 16.5 5.5 16.5 8V10" />
+      <path d="M6.5 10H17.5C18.3 10 19 10.7 19 11.5V18.5C19 19.3 18.3 20 17.5 20H6.5C5.7 20 5 19.3 5 18.5V11.5C5 10.7 5.7 10 6.5 10Z" />
+    </svg>
+  );
+}
+
+function PersonPlaceholderIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="profile-avatar-placeholder-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 12C14.4 12 16.3 10.1 16.3 7.7C16.3 5.3 14.4 3.4 12 3.4C9.6 3.4 7.7 5.3 7.7 7.7C7.7 10.1 9.6 12 12 12Z" />
+      <path d="M4.8 20.6C6.1 16.9 8.8 15.1 12 15.1C15.2 15.1 17.9 16.9 19.2 20.6" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="profile-image-close-icon"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path d="M6 6L18 18" />
+      <path d="M18 6L6 18" />
+    </svg>
+  );
+}
+
 type ProfileScreenProps = {
   isOnline: boolean;
   isSyncingQueuedUpdates: boolean;
@@ -55,6 +97,14 @@ type ProfileScreenProps = {
     apiKey: string;
     user: AuthenticatedUser;
   };
+};
+
+type ConfirmationDialog = {
+  confirmText: string;
+  message: string;
+  onConfirm: () => void;
+  title: string;
+  type: "error" | "warning";
 };
 
 export default function ProfileScreen({
@@ -79,6 +129,8 @@ export default function ProfileScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [isViewingAvatar, setIsViewingAvatar] = useState(false);
   const [hasAvatarLoadError, setHasAvatarLoadError] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     message: string;
@@ -89,6 +141,10 @@ export default function ProfileScreen({
     title: "",
     type: "success",
   });
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog | null>(
+    null,
+  );
+  const touchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
     setFullname(session.user.fullname || "");
@@ -166,6 +222,8 @@ export default function ProfileScreen({
     setAlertVisible(true);
   };
 
+  const isRefreshBusy = isRefreshing || isPullRefreshing;
+
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
@@ -193,13 +251,16 @@ export default function ProfileScreen({
       return;
     }
 
-    const shouldLeave = window.confirm(
-      "You have unsaved changes. Are you sure you want to leave?",
-    );
-
-    if (shouldLeave) {
-      onBack();
-    }
+    setConfirmDialog({
+      confirmText: "Leave",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        onBack();
+      },
+      title: "Discard Changes?",
+      type: "warning",
+    });
   };
 
   const handleRefresh = async () => {
@@ -227,15 +288,62 @@ export default function ProfileScreen({
     }
   };
 
-  const handleDeletePicture = async () => {
-    const shouldDelete = window.confirm(
-      "Are you sure you want to remove your profile picture?",
-    );
-
-    if (!shouldDelete) {
+  const handlePullStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (
+      window.scrollY > 0 ||
+      hasChanges ||
+      isRefreshBusy ||
+      isSaving ||
+      isViewingAvatar
+    ) {
       return;
     }
 
+    touchStartYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handlePullMove = (event: React.TouchEvent<HTMLElement>) => {
+    const startY = touchStartYRef.current;
+
+    if (startY === null) {
+      return;
+    }
+
+    const currentY = event.touches[0]?.clientY ?? startY;
+    const distance = currentY - startY;
+
+    if (distance <= 0) {
+      setPullDistance(0);
+      return;
+    }
+
+    setPullDistance(Math.min(distance * 0.45, 96));
+  };
+
+  const handlePullEnd = () => {
+    const shouldRefresh = pullDistance >= 64;
+    touchStartYRef.current = null;
+
+    if (!shouldRefresh) {
+      setPullDistance(0);
+      return;
+    }
+
+    setIsPullRefreshing(true);
+    setPullDistance(72);
+
+    void handleRefresh().finally(() => {
+      setIsPullRefreshing(false);
+      setPullDistance(0);
+    });
+  };
+
+  const handlePullCancel = () => {
+    touchStartYRef.current = null;
+    setPullDistance(0);
+  };
+
+  const performDeletePicture = async () => {
     setIsDeletingImage(true);
 
     try {
@@ -251,6 +359,19 @@ export default function ProfileScreen({
     } finally {
       setIsDeletingImage(false);
     }
+  };
+
+  const handleDeletePicture = () => {
+    setConfirmDialog({
+      confirmText: "Remove",
+      message: "Are you sure you want to remove your profile picture?",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void performDeletePicture();
+      },
+      title: "Remove Profile Picture?",
+      type: "error",
+    });
   };
 
   const handleSave = async () => {
@@ -305,21 +426,30 @@ export default function ProfileScreen({
   };
 
   return (
-    <main className="screen-shell">
-      <div className="mobile-page-card">
+    <main
+      className="screen-shell"
+      onTouchCancel={handlePullCancel}
+      onTouchEnd={handlePullEnd}
+      onTouchMove={handlePullMove}
+      onTouchStart={handlePullStart}
+    >
+      {pullDistance > 0 || isPullRefreshing ? (
+        <div
+          className={`profile-pull-refresh ${
+            pullDistance >= 64 ? "profile-pull-refresh-ready" : ""
+          }`}
+        >
+          {isPullRefreshing
+            ? "Refreshing..."
+            : pullDistance >= 64
+              ? "Release to refresh"
+              : "Pull to refresh"}
+        </div>
+      ) : null}
+
+      <div className="mobile-page-card profile-page-card">
         <PwaScreenHeader
           onBack={handleBack}
-          rightSlot={(
-            <button
-              aria-label="Refresh profile"
-              className="profile-header-refresh"
-              disabled={isRefreshing}
-              onClick={() => void handleRefresh()}
-              type="button"
-            >
-              {isRefreshing ? "..." : "↻"}
-            </button>
-          )}
           showBackButton
           title="Profile"
         />
@@ -344,7 +474,7 @@ export default function ProfileScreen({
                   />
                 ) : (
                   <span className="profile-avatar-fallback">
-                    {session.user.fullname?.charAt(0).toUpperCase() || "P"}
+                    <PersonPlaceholderIcon />
                   </span>
                 )}
               </button>
@@ -383,7 +513,7 @@ export default function ProfileScreen({
               {session.user.fullname || "Promoter"}
             </h2>
 
-            {hasChanges ? (
+            {pendingAvatarFile ? (
               <span className="profile-pending-badge">Unsaved Changes</span>
             ) : null}
           </div>
@@ -442,25 +572,35 @@ export default function ProfileScreen({
             <div className="profile-readonly-card">
               <div className="profile-label-row">
                 <span className="profile-detail-label">Promoter Code</span>
-                <span className="profile-lock-tag">Locked</span>
+                <span className="profile-lock-tag">
+                  <LockIcon />
+                </span>
               </div>
               <strong>{session.user.promoter_id}</strong>
             </div>
 
-            <label className="mobile-field">
+            <label className="mobile-field profile-name-field">
               <span>Full Name</span>
               <input
-                className="mobile-input"
+                className="mobile-input profile-name-input"
                 onChange={(event) => setFullname(event.target.value)}
                 placeholder="Enter your full name"
                 value={fullname}
               />
             </label>
 
-            <div className="profile-readonly-card">
+            <div
+              className={`profile-readonly-card profile-status-card ${
+                session.user.active
+                  ? "profile-status-card-active"
+                  : "profile-status-card-inactive"
+              }`}
+            >
               <div className="profile-label-row">
                 <span className="profile-detail-label">Status</span>
-                <span className="profile-lock-tag">Locked</span>
+                <span className="profile-lock-tag">
+                  <LockIcon />
+                </span>
               </div>
               <strong
                 className={
@@ -475,8 +615,8 @@ export default function ProfileScreen({
           </section>
 
           <button
-            className="fixed-width-primary"
-            disabled={isSaving}
+            className="fixed-width-primary profile-update-button"
+            disabled={!hasChanges || isSaving}
             onClick={() => void handleSave()}
             type="button"
           >
@@ -494,7 +634,7 @@ export default function ProfileScreen({
       {isViewingAvatar && formattedDisplayImage && !hasAvatarLoadError ? (
         <div
           aria-modal="true"
-          className="modal-backdrop"
+          className="modal-backdrop profile-image-backdrop"
           onClick={() => setIsViewingAvatar(false)}
           role="dialog"
         >
@@ -502,16 +642,14 @@ export default function ProfileScreen({
             className="profile-image-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="card-header">
-              <div />
-              <button
-                className="ghost-button"
-                onClick={() => setIsViewingAvatar(false)}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
+            <button
+              aria-label="Close image preview"
+              className="profile-image-close-button"
+              onClick={() => setIsViewingAvatar(false)}
+              type="button"
+            >
+              <CloseIcon />
+            </button>
             <img
               alt={session.user.fullname || "Promoter avatar"}
               className="profile-image-modal-image"
@@ -529,6 +667,20 @@ export default function ProfileScreen({
         type={alertConfig.type}
         visible={alertVisible}
       />
+
+      {confirmDialog ? (
+        <AlertDialog
+          cancelText="Cancel"
+          confirmText={confirmDialog.confirmText}
+          message={confirmDialog.message}
+          onClose={() => setConfirmDialog(null)}
+          onConfirm={confirmDialog.onConfirm}
+          showCancel
+          title={confirmDialog.title}
+          type={confirmDialog.type}
+          visible
+        />
+      ) : null}
     </main>
   );
 }
